@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>온라인 원카드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gowun+Dodum&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- 시작 화면 -->
+<section id="home" class="screen">
+  <div class="panel">
+    <h1 class="logo"><span class="red">♥</span> 원카드 <span>♠</span></h1>
+    <p class="sub">친구와 함께하는 온라인 카드 게임</p>
+    <label class="field">닉네임
+      <input id="name" maxlength="12" placeholder="닉네임을 입력하세요" autocomplete="off">
+    </label>
+    <button id="btnCreate" class="btn primary">방 만들기</button>
+    <div class="join">
+      <input id="code" maxlength="4" placeholder="방 코드" autocomplete="off">
+      <button id="btnJoin" class="btn">참가</button>
+    </div>
+    <details class="rules">
+      <summary>게임 규칙</summary>
+      <ul>
+        <li>바닥 카드와 <b>무늬</b> 또는 <b>숫자</b>가 같은 카드를 냅니다. 낼 카드가 없으면 1장 뽑아요.</li>
+        <li><b>공격</b>: 2 → 2장, A → 3장, A♠ → 5장, 흑백 조커 → 5장, 컬러 조커 → 7장. 공격 카드로 되받아치면 장수가 쌓여요.</li>
+        <li><b>방어</b>: 2 공격에는 같은 무늬 3으로 막을 수 있어요.</li>
+        <li><b>J</b> 건너뛰기 · <b>Q</b> 방향 바꾸기 · <b>K</b> 한 번 더 · <b>7</b> 무늬 바꾸기</li>
+        <li>한 장 남으면 <b>원카드!</b> 버튼을 누르세요. 다른 사람이 먼저 누르면 1장 벌칙!</li>
+        <li>손패가 20장 이상이 되면 <b>파산</b>(탈락)입니다.</li>
+      </ul>
+    </details>
+  </div>
+</section>
+
+<!-- 대기실 -->
+<section id="lobby" class="screen" hidden>
+  <div class="panel">
+    <p class="sub">방 코드</p>
+    <div class="room-code" id="roomCode">----</div>
+    <button id="btnCopy" class="btn small">초대 링크 복사</button>
+    <ul id="members" class="members"></ul>
+    <div id="hostControls" class="row">
+      <button id="btnBot" class="btn">🤖 봇 추가</button>
+      <button id="btnStart" class="btn primary">게임 시작</button>
+    </div>
+    <p id="waitMsg" class="sub" hidden>방장이 게임을 시작하길 기다리는 중…</p>
+    <button id="btnLeave" class="btn ghost">나가기</button>
+  </div>
+</section>
+
+<!-- 게임 -->
+<section id="game" class="screen" hidden>
+  <div id="opponents" class="opponents"></div>
+
+  <div class="table">
+    <div class="status" id="status"></div>
+    <div class="center">
+      <button id="deck" class="deck card back" aria-label="카드 뽑기"><span id="deckCount"></span></button>
+      <div id="pile" class="pile"></div>
+      <div id="suitBadge" class="suit-badge"></div>
+    </div>
+    <div class="actions">
+      <button id="btnDraw" class="btn">카드 뽑기</button>
+      <button id="btnOne" class="btn one">원카드!</button>
+    </div>
+  </div>
+
+  <div class="me-bar">
+    <span id="myName"></span>
+    <span id="timer" class="timer"></span>
+  </div>
+  <div id="hand" class="hand"></div>
+
+  <button id="btnLog" class="fab" aria-label="기록과 채팅">💬</button>
+  <aside id="side" class="side" hidden>
+    <div class="side-head"><b>기록 · 채팅</b><button id="btnCloseSide" class="btn small ghost">닫기</button></div>
+    <ul id="log" class="log"></ul>
+    <form id="chatForm" class="chat-form">
+      <input id="chatInput" maxlength="100" placeholder="메시지 입력" autocomplete="off">
+      <button class="btn small">전송</button>
+    </form>
+  </aside>
+</section>
+
+<!-- 무늬 선택 -->
+<div id="suitModal" class="modal" hidden>
+  <div class="panel">
+    <p>바꿀 무늬를 고르세요</p>
+    <div class="suits">
+      <button data-suit="S">♠</button>
+      <button data-suit="H" class="red">♥</button>
+      <button data-suit="D" class="red">♦</button>
+      <button data-suit="C">♣</button>
+    </div>
+    <button id="suitCancel" class="btn ghost small">취소</button>
+  </div>
+</div>
+
+<!-- 결과 -->
+<div id="resultModal" class="modal" hidden>
+  <div class="panel">
+    <h2>게임 결과</h2>
+    <ol id="results" class="results"></ol>
+    <button id="btnAgain" class="btn primary">다시 하기</button>
+    <button id="btnToLobby" class="btn ghost">대기실로</button>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+<div id="bubble" class="bubble" hidden></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="client.js"></script>
+</body>
+</html>
