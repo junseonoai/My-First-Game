@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- PAGE START -->
+<title>풍등 날리기</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gowun+Dodum&display=swap">
+<style>
+  /* Layout: one full-screen night sky canvas; HUD floats at the top, cards float in the middle. Single dark look by choice. */
+  :root {
+    --night: #0b1026;
+    --night-2: #1a1f45;
+    --paper: #ffe9c2;
+    --flame: #ffb347;
+    --ember: #ff6b3d;
+    --mist: #a9b3e6;
+    --display: "Black Han Sans", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --body: "Gowun Dodum", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    color-scheme: dark;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--night);
+    color: var(--paper);
+    font-family: var(--body);
+    overflow: hidden;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  #stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  .hud {
+    position: fixed; top: 0; left: 0; right: 0;
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: flex; align-items: center; gap: 16px;
+    pointer-events: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .alt { font-family: var(--display); font-size: 1.75rem; line-height: 1; min-width: 5ch; }
+  .alt small { font-family: var(--body); font-size: .8rem; color: var(--mist); margin-left: 2px; }
+  .fuel { flex: 1; max-width: 260px; display: grid; gap: 4px; }
+  .fuel span { font-size: .72rem; letter-spacing: .08em; color: var(--mist); }
+  .bar { height: 8px; border-radius: 4px; background: rgba(169,179,230,.18); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, var(--ember), var(--flame)); transform-origin: left; }
+  .best { margin-left: auto; font-size: .85rem; color: var(--mist); text-align: right; }
+  .best b { display: block; font-family: var(--display); font-weight: 400; font-size: 1.1rem; color: var(--paper); }
+
+  .card {
+    position: fixed; inset: 0;
+    display: grid; place-items: center;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    background: radial-gradient(ellipse at center, rgba(11,16,38,.55), rgba(11,16,38,.85));
+  }
+  .card > div { max-width: 340px; text-align: center; display: grid; gap: 14px; justify-items: center; }
+  .card h1 {
+    font-family: var(--display); font-weight: 400; margin: 0;
+    font-size: clamp(2.6rem, 12vw, 3.6rem); line-height: 1.05;
+    color: var(--paper);
+    text-shadow: 0 0 24px rgba(255,179,71,.55);
+    text-wrap: balance;
+  }
+  .card p { margin: 0; line-height: 1.6; color: var(--mist); font-size: .98rem; }
+  .card p strong { color: var(--paper); font-weight: 400; }
+  .rules { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; font-size: .92rem; text-align: left; }
+  .rules li { display: flex; gap: 10px; align-items: baseline; }
+  .rules em { font-style: normal; color: var(--flame); min-width: 4.5em; }
+  .score { font-family: var(--display); font-size: 3rem; line-height: 1; color: var(--flame); }
+  button {
+    font: inherit; font-family: var(--display); font-size: 1.15rem;
+    padding: 14px 34px; border: 0; border-radius: 999px; cursor: pointer;
+    color: var(--night); background: var(--flame);
+    box-shadow: 0 0 0 0 rgba(255,179,71,.5), 0 8px 24px rgba(255,107,61,.35);
+    transition: transform .15s ease;
+  }
+  button:hover { transform: translateY(-2px); }
+  button:focus-visible { outline: 3px solid var(--paper); outline-offset: 3px; }
+  .hint { font-size: .8rem; color: var(--mist); opacity: .8; }
+  @media (prefers-reduced-motion: no-preference) {
+    #startBtn { animation: pulse 2.2s ease-in-out infinite; }
+    @keyframes pulse { 50% { box-shadow: 0 0 0 10px rgba(255,179,71,0), 0 8px 24px rgba(255,107,61,.35); } }
+  }
+</style>
+
+<div id="stage"><canvas id="sky"></canvas></div>
+
+<div class="hud" id="hud" hidden>
+  <div class="alt"><span id="alt">0</span><small>m</small></div>
+  <div class="fuel"><span>불씨</span><div class="bar"><i id="fuel"></i></div></div>
+  <div class="best">최고<b id="bestHud">0m</b></div>
+</div>
+
+<section class="card" id="startCard">
+  <div>
+    <h1>풍등 날리기</h1>
+    <p>소원을 담은 풍등을 밤하늘 높이 띄워 보내세요.<br>불씨가 꺼지면 풍등은 더 오를 수 없어요.</p>
+    <ul class="rules">
+      <li><em>움직이기</em><span>화면을 끌거나 ← → 키</span></li>
+      <li><em>반딧불</em><span>모으면 불씨가 살아나요</span></li>
+      <li><em>박쥐·나뭇가지</em><span>부딪히면 불씨가 크게 줄어요</span></li>
+    </ul>
+    <button id="startBtn" type="button">날려 보내기</button>
+    <span class="hint" id="bestStart"></span>
+  </div>
+</section>
+
+<section class="card" id="overCard" hidden>
+  <div>
+    <p>풍등이 닿은 높이</p>
+    <div class="score" id="finalAlt">0m</div>
+    <p id="overMsg"></p>
+    <button id="retryBtn" type="button">다시 날리기</button>
+    <span class="hint">스페이스 / 엔터로도 시작</span>
+  </div>
+</section>
+
+<script>
+(() => {
+  const cvs = document.getElementById('sky');
+  const ctx = cvs.getContext('2d');
+  const $ = id => document.getElementById(id);
+  const hud = $('hud'), altEl = $('alt'), fuelEl = $('fuel'), bestHud = $('bestHud');
+  const startCard = $('startCard'), overCard = $('overCard');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let W = 0, H = 0, DPR = 1;
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = cvs.clientWidth; H = cvs.clientHeight;
+    cvs.width = Math.round(W * DPR); cvs.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    if (lantern) { lantern.y = H * 0.72; lantern.x = Math.min(Math.max(lantern.x, 20), W - 20); }
+  }
+
+  // ---------- storage ----------
+  const KEY = 'pungdeung-best';
+  let best = 0;
+  try { best = parseInt(localStorage.getItem(KEY), 10) || 0; } catch (e) {}
+  function saveBest() { try { localStorage.setItem(KEY, String(best)); } catch (e) {} }
+  function showBest() {
+    bestHud.textContent = best + 'm';
+    $('bestStart').textContent = best ? `최고 기록 ${best}m` : '';
+  }
+  showBest();
+
+  // ---------- sound ----------
+  let ac = null;
+  function beep(freq, dur, type = 'sine', vol = 0.08, slide = 0) {
+    if (!ac) return;
+    const t = ac.currentTime;
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (slide) o.frequency.exponentialRampToValueAtTime(freq * slide, t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur);
+  }
+  function initAudio() {
+    if (ac) return;
+    try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; }
+  }
+
+  // ---------- world ----------
+  const rand = (a, b) => a + Math.random() * (b - a);
+  let stars = [], hills = [];
+  function makeStars() {
+    stars = Array.from({ length: 110 }, () => ({ x: Math.random(), y: Math.random(), r: rand(.4, 1.6), d: rand(.05, .35), tw: rand(0, 6.28) }));
+  }
+  makeStars();
+
+  let lantern = null, flies = [], bats = [], branches = [], sparks = [];
+  let state = 'title'; // title | play | over
+  let altitude = 0, fuel = 100, invuln = 0, shake = 0, time = 0;
+  let spawnFly = 0, spawnBat = 0, spawnBranch = 0;
+  let targetX = null; const keys = { l: false, r: false };
+
+  function reset() {
+    lantern = { x: W / 2, y: H * 0.72, vx: 0 };
+    flies = []; bats = []; branches = []; sparks = [];
+    altitude = 0; fuel = 100; invuln = 0; shake = 0;
+    spawnFly = 0.3; spawnBat = 1.6; spawnBranch = 4;
+    targetX = null;
+  }
+
+  function start() {
+    initAudio();
+    if (ac && ac.state === 'suspended') ac.resume();
+    reset();
+    state = 'play';
+    startCard.hidden = true; overCard.hidden = true; hud.hidden = false;
+    beep(392, .25, 'triangle', .07, 1.5);
+  }
+
+  function gameOver() {
+    state = 'over';
+    const h = Math.floor(altitude);
+    const isBest = h > best;
+    if (isBest) { best = h; saveBest(); }
+    showBest();
+    $('finalAlt').textContent = h + 'm';
+    $('overMsg').innerHTML = isBest
+      ? '<strong>새 최고 기록!</strong> 소원이 더 높이 닿았어요.'
+      : `최고 기록은 <strong>${best}m</strong>. 반딧불을 놓치지 마세요.`;
+    overCard.hidden = false;
+    beep(330, .5, 'sine', .08, .4);
+    setTimeout(() => $('retryBtn').focus({ preventScroll: true }), 50);
+  }
+
+  // speed of the world scrolling past (px/s)
+  const speed = () => Math.min(150 + altitude * 0.55, 430);
+
+  function update(dt) {
+    time += dt;
+    const v = state === 'play' ? speed() : 40;
+
+    for (const s of stars) { s.y += (v * s.d * dt) / H; if (s.y > 1) { s.y -= 1; s.x = Math.random(); } }
+
+    if (state !== 'play') return;
+
+    altitude += v * dt / 30;
+    fuel -= dt * (6 + Math.min(altitude / 400, 4));
+    invuln = Math.max(0, invuln - dt);
+    shake = Math.max(0, shake - dt * 30);
+
+    // movement
+    const L = lantern;
+    if (keys.l || keys.r) {
+      L.vx += ((keys.r ? 1 : 0) - (keys.l ? 1 : 0)) * 2400 * dt;
+      L.vx *= Math.pow(0.002, dt);
+      targetX = null;
+    } else if (targetX !== null) {
+      L.vx = (targetX - L.x) * 10;
+    } else {
+      L.vx *= Math.pow(0.01, dt);
+    }
+    L.x += L.vx * dt;
+    L.x = Math.min(Math.max(L.x, 18), W - 18);
+
+    // spawning
+    const diff = Math.min(altitude / 1500, 1);
+    if ((spawnFly -= dt) <= 0) {
+      spawnFly = rand(.55, 1.0) + diff * .35;
+      flies.push({ x: rand(24, W - 24), y: -20, ph: rand(0, 6.28), amp: rand(10, 30) });
+    }
+    if ((spawnBat -= dt) <= 0) {
+      spawnBat = rand(1.1, 1.8) - diff * .75;
+      bats.push({ x: rand(30, W - 30), y: -30, ph: rand(0, 6.28), sweep: rand(30, 60 + diff * 90), fs: rand(.8, 1.6), bx: 0 });
+      bats[bats.length - 1].bx = bats[bats.length - 1].x;
+    }
+    if (altitude > 120 && (spawnBranch -= dt) <= 0) {
+      spawnBranch = rand(2.6, 4.2) - diff * 1.4;
+      const left = Math.random() < .5;
+      branches.push({ left, len: W * rand(.3, .55), y: -20, leaves: Array.from({ length: 5 }, () => rand(.25, 1)) });
+    }
+
+    // move + collide
+    for (const f of flies) {
+      f.y += v * .8 * dt; f.ph += dt * 3;
+      const fx = f.x + Math.sin(f.ph) * f.amp;
+      if (!f.got && Math.hypot(fx - L.x, f.y - L.y) < 30) {
+        f.got = true; fuel = Math.min(100, fuel + 16);
+        burst(fx, f.y, '#fff5a8', 10);
+        beep(880 + Math.random() * 300, .12, 'sine', .05, 1.4);
+      }
+    }
+    for (const b of bats) {
+      b.y += v * 1.05 * dt; b.ph += dt * b.fs;
+      b.x = b.bx + Math.sin(b.ph * 2) * b.sweep;
+      if (!invuln && Math.hypot(b.x - L.x, b.y - L.y) < 26) hit();
+    }
+    for (const br of branches) {
+      br.y += v * dt;
+      const x0 = br.left ? 0 : W - br.len, x1 = br.left ? br.len : W;
+      const cx = Math.min(Math.max(L.x, x0), x1);
+      if (!invuln && Math.hypot(cx - L.x, br.y - L.y) < 20) hit();
+    }
+    for (const p of sparks) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 120 * dt; p.life -= dt; }
+
+    flies = flies.filter(f => !f.got && f.y < H + 30);
+    bats = bats.filter(b => b.y < H + 40);
+    branches = branches.filter(b => b.y < H + 30);
+    sparks = sparks.filter(p => p.life > 0);
+
+    if (fuel <= 0) { fuel = 0; gameOver(); }
+  }
+
+  function hit() {
+    fuel -= 30; invuln = 1.2; shake = reduceMotion ? 0 : 10;
+    burst(lantern.x, lantern.y, '#ff8a4c', 18);
+    beep(140, .3, 'sawtooth', .07, .5);
+    if (navigator.vibrate) try { navigator.vibrate(60); } catch (e) {}
+  }
+
+  function burst(x, y, color, n) {
+    for (let i = 0; i < n; i++) {
+      const a = rand(0, 6.28), s = rand(40, 160);
+      sparks.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: rand(.3, .7), color });
+    }
+  }
+
+  // ---------- drawing ----------
+  function draw() {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#05081a'); g.addColorStop(.6, '#0b1026'); g.addColorStop(1, '#1a1f45');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+    ctx.save();
+    if (shake) ctx.translate(rand(-shake, shake), rand(-shake, shake));
+
+    // stars
+    for (const s of stars) {
+      const a = .35 + .35 * Math.sin(time * 2 + s.tw);
+      ctx.fillStyle = `rgba(220,228,255,${a})`;
+      ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r, 0, 6.283); ctx.fill();
+    }
+    // moon
+    ctx.fillStyle = 'rgba(255,240,210,.9)';
+    ctx.beginPath(); ctx.arc(W * .82, H * .16, 26, 0, 6.283); ctx.fill();
+    ctx.fillStyle = '#05081a';
+    ctx.beginPath(); ctx.arc(W * .82 + 10, H * .16 - 6, 23, 0, 6.283); ctx.fill();
+
+    // hills at the start (sink away as you climb)
+    const sink = state === 'play' ? Math.min(altitude * 6, H) : 0;
+    if (sink < H * .4) {
+      ctx.fillStyle = '#070a1c';
+      ctx.beginPath(); ctx.moveTo(0, H);
+      for (let x = 0; x <= W; x += 20) ctx.lineTo(x, H * .9 + sink + Math.sin(x * .012) * 18 + Math.sin(x * .031) * 8);
+      ctx.lineTo(W, H); ctx.fill();
+    }
+
+    for (const br of branches) drawBranch(br);
+    for (const f of flies) drawFly(f);
+    for (const b of bats) drawBat(b);
+
+    for (const p of sparks) {
+      ctx.globalAlpha = Math.max(p.life * 1.6, 0);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x - 1.5, p.y - 1.5, 3, 3);
+    }
+    ctx.globalAlpha = 1;
+
+    if (lantern && state !== 'title') drawLantern();
+    else drawTitleLantern();
+    ctx.restore();
+  }
+
+  function drawLanternAt(x, y, power, blink) {
+    const flick = 1 + Math.sin(time * 17) * .04 + Math.sin(time * 7.3) * .05;
+    const glowR = (40 + power * 1.1) * flick;
+    const glow = ctx.createRadialGradient(x, y, 4, x, y, glowR);
+    glow.addColorStop(0, `rgba(255,190,90,${.25 + power / 250})`);
+    glow.addColorStop(1, 'rgba(255,150,60,0)');
+    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(x, y, glowR, 0, 6.283); ctx.fill();
+
+    if (blink && Math.floor(time * 14) % 2) ctx.globalAlpha = .4;
+    // paper body (wider at top)
+    ctx.beginPath();
+    ctx.moveTo(x - 15, y - 20);
+    ctx.quadraticCurveTo(x, y - 27, x + 15, y - 20);
+    ctx.lineTo(x + 11, y + 16);
+    ctx.quadraticCurveTo(x, y + 19, x - 11, y + 16);
+    ctx.closePath();
+    const body = ctx.createLinearGradient(x, y - 24, x, y + 18);
+    body.addColorStop(0, '#ff9a4d'); body.addColorStop(1, `rgb(255,${200 + power * .4 | 0},140)`);
+    ctx.fillStyle = body; ctx.fill();
+    ctx.strokeStyle = 'rgba(160,60,20,.5)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, y - 24); ctx.lineTo(x, y + 17); ctx.stroke();
+    // flame at the mouth
+    ctx.fillStyle = '#fff3c4';
+    ctx.beginPath(); ctx.ellipse(x, y + 20, 3 * flick, (4 + power / 30) * flick, 0, 0, 6.283); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  function drawLantern() { drawLanternAt(lantern.x, lantern.y + Math.sin(time * 2) * 2, fuel, invuln > 0); }
+  function drawTitleLantern() { drawLanternAt(W / 2, H * .82 + Math.sin(time * 1.5) * 6, 80, false); }
+
+  function drawFly(f) {
+    const x = f.x + Math.sin(f.ph) * f.amp, y = f.y;
+    const a = .6 + .4 * Math.sin(time * 9 + f.ph * 3);
+    const g = ctx.createRadialGradient(x, y, 0, x, y, 14);
+    g.addColorStop(0, `rgba(240,255,150,${a})`); g.addColorStop(1, 'rgba(200,255,120,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 14, 0, 6.283); ctx.fill();
+    ctx.fillStyle = '#fbffd0'; ctx.beginPath(); ctx.arc(x, y, 2.6, 0, 6.283); ctx.fill();
+  }
+
+  function drawBat(b) {
+    const flap = Math.sin(time * 18 + b.ph * 5);
+    ctx.save(); ctx.translate(b.x, b.y);
+    ctx.fillStyle = '#2b2048';
+    ctx.strokeStyle = '#7a6bb3'; ctx.lineWidth = 1;
+    for (const s of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(s * 10, -10 * flap - 4, s * 22, -6 * flap);
+      ctx.quadraticCurveTo(s * 16, 2, s * 12, 4);
+      ctx.quadraticCurveTo(s * 7, 2, 0, 5);
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+    ctx.beginPath(); ctx.ellipse(0, 1, 5, 7, 0, 0, 6.283); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#ff5a5a';
+    ctx.fillRect(-3, -1, 2, 2); ctx.fillRect(1, -1, 2, 2);
+    ctx.restore();
+  }
+
+  function drawBranch(br) {
+    const x0 = br.left ? -10 : W + 10, x1 = br.left ? br.len : W - br.len;
+    ctx.strokeStyle = '#3a2a24'; ctx.lineCap = 'round';
+    ctx.lineWidth = 9;
+    ctx.beginPath(); ctx.moveTo(x0, br.y - 6); ctx.quadraticCurveTo((x0 + x1) / 2, br.y + 4, x1, br.y); ctx.stroke();
+    ctx.lineWidth = 3;
+    ctx.fillStyle = '#1f3a2c';
+    br.leaves.forEach((t, i) => {
+      const lx = x0 + (x1 - x0) * t, ly = br.y + (i % 2 ? 8 : -8);
+      ctx.beginPath(); ctx.moveTo(lx, br.y); ctx.lineTo(lx + (br.left ? 6 : -6), ly); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(lx + (br.left ? 8 : -8), ly, 7, 4, i, 0, 6.283); ctx.fill();
+    });
+  }
+
+  // ---------- HUD ----------
+  let lastAlt = -1;
+  function drawHud() {
+    if (state !== 'play') return;
+    const a = Math.floor(altitude);
+    if (a !== lastAlt) { altEl.textContent = a; lastAlt = a; }
+    fuelEl.style.transform = `scaleX(${fuel / 100})`;
+    fuelEl.style.opacity = fuel < 25 ? (.5 + .5 * Math.abs(Math.sin(time * 8))) : 1;
+  }
+
+  // ---------- loop ----------
+  let last = performance.now(), paused = false;
+  function frame(now) {
+    const dt = Math.min((now - last) / 1000, 1 / 20); last = now;
+    if (!paused) { update(dt); draw(); drawHud(); }
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- input ----------
+  function pointerX(e) { return e.clientX - cvs.getBoundingClientRect().left; }
+  cvs.addEventListener('pointerdown', e => { if (state === 'play') { targetX = pointerX(e); cvs.setPointerCapture?.(e.pointerId); } });
+  cvs.addEventListener('pointermove', e => { if (state === 'play' && (e.buttons || e.pointerType === 'mouse')) targetX = pointerX(e); });
+  cvs.addEventListener('pointerup', () => { if (lantern) targetX = null; });
+
+  window.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { keys.l = true; e.preventDefault(); }
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { keys.r = true; e.preventDefault(); }
+    if ((e.key === ' ' || e.key === 'Enter') && state !== 'play') { e.preventDefault(); start(); }
+  });
+  window.addEventListener('keyup', e => {
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.l = false;
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.r = false;
+  });
+  $('startBtn').addEventListener('click', start);
+  $('retryBtn').addEventListener('click', start);
+  document.addEventListener('visibilitychange', () => { paused = document.hidden; last = performance.now(); });
+  window.addEventListener('blur', () => { keys.l = keys.r = false; });
+  window.addEventListener('resize', resize);
+
+  resize();
+  requestAnimationFrame(frame);
+})();
+</script>
+<!-- PAGE END -->
+</html>
