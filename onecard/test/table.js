@@ -12,6 +12,7 @@ function race(g, tierOf) {
     if (Math.random() >= (own ? r.self : r.catch)) continue;
     const [a, b] = own ? r.selfMs : r.catchMs;
     const t = a + Math.random() * (b - a);
+    if (t > 2000) continue; // 버튼이 열린 뒤 2초 안에 못 누르면 실패
     if (!best || t < best.t) best = { id: p.id, t };
   }
   if (best) g.callOneCard(best.id); else g.oneCard = null;

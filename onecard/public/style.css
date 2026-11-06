@@ -35,7 +35,7 @@ body {
   /* 펠트 결 (노이즈) + 가장자리 어둡게 */
   background-image:
     radial-gradient(ellipse 120% 90% at 50% 45%, transparent 55%, rgba(0, 0, 0, .45) 100%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+    url("felt.png");
   color: var(--cream);
   font-family: var(--ui);
   overflow: hidden;
@@ -324,7 +324,7 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
 }
 
 /* --- 떠다니는 카드 (날아가는 애니메이션) --- */
-.flyer { position: fixed; left: 0; top: 0; z-index: 30; pointer-events: none; margin: 0; }
+.flyer { position: fixed; left: 0; top: 0; z-index: 30; pointer-events: none; margin: 0; will-change: transform; }
 
 /* --- 사이드 / 아이콘 버튼 --- */
 .fab {
@@ -667,3 +667,66 @@ body[data-bg="charcoal"] { --felt: #2b2e33; --felt-deep: #1b1d21; --tray: #14161
 
 /* 원카드 경쟁 중에는 판이 멈추므로 뒤 화면을 누를 수 없게 */
 .one-pop { pointer-events: auto; }
+
+/* --- 원카드 새 흐름 --- */
+.one-bar { width: 170px; height: 8px; border-radius: 4px; background: rgba(0, 0, 0, .4); overflow: hidden; visibility: hidden; }
+.one-bar i { display: block; height: 100%; background: var(--cream); transform-origin: left center; }
+.one-pop.open .one-bar, .one-pop.mine .one-bar { visibility: visible; }
+.one-pop.mine .one-big { background: var(--paper); color: var(--ink); font-family: var(--serif); font-size: 34px; box-shadow: 0 10px 0 var(--paper-2), 0 10px 0 2px var(--ink), 0 18px 24px rgba(0, 0, 0, .45); animation: goPop .25s cubic-bezier(.3, 1.6, .5, 1); }
+.one-pop.watch .one-big { background: #6d6a63; color: var(--cream); font-size: 48px; font-family: var(--serif); box-shadow: 0 10px 0 #3e3c38, 0 10px 0 2px var(--ink); animation: none; }
+.one-pop.mine-target.open .one-big { background: var(--brass); color: var(--ink); box-shadow: 0 10px 0 #7d5c12, 0 10px 0 2px var(--ink), 0 18px 24px rgba(0, 0, 0, .45); }
+/* 전체 결과: 판이 다시 움직이므로 화면을 막지 않고 떠 있다가 사라진다 */
+#racePanel.race-panel {
+  position: fixed; left: 50%; top: calc(48px + env(safe-area-inset-top)); transform: translate(-50%, 0); z-index: 33; pointer-events: none; /* 위쪽(상대 자리 위)에 잠깐: 바닥 카드와 내 손패는 가리지 않는다 */
+  display: block; width: min(300px, calc(100vw - 40px)); padding: 12px 14px; animation: none;
+}
+#racePanel[hidden] { display: none; }
+#racePanel.show { animation: raceIn .25s cubic-bezier(.3, 1.4, .5, 1), raceOut .35s ease-in 2.25s forwards; }
+@keyframes raceIn { from { transform: translate(-50%, -12px) scale(.9); opacity: 0; } }
+@keyframes raceOut { to { opacity: 0; transform: translate(-50%, -10px); } }
+.race-panel li.fail { color: var(--ink-soft); }
+.race-panel li.fail i { background: transparent; color: var(--red); border: 1.5px solid var(--red); }
+.race-panel li.fail.me { color: var(--red); }
+.race-out { margin-top: 0; }
+
+/* --- 위쪽 막대: 나가기 · 테이블 색 · 기록 (빠른 채팅만 아래) --- */
+#game { padding-top: calc(6px + env(safe-area-inset-top)); }
+.topbar { position: relative; z-index: 6; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 12px; margin-bottom: 4px; }
+.topbar-right { display: flex; gap: 8px; }
+.topbar .fab { position: relative; left: auto; right: auto; bottom: auto; width: 36px; height: 36px; box-shadow: 0 2px 0 var(--ink); }
+.topbar .fab svg { width: 18px; height: 18px; }
+.topbar .fab:active { transform: translateY(2px); box-shadow: none; }
+.fab-emote { bottom: calc(232px + env(safe-area-inset-bottom)); width: 52px; height: 52px; }
+.fab-emote svg { width: 26px; height: 26px; }
+.emote-panel { right: 16px; bottom: calc(292px + env(safe-area-inset-bottom)); width: min(250px, calc(100% - 32px)); }
+
+/* --- 이모티콘·빠른 채팅이 잘 보이게: 말풍선을 자리 바로 옆에 크게 --- */
+.emote-float { z-index: 37; }
+.emote-float.emoji { font-size: 54px; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, .35)); }
+.emote-float.phrase { font-size: 17px; padding: 8px 14px; max-width: 240px; border-width: 2.5px; }
+.emote-float.from-opp { transform: translate(-50%, 0); }
+.emote-float.from-opp.emoji { animation: hopDown 2.4s ease-out forwards; }
+.emote-float.from-opp.phrase { animation: sayDown 2.6s ease-out forwards; }
+.emote-float.from-opp.phrase::before {
+  content: ""; position: absolute; left: 50%; top: -9px; width: 14px; height: 14px; margin-left: -7px;
+  background: var(--paper); border-left: 2.5px solid var(--ink); border-top: 2.5px solid var(--ink); transform: rotate(45deg);
+}
+.emote-float.from-me.phrase::after {
+  content: ""; position: absolute; left: 50%; bottom: -9px; width: 14px; height: 14px; margin-left: -7px;
+  background: var(--paper); border-right: 2.5px solid var(--ink); border-bottom: 2.5px solid var(--ink); transform: rotate(45deg);
+}
+.emote-float.from-me.emoji { animation: hop 2.4s ease-out forwards; }
+.emote-float.from-me.phrase { animation: say 2.6s ease-out forwards; }
+@keyframes hopDown {
+  0% { transform: translate(-50%, -20%) scale(.4); opacity: 0; }
+  12% { transform: translate(-50%, 8%) scale(1.08); opacity: 1; }
+  22% { transform: translate(-50%, 0) scale(1); }
+  82% { opacity: 1; }
+  100% { transform: translate(-50%, 6%); opacity: 0; }
+}
+@keyframes sayDown {
+  0% { transform: translate(-50%, -8px); opacity: 0; }
+  8% { transform: translate(-50%, 0); opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
+}

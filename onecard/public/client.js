@@ -340,12 +340,14 @@
     for (const c of recent) {
       const el = cardEl(c);
       el.style.transform = `translate(${nudge(c.id)}px, ${nudge(c.id * 3)}px) rotate(${tilt(c.id)}deg)`;
-      if (landing.has(c.id) || fresh.includes(c)) el.style.visibility = 'hidden';
+      // 날아오는 중인 카드는 도착할 때까지 숨긴다 (내가 이미 날린 카드는 도착했으면 바로 보임)
+      if (landing.has(c.id) || (fresh.includes(c) && !localFlown.has(c.id))) el.style.visibility = 'hidden';
       pile.appendChild(el);
     }
     const pileRect = pile.getBoundingClientRect();
     const actor = anim.prev ? anim.prev.turn : null;
     fresh.forEach((c, i) => {
+      if (localFlown.has(c.id)) { localFlown.delete(c.id); return; } // 이미 날아가는 중이거나 도착함
       landing.add(c.id);
       let from = null;
       if (actor === me) from = anim.handRects[c.id] || $('hand').getBoundingClientRect();
@@ -412,10 +414,11 @@
         el.classList.add('dim');
       } else if (myTurn) el.classList.add(...(ok.has(c.id) ? ['ok', 'k-' + (kinds[c.id] || 'normal')] : ['dim']));
       el.onclick = () => playCard(c, ok.has(c.id), g);
-      if (newHandIds.has(c.id)) el.style.visibility = 'hidden';
+      if (newHandIds.has(c.id) || localFlown.has(c.id)) el.style.visibility = 'hidden';
       rows[idx < rows.per ? 0 : 1].appendChild(el);
     });
     animateDraws(g, me);
+    slideHand(anim.handRects);
     const selecting = selected.length > 0;
     $('btnMulti').hidden = !selecting;
     $('btnMultiCancel').hidden = !selecting;
@@ -454,79 +457,83 @@
     el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
   }
 
-  // --- 원카드 버튼: 카운트다운 → 누르기 → (늦었으면 잠깐 더) → 가운데에 결과 ---
-  const LATE_MS = 1200, RESULT_MS = 3500, RESULT_MIN_MS = 2500; // 서버가 결과 뒤 2.5초 판을 멈추므로 그때까지는 닫히지 않게
-  let raceSeen = {}; // race.id → { openAt, doneAt, closed } (새 판마다 비움)
+  // --- 원카드: 카운트다운 → 버튼 열림(2초) → 누르면 내 기록 → 모두 눌렀거나 2초 지나면 전체 결과, 판 재개 ---
+  const RESULT_SHOW_MS = 2600;
+  let raceSeen = {}; // race.id → { openAt, closeAt, doneAt }
   const counted = new Set(); // 최고 기록에 이미 반영한 경쟁
+  const myPress = {}; // race.id → { ms, place } (서버가 바로 알려 줌)
   let oneTicker = null;
-  let guardUntil = 0; // 결과 창이 닫힌 직후 실수로 카드 뽑기를 누르지 않게
+  let guardUntil = 0; // 결과가 뜬 직후 실수로 카드 뽑기를 누르지 않게
   function raceInfo(race) {
     let r = raceSeen[race.id];
-    if (!r) r = raceSeen[race.id] = { openAt: Date.now() + race.openIn, doneAt: 0, closed: false };
-    if (race.done && !r.doneAt) r.doneAt = Date.now();
+    if (!r) r = raceSeen[race.id] = { openAt: Date.now() + race.openIn, closeAt: Date.now() + race.closeIn, doneAt: 0 };
+    if (race.done && !r.doneAt) { r.doneAt = Date.now(); guardUntil = r.doneAt + 450; }
     return r;
   }
   function onePhase() {
     const g = state && state.game;
     const race = state && state.race;
-    if (!g || !race || g.finished && !race.done) return null;
-    const me = state.me;
-    const meP = g.players.find((p) => p.id === me);
-    const eligible = meP && (!meP.out || race.target === me);
+    if (!g || !race) return null;
     const info = raceInfo(race);
-    const pressed = race.presses.some((p) => p.id === me);
     const now = Date.now();
-    if (!race.done) {
-      if (!g.oneCard || g.oneCard !== race.target || !eligible) return null;
-      return now < info.openAt ? 'count' : 'open';
-    }
-    if (info.closed) return null;
-    if (!pressed && eligible && race.presses.length && now - info.doneAt < LATE_MS) return 'late';
-    if (now - info.doneAt < RESULT_MS + (pressed || !eligible ? 0 : LATE_MS)) return 'result';
-    info.closed = true;
-    guardUntil = now + 600;
-    return null;
+    if (race.done) return now - info.doneAt < RESULT_SHOW_MS ? 'result' : null;
+    const me = state.me;
+    const eligible = race.eligible.some((e) => e.id === me);
+    if (!eligible) return 'watch';
+    if (myPress[race.id] || race.presses.some((p) => p.id === me)) return 'mine';
+    return now < info.openAt ? 'count' : 'open';
   }
   function renderOnePop() {
     const phase = onePhase();
     const pop = $('onePop');
-    pop.hidden = !phase;
-    pop.className = 'one-pop' + (phase ? ' ' + phase : '');
+    const blocking = phase && phase !== 'result';
+    pop.hidden = !blocking;
+    pop.className = 'one-pop' + (blocking ? ' ' + phase : '');
+    $('racePanel').hidden = phase !== 'result';
     clearInterval(oneTicker); oneTicker = null;
     if (!phase) return;
     const race = state.race, me = state.me;
     const info = raceInfo(race);
-    pop.classList.toggle('mine', race.target === me);
+    pop.classList.toggle('mine-target', race.target === me);
     const btn = $('btnOne');
+    const bar = $('oneBar');
+    const now = Date.now();
     if (phase === 'count') {
-      const left = Math.ceil((info.openAt - Date.now()) / 1000);
-      btn.textContent = left;
+      btn.textContent = Math.ceil((info.openAt - now) / 1000);
       btn.disabled = true;
       $('oneMsg').textContent = race.target === me ? '한 장 남았어요! 준비…' : `${race.targetName}님이 한 장! 준비…`;
     } else if (phase === 'open') {
       btn.textContent = '원카드!';
       btn.disabled = false;
       $('oneMsg').textContent = race.target === me ? '지금! 먼저 누르세요' : '지금! 먼저 누르면 벌칙';
-    } else if (phase === 'late') {
-      const first = race.presses.find((p) => p.first);
-      btn.textContent = '원카드!';
-      btn.disabled = false;
-      $('oneMsg').textContent = `${first ? first.name : ''}님이 먼저 눌렀어요! 내 속도도 재 보기`;
+      bar.style.transform = `scaleX(${Math.max(0, (info.closeAt - now) / 2000)})`;
+    } else if (phase === 'mine') {
+      const mine = myPress[race.id] || race.presses.find((p) => p.id === me);
+      btn.disabled = true;
+      btn.textContent = mine ? `${(mine.ms / 1000).toFixed(2)}초` : '…';
+      const place = mine && (mine.place || race.presses.findIndex((p) => p.id === me) + 1);
+      $('oneMsg').textContent = place === 1 ? '가장 빨랐어요! 다른 사람 기다리는 중…' : `${place}번째로 눌렀어요. 다른 사람 기다리는 중…`;
+      bar.style.transform = `scaleX(${Math.max(0, (info.closeAt - now) / 2000)})`;
+    } else if (phase === 'watch') {
+      btn.disabled = true;
+      btn.textContent = now < info.openAt ? Math.ceil((info.openAt - now) / 1000) : '…';
+      $('oneMsg').textContent = `${race.targetName}님 원카드 상황`;
+    } else if (phase === 'result') {
+      renderRace(race, me);
     }
-    if (phase === 'result') renderRace(race, me);
-    // 카운트다운·늦은 시간·결과 시간이 흐르는 동안 다시 그린다
-    oneTicker = setInterval(() => { const ph = onePhase(); if (ph !== phase || ph === 'count') renderOnePop(); }, 100);
+    // 카운트다운·남은 시간·결과 시간이 흐르는 동안 다시 그린다
+    oneTicker = setInterval(() => { const ph = onePhase(); if (ph !== phase || ph === 'count' || ph === 'open' || ph === 'mine' || ph === 'watch') renderOnePop(); }, 80);
   }
 
-  // 반응 속도 결과 (가운데)
+  // 전체 결과: 누른 사람은 시간 순서, 안 누른 사람은 실패. 판은 이미 다시 움직인다 (화면을 막지 않음)
   let raceDrawn = '';
   function renderRace(race, me) {
     const el = $('racePanel');
-    // 내용이 바뀔 때만 다시 그린다 (봇이 움직일 때마다 다시 튀어나오지 않게)
     const drawn = gameNo + ':' + race.id + ':' + race.presses.length;
     if (drawn === raceDrawn) return;
     raceDrawn = drawn;
     const rows = race.presses.slice().sort((a, b) => a.ms - b.ms);
+    const failed = race.eligible.filter((e) => !race.presses.some((p) => p.id === e.id));
     const mine = race.presses.find((p) => p.id === me);
     let best = +store.get('onecard-best-ms') || 0, record = '';
     if (mine && !counted.has(gameNo + ':' + race.id)) {
@@ -534,29 +541,28 @@
       if (!best || mine.ms < best) { record = best ? ' · 새 기록!' : ''; best = mine.ms; store.set('onecard-best-ms', mine.ms); }
     }
     const winner = race.presses.find((p) => p.first);
-    const outcome = !winner ? '아무도 누르지 않았어요'
-      : winner.id === race.target ? `${winner.name}님이 원카드를 외쳤어요`
+    const outcome = !winner ? '아무도 누르지 않았어요 · 벌칙 없음'
+      : winner.id === race.target ? `${winner.name}님 원카드 성공!`
       : `${winner.name}님이 잡았어요! ${race.targetName}님 1장 벌칙`;
-    el.innerHTML = `<div class="race-head">원카드 반응 속도</div><div class="race-out"></div><ol></ol>${best ? `<div class="race-best">내 최고 ${(best / 1000).toFixed(2)}초${record}</div>` : ''}<div class="race-tap">화면을 누르면 닫혀요</div>`;
+    el.innerHTML = `<div class="race-out"></div><ol></ol>${best ? `<div class="race-best">내 최고 ${(best / 1000).toFixed(2)}초${record}</div>` : ''}`;
     el.querySelector('.race-out').textContent = outcome;
     const ol = el.querySelector('ol');
-    for (const p of rows) {
+    rows.forEach((p, k) => {
       const li = document.createElement('li');
       if (p.id === me) li.className = 'me';
-      li.innerHTML = `<span class="rn"></span><b>${(p.ms / 1000).toFixed(2)}초</b>${p.first ? '<i>먼저!</i>' : '<i class="lt">늦음</i>'}`;
+      li.innerHTML = `<span class="rn"></span><b>${(p.ms / 1000).toFixed(2)}초</b><i>${k === 0 ? '먼저!' : k + 1 + '등'}</i>`;
       li.querySelector('.rn').textContent = p.name + (p.id === me ? ' (나)' : '');
       ol.appendChild(li);
+    });
+    for (const f of failed) {
+      const li = document.createElement('li');
+      li.className = 'fail' + (f.id === me ? ' me' : '');
+      li.innerHTML = '<span class="rn"></span><b>–</b><i>실패</i>';
+      li.querySelector('.rn').textContent = f.name + (f.id === me ? ' (나)' : '');
+      ol.appendChild(li);
     }
+    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
   }
-  // 결과 창: 잠깐은 눌러도 닫히지 않고(실수 방지), 그 뒤엔 눌러서 닫기
-  $('onePop').addEventListener('click', (e) => {
-    if (!$('onePop').classList.contains('result') || !state || !state.race) return;
-    const info = raceInfo(state.race);
-    if (Date.now() - info.doneAt < RESULT_MIN_MS) return;
-    info.closed = true;
-    guardUntil = Date.now() + 600;
-    renderOnePop();
-  });
 
   // --- 차례 말: 지금 차례인 자리로 미끄러져 간다 ---
   function placeTurnToken(g, me) {
@@ -573,6 +579,19 @@
     tok.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px) translate(-50%, ${g.turn === me ? '-100%' : '0'})`;
   }
   window.addEventListener('resize', () => { if (state && state.game) placeTurnToken(state.game, state.me); });
+
+  // 손패 재배치: 예전 자리에서 새 자리로 미끄러진다
+  function slideHand(oldRects) {
+    if (reduceMotion || !oldRects) return;
+    document.querySelectorAll('#hand .card').forEach((el) => {
+      const old = oldRects[el.dataset.id];
+      if (!old || el.style.visibility === 'hidden') return;
+      const r = el.getBoundingClientRect();
+      const dx = old.left - r.left, dy = old.top - r.top;
+      if (Math.abs(dx) + Math.abs(dy) < 2) return;
+      el.animate([{ translate: `${dx}px ${dy}px` }, { translate: '0px 0px' }], { duration: 260, easing: 'cubic-bezier(.25,.8,.3,1)' });
+    });
+  }
 
   // --- 카드 뽑기 애니메이션: 덱에서 받은 사람에게 ---
   function animateDraws(g, me) {
@@ -721,6 +740,34 @@
     render();
   }
 
+  // 내가 낸 카드는 서버 응답을 기다리지 않고 바로 바닥으로 날린다
+  const localFlown = new Set();
+  function launchLocal(ids) {
+    if (reduceMotion) return;
+    const pileRect = $('pile').getBoundingClientRect();
+    ids.forEach((id, i) => {
+      const el = document.querySelector(`#hand .card[data-id="${id}"]`);
+      const c = state && state.game && state.game.hand.find((x) => x.id === id);
+      if (!el || !c) return;
+      const from = el.getBoundingClientRect();
+      el.style.visibility = 'hidden';
+      localFlown.add(id);
+      landing.add(id);
+      fly(() => cardEl(c), from, pileRect, {
+        delay: i * 110, rotTo: tilt(id),
+        onDone: () => {
+          landing.delete(id);
+          const pe = $('pile').querySelector(`.card[data-id="${id}"]`);
+          if (pe) pe.style.visibility = '';
+        },
+      });
+    });
+  }
+  function emitPlay(ids, suit) {
+    launchLocal(ids);
+    socket.emit('play', suit ? { cardIds: ids, suit } : { cardIds: ids });
+  }
+
   function submitPlay(ids, g) {
     const first = g.hand.find((x) => x.id === ids[0]);
     if (first && first.rank === '7' && g.penalty === 0) {
@@ -728,7 +775,7 @@
       $('suitModal').hidden = false;
       return;
     }
-    socket.emit('play', { cardIds: ids });
+    emitPlay(ids);
     selected = [];
   }
 
@@ -821,7 +868,7 @@
   document.querySelectorAll('#suitModal [data-suit]').forEach((b) => {
     b.onclick = () => {
       $('suitModal').hidden = true;
-      if (pendingSeven !== null) socket.emit('play', { cardIds: pendingSeven, suit: b.dataset.suit });
+      if (pendingSeven !== null) emitPlay(pendingSeven, b.dataset.suit);
       selected = [];
       pendingSeven = null;
     };
@@ -829,7 +876,7 @@
   $('suitCancel').onclick = () => { $('suitModal').hidden = true; pendingSeven = null; };
 
   $('btnAgain').onclick = () => { $('resultModal').hidden = true; socket.emit('start'); };
-  $('btnToLobby').onclick = () => { $('resultModal').hidden = true; shownResult = 'closed'; render(); };
+  $('btnToLobby').onclick = () => { $('resultModal').hidden = true; shownResult = 'closed'; chatLines.length = 0; $('log').innerHTML = ''; render(); };
 
   // --- 빠른 이모티콘 / 채팅 ---
   const EMOJIS = ['😀', '😂', '😎', '😭', '😡', '😱', '👍', '👏', '🔥', '💀'];
@@ -851,15 +898,16 @@
 
   function floatEmote({ id, text, kind }) {
     // 보낸 사람 자리 위에 띄움 (나는 손패 위)
-    let anchor = state && id === state.me ? document.querySelector('.me-bar') : document.querySelector(`.opp[data-id="${id}"]`);
+    let anchor = state && id === state.me ? $('trayTab') : document.querySelector(`.opp[data-id="${id}"]`);
     if (!anchor || $('game').hidden) return;
     const r = anchor.getBoundingClientRect();
     const el = document.createElement('div');
     el.className = 'emote-float ' + kind;
     el.textContent = text;
     const isOpp = id !== state.me;
-    el.style.left = Math.min(Math.max(r.left + r.width / 2, 60), window.innerWidth - 60) + 'px';
-    el.style.top = (isOpp ? r.bottom + 58 : r.top) + 'px';
+    el.classList.add(isOpp ? 'from-opp' : 'from-me');
+    el.style.left = Math.min(Math.max(r.left + r.width / 2, 70), window.innerWidth - 70) + 'px';
+    el.style.top = (isOpp ? r.bottom + 8 : r.top - 8) + 'px';
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 2300);
   }
@@ -879,6 +927,7 @@
     // 새 게임이 시작되면 결과 상태 초기화
     if (s.game && !s.game.finished && (!prevGame || prevGame.finished)) {
       shownResult = false; seenSeq = 0; $('resultModal').hidden = true; pileSeen.clear(); $('onePop').hidden = true; raceSeen = {}; gameNo++;
+      chatLines.length = 0; $('log').innerHTML = ''; // 경기 기록은 판마다 새로
     }
     // 애니메이션용: 바뀌기 전 상태와 내 카드 위치
     const handRects = {};
@@ -890,7 +939,8 @@
     history.replaceState(null, '', `${location.pathname}?room=${s.lobby.code}`);
     render();
   });
-  socket.on('toast', toast);
+  socket.on('toast', (m) => { toast(m); localFlown.clear(); render(); });
+  socket.on('pressed', ({ raceId, ms, place }) => { myPress[raceId] = { ms, place }; renderOnePop(); });
   // 같은 ID가 이미 다른 탭에서 접속 중이면 새 ID로 다시 참가
   socket.on('uidTaken', ({ code }) => {
     uid = newUid(); tabStore.set('onecard-uid', uid);

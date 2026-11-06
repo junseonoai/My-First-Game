@@ -10,9 +10,7 @@ const MAX_PLAYERS = 6;
 const TURN_SECONDS = 30;
 const RECONNECT_GRACE_MS = 60_000;
 const ONECARD_COUNTDOWN_MS = 3000; // 원카드 버튼은 3초 카운트다운 뒤에 열린다
-const LATE_PRESS_MS = 2500;
-const NO_PRESS_MS = 5000; // 버튼이 열리고 이 시간 안에 아무도 안 누르면 경쟁 끝 (게임이 멈추지 않게)
-const RESULT_PAUSE_MS = 2500; // 결과를 보는 동안 판을 잠깐 멈춘다 // 승부가 난 뒤에도 이 시간 안에 누르면 반응 속도만 기록
+const ONECARD_WINDOW_MS = 2000; // 버튼이 열린 뒤 누를 수 있는 시간. 지나면 결과를 보여 주고 바로 판 재개 // 승부가 난 뒤에도 이 시간 안에 누르면 반응 속도만 기록
 const EMOJIS = ['😀', '😂', '😎', '😭', '😡', '😱', '👍', '👏', '🔥', '💀'];
 const PHRASES = ['빨리 내요!', '잘했어요', '아 안 돼!', '봐주세요', '원카드 조심!', '공격 간다!', '운이 좋네요', '한 판 더?', 'ㅋㅋㅋㅋ', '안녕하세요'];
 const BOT_NAMES = ['철수', '영희', '민수', '지수', '하늘'];
@@ -62,7 +60,7 @@ function broadcast(room) {
 }
 
 // 원카드 창이 화면을 가리는 동안(카운트다운 + 결과) 사람의 시간은 깎지 않는다
-const RACE_COVER_MS = NO_PRESS_MS + RESULT_PAUSE_MS;
+const RACE_COVER_MS = ONECARD_WINDOW_MS;
 function raceCoverLeft(room) {
   const r = room.race;
   if (!r || r.doneAt) return 0;
@@ -73,8 +71,8 @@ function raceCoverLeft(room) {
 function pausedFor(room) {
   const r = room.race;
   if (!r) return 0;
-  if (!r.doneAt) return 300;
-  return Math.max(0, r.doneAt + RESULT_PAUSE_MS - Date.now());
+  if (!r.doneAt) return Math.max(50, r.closeAt - Date.now() + 50);
+  return 0; // 결과가 나오면 바로 재개
 }
 // 멈춤이 끝난 뒤에 fn 실행
 function whenUnpaused(room, fn, timerKey) {
@@ -134,8 +132,10 @@ function extendTurn(room, ms) {
   }, 'turnTimer'), room.deadline - Date.now());
 }
 
-// --- 원카드 버튼 경쟁: 누가 몇 초 만에 눌렀는지 기록 ---
-// race = { id, target, since, presses: [{ id, ms, first }], doneAt }
+// --- 원카드 버튼 경쟁 ---
+// 카운트다운(3초) → 버튼 열림 → 2초 동안 누르기 → 모두 눌렀거나 2초가 지나면 결과 + 판 재개
+// 가장 먼저 누른 사람이 승부를 정한다: 본인이면 안전, 남이면 본인 1장 벌칙. 아무도 안 누르면 벌칙 없음.
+// race = { id, target, openAt, closeAt, eligible: [id], presses: [{ id, ms, first }], doneAt }
 function raceView(room) {
   const r = room.race;
   if (!r) return null;
@@ -145,64 +145,65 @@ function raceView(room) {
     target: r.target,
     targetName: name(r.target),
     openIn: Math.max(0, r.openAt - Date.now()), // 버튼이 열리기까지 남은 시간 (기기 시계 차이 없이)
+    closeIn: Math.max(0, r.closeAt - Date.now()),
     done: !!r.doneAt,
+    eligible: r.eligible.map((id) => ({ id, name: name(id) })),
     presses: r.presses.map((p) => ({ ...p, name: name(p.id) })),
   };
 }
 
-// 원카드 버튼 누름 (사람·봇 공통). 이겼으면 true
+// 원카드 버튼 누름 (사람·봇 공통). 기록이 남으면 { ms, place } 반환
 function pressOneCard(room, id) {
   const g = room.game;
   const r = room.race;
-  if (!g || !r) return false;
+  if (!g || !r || r.doneAt) return null;
   const now = Date.now();
-  if (now < r.openAt) return false; // 카운트다운 중에는 누를 수 없다
-  if (r.presses.some((p) => p.id === id)) return false;
-  if (g.oneCard && g.oneCard.playerId === r.target && !r.doneAt) {
-    const res = g.callOneCard(id);
-    if (!res.ok) return false;
-    r.presses.push({ id, ms: now - r.openAt, first: true });
-    r.doneAt = now;
-    return true;
-  }
-  // 이미 누가 먼저 눌렀다: 늦게 누른 기록만 남긴다
-  if (r.doneAt && now - r.doneAt < LATE_PRESS_MS) {
-    r.presses.push({ id, ms: now - r.openAt, first: false });
-    broadcast(room);
-  }
-  return false;
+  if (now < r.openAt || now > r.closeAt) return null; // 카운트다운 중이거나 시간이 지났다
+  if (!r.eligible.includes(id) || r.presses.some((p) => p.id === id)) return null;
+  const first = r.presses.length === 0;
+  if (first && g.oneCard && g.oneCard.playerId === r.target) g.callOneCard(id); // 승부는 가장 먼저 누른 사람이
+  r.presses.push({ id, ms: now - r.openAt, first });
+  // 모두 눌렀으면 바로 결과
+  if (r.presses.length >= r.eligible.length) finishRace(room, r);
+  return { ms: now - r.openAt, place: r.presses.length };
 }
 
-// 봇의 원카드 외치기/잡기: 단계마다 반응 속도와 정확도가 다르다 (대상이 바뀔 때만 새 경쟁)
+function finishRace(room, race) {
+  if (race.doneAt || room.race !== race) return;
+  race.doneAt = Date.now();
+  const g = room.game;
+  if (g && g.oneCard && g.oneCard.playerId === race.target) g.oneCard = null; // 아무도 안 눌렀으면 벌칙 없이 넘어감
+  (room.oneCardTimers || []).forEach(clearTimeout);
+  room.oneCardTimers = [];
+  after(room);
+}
+
+// 새 원카드 상황이 생기면 경쟁을 연다. 봇은 등급별 반응 속도로 누른다
 function scheduleOneCard(room) {
   const g = room.game;
   const targetId = g && !g.finished && g.oneCard ? g.oneCard.playerId : null;
   if (targetId === room.oneCardFor) return;
   room.oneCardFor = targetId;
-  if (!targetId) return; // 승부가 나도 남은 봇 타이머는 늦은 기록용으로 둔다
+  if (!targetId) return;
   (room.oneCardTimers || []).forEach(clearTimeout);
   room.oneCardTimers = [];
-  const race = { id: (room.race ? room.race.id : 0) + 1, target: targetId, openAt: Date.now() + ONECARD_COUNTDOWN_MS, presses: [], doneAt: 0, moves: g.moves };
+  const openAt = Date.now() + ONECARD_COUNTDOWN_MS;
+  const eligible = g.players.filter((p) => !p.out || p.id === targetId).map((p) => p.id)
+    .filter((id) => { const m = room.members.find((x) => x.id === id); return m && (m.bot || m.socketId); }); // 접속 중인 사람과 봇
+  const race = { id: (room.race ? room.race.id : 0) + 1, target: targetId, openAt, closeAt: openAt + ONECARD_WINDOW_MS, eligible, presses: [], doneAt: 0, moves: g.moves };
   room.race = race;
-  room.oneCardTimers.push(setTimeout(() => {
-    if (room.game !== g || room.race !== race || race.doneAt) return;
-    race.doneAt = Date.now();
-    if (g.oneCard && g.oneCard.playerId === race.target) g.oneCard = null; // 아무도 안 눌렀으니 벌칙 없음
-    after(room);
-  }, ONECARD_COUNTDOWN_MS + NO_PRESS_MS));
+  room.oneCardTimers.push(setTimeout(() => finishRace(room, race), race.closeAt - Date.now() + 30));
   const fire = (callerId) => {
     if (room.game !== g || room.race !== race) return;
-    if (pressOneCard(room, callerId)) after(room);
+    if (pressOneCard(room, callerId) && !race.doneAt) broadcast(room);
   };
-  const between = ([a, b]) => ONECARD_COUNTDOWN_MS + a + Math.random() * (b - a); // 버튼이 열린 뒤부터 반응
   for (const m of room.members) {
-    if (!m.bot) continue;
-    const pl = g.find(m.id);
-    if (!pl || (pl.out && m.id !== targetId)) continue;
+    if (!m.bot || !eligible.includes(m.id)) continue;
     const r = REACTION[m.tier] || REACTION.gold;
-    // 자기 원카드는 외치고, 남의 원카드는 잡는다. 가장 먼저 누른 사람이 이긴다
-    if (m.id === targetId) { if (Math.random() < r.self) room.oneCardTimers.push(setTimeout(() => fire(m.id), between(r.selfMs))); }
-    else if (Math.random() < r.catch) room.oneCardTimers.push(setTimeout(() => fire(m.id), between(r.catchMs)));
+    const own = m.id === targetId;
+    if (Math.random() >= (own ? r.self : r.catch)) continue; // 이번엔 놓친다 (실패)
+    const [a, b] = own ? r.selfMs : r.catchMs;
+    room.oneCardTimers.push(setTimeout(() => fire(m.id), ONECARD_COUNTDOWN_MS + a + Math.random() * (b - a)));
   }
 }
 
@@ -224,7 +225,7 @@ function checkInvariants(room) {
   const r = room.race;
   if (r) {
     if (r.moves === undefined) r.moves = g.moves;
-    if ((!r.doneAt || Date.now() < r.doneAt + RESULT_PAUSE_MS - 50) && g.moves !== r.moves && !g.finished) bad.push(`원카드 중에 수를 둠 (${r.moves}→${g.moves})`);
+    if (!r.doneAt && g.moves !== r.moves && !g.finished) bad.push(`원카드 중에 수를 둠 (${r.moves}→${g.moves})`);
   }
   if (bad.length) console.error('INVARIANT', room.code, bad.join(', '));
 }
@@ -347,7 +348,10 @@ io.on('connection', (socket) => {
 
   socket.on('oneCard', () => {
     if (!room || !room.game) return;
-    if (pressOneCard(room, memberId)) after(room);
+    const res = pressOneCard(room, memberId);
+    if (!res) return;
+    socket.emit('pressed', { raceId: room.race.id, ...res }); // 내 기록은 바로 알려 준다
+    if (!room.race.doneAt) broadcast(room);
   });
 
   socket.on('chat', (text) => {

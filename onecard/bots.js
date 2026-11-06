@@ -18,13 +18,14 @@ const { attackValue, isJoker, SUITS, makeDeck } = require('./game');
 const TIERS = ['silver', 'gold', 'platinum', 'master', 'grandmaster'];
 const TIER_NAMES = { silver: '실버', gold: '골드', platinum: '플래티넘', master: '마스터', grandmaster: '그랜드마스터' };
 
-// 원카드 버튼 반응: 내 원카드를 외칠 확률과 시간, 남의 원카드를 잡을 확률과 시간 (ms)
+// 원카드 버튼 반응 (버튼이 열린 뒤 ms). 2초 안에 못 누르면 실패.
+// self: 내 원카드를 외칠 확률과 시간, catch: 남의 원카드를 잡을 확률과 시간
 const REACTION = {
-  silver: { self: 0.55, selfMs: [3000, 5500], catch: 0.35, catchMs: [5000, 8000] },
-  gold: { self: 0.8, selfMs: [1800, 3500], catch: 0.6, catchMs: [3500, 6000] },
-  platinum: { self: 0.92, selfMs: [1200, 2400], catch: 0.8, catchMs: [2500, 4500] },
-  master: { self: 0.97, selfMs: [800, 1600], catch: 0.9, catchMs: [1600, 3000] },
-  grandmaster: { self: 1, selfMs: [500, 1000], catch: 0.98, catchMs: [900, 1800] },
+  silver: { self: 0.7, selfMs: [900, 2600], catch: 0.5, catchMs: [1200, 3000] },
+  gold: { self: 0.85, selfMs: [700, 1800], catch: 0.7, catchMs: [900, 2200] },
+  platinum: { self: 0.93, selfMs: [550, 1300], catch: 0.85, catchMs: [700, 1600] },
+  master: { self: 0.97, selfMs: [420, 950], catch: 0.92, catchMs: [500, 1150] },
+  grandmaster: { self: 1, selfMs: [300, 700], catch: 0.98, catchMs: [350, 800] },
 };
 
 const FULL_DECK = makeDeck();

@@ -77,6 +77,13 @@
   <div id="ring" class="ring" aria-hidden="true">
     <i class="ar top"></i><i class="ar right"></i><i class="ar bottom"></i><i class="ar left"></i>
   </div>
+  <div class="topbar">
+    <button id="btnQuit" class="fab fab-quit" aria-label="게임에서 나가기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 16l-4-4 4-4M6 12h10"/></svg></button>
+    <div class="topbar-right">
+      <button id="btnBg" class="fab fab-bg" aria-label="테이블 색 바꾸기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.8-.5-1.2-.3-.4-.5-.7-.5-1.2 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2" fill="currentColor"/><circle cx="10.5" cy="7.2" r="1.2" fill="currentColor"/><circle cx="15" cy="7.5" r="1.2" fill="currentColor"/></svg></button>
+      <button id="btnLog" class="fab" aria-label="기록과 채팅"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h16v11H10l-4 3.5V16H4z"/><path d="M8 9h8M8 12h5" stroke-linecap="round"/></svg></button>
+    </div>
+  </div>
   <div id="opponents" class="opponents"></div>
   <div id="turnToken" class="turn-token" hidden></div>
 
@@ -108,14 +115,14 @@
     <div id="hand" class="hand"></div>
   </div>
 
-  <button id="btnBg" class="fab fab-bg" aria-label="테이블 색 바꾸기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.8-.5-1.2-.3-.4-.5-.7-.5-1.2 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2" fill="currentColor"/><circle cx="10.5" cy="7.2" r="1.2" fill="currentColor"/><circle cx="15" cy="7.5" r="1.2" fill="currentColor"/></svg></button>
-  <button id="btnQuit" class="fab fab-quit" aria-label="게임에서 나가기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 16l-4-4 4-4M6 12h10"/></svg></button>
+  
+  
   <button id="btnEmote" class="fab fab-emote" aria-label="빠른 이모티콘과 채팅"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><path d="M9 9.5v.5M15 9.5v.5"/></svg></button>
   <div id="emotePanel" class="emote-panel" hidden>
     <div id="emojiRow" class="emoji-row"></div>
     <div id="phraseList" class="phrase-list"></div>
   </div>
-  <button id="btnLog" class="fab" aria-label="기록과 채팅"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h16v11H10l-4 3.5V16H4z"/><path d="M8 9h8M8 12h5" stroke-linecap="round"/></svg></button>
+  
   <aside id="side" class="side" hidden>
     <div class="side-head"><b>기록 · 채팅</b><button id="btnCloseSide" class="btn small ghost">닫기</button></div>
     <ul id="log" class="log"></ul>
@@ -143,8 +150,9 @@
 <div id="onePop" class="one-pop" hidden>
   <p id="oneMsg"></p>
   <button id="btnOne" class="one-big">원카드!</button>
-  <div id="racePanel" class="race-panel" aria-live="polite"></div>
+  <div class="one-bar"><i id="oneBar"></i></div>
 </div>
+<div id="racePanel" class="race-panel" hidden aria-live="polite"></div>
 
 <!-- 테이블 색 -->
 <div id="bgModal" class="modal" hidden role="dialog" aria-labelledby="bgTitle">
