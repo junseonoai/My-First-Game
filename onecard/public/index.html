@@ -102,6 +102,7 @@
   </div>
   <div id="hand" class="hand"></div>
 
+  <button id="btnQuit" class="fab fab-quit" aria-label="게임에서 나가기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 16l-4-4 4-4M6 12h10"/></svg></button>
   <button id="btnEmote" class="fab fab-emote" aria-label="빠른 이모티콘과 채팅"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><path d="M9 9.5v.5M15 9.5v.5"/></svg></button>
   <div id="emotePanel" class="emote-panel" hidden>
     <div id="emojiRow" class="emoji-row"></div>
@@ -135,6 +136,16 @@
 <div id="onePop" class="one-pop" hidden>
   <p id="oneMsg"></p>
   <button id="btnOne" class="one-big">원카드!</button>
+  <div id="racePanel" class="race-panel" aria-live="polite"></div>
+</div>
+
+<!-- 나가기 확인 -->
+<div id="quitModal" class="modal" hidden role="dialog" aria-labelledby="quitTitle">
+  <div class="panel">
+    <h2 id="quitTitle">나갈까요?</h2>
+    <p id="quitMsg" class="sub"></p>
+    <div class="row"><button id="quitCancel" class="btn">계속하기</button><button id="quitOk" class="btn primary">나가기</button></div>
+  </div>
 </div>
 
 <!-- 무늬 선택 -->
@@ -161,7 +172,6 @@
   </div>
 </div>
 
-<div id="racePanel" class="race-panel" hidden aria-live="polite"></div>
 <div id="toast" class="toast" hidden></div>
 <div id="bubble" class="bubble" hidden></div>
 

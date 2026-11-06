@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 3000;
 const MAX_PLAYERS = 6;
 const TURN_SECONDS = 30;
 const RECONNECT_GRACE_MS = 60_000;
+const ONECARD_COUNTDOWN_MS = 3000; // 원카드 버튼은 3초 카운트다운 뒤에 열린다
 const LATE_PRESS_MS = 2500; // 승부가 난 뒤에도 이 시간 안에 누르면 반응 속도만 기록
 const EMOJIS = ['😀', '😂', '😎', '😭', '😡', '😱', '👍', '👏', '🔥', '💀'];
 const PHRASES = ['빨리 내요!', '잘했어요', '아 안 돼!', '봐주세요', '원카드 조심!', '공격 간다!', '운이 좋네요', '한 판 더?', 'ㅋㅋㅋㅋ', '안녕하세요'];
@@ -94,12 +95,14 @@ function scheduleTurn(room) {
 // race = { id, target, since, presses: [{ id, ms, first }], doneAt }
 function raceView(room) {
   const r = room.race;
-  if (!r || !r.presses.length) return null;
+  if (!r) return null;
   const name = (id) => (room.members.find((m) => m.id === id) || {}).name || '?';
   return {
     id: r.id,
     target: r.target,
     targetName: name(r.target),
+    openIn: Math.max(0, r.openAt - Date.now()), // 버튼이 열리기까지 남은 시간 (기기 시계 차이 없이)
+    done: !!r.doneAt,
     presses: r.presses.map((p) => ({ ...p, name: name(p.id) })),
   };
 }
@@ -110,17 +113,18 @@ function pressOneCard(room, id) {
   const r = room.race;
   if (!g || !r) return false;
   const now = Date.now();
+  if (now < r.openAt) return false; // 카운트다운 중에는 누를 수 없다
   if (r.presses.some((p) => p.id === id)) return false;
   if (g.oneCard && g.oneCard.playerId === r.target && !r.doneAt) {
     const res = g.callOneCard(id);
     if (!res.ok) return false;
-    r.presses.push({ id, ms: now - r.since, first: true });
+    r.presses.push({ id, ms: now - r.openAt, first: true });
     r.doneAt = now;
     return true;
   }
   // 이미 누가 먼저 눌렀다: 늦게 누른 기록만 남긴다
   if (r.doneAt && now - r.doneAt < LATE_PRESS_MS) {
-    r.presses.push({ id, ms: now - r.since, first: false });
+    r.presses.push({ id, ms: now - r.openAt, first: false });
     broadcast(room);
   }
   return false;
@@ -135,13 +139,13 @@ function scheduleOneCard(room) {
   if (!targetId) return; // 승부가 나도 남은 봇 타이머는 늦은 기록용으로 둔다
   (room.oneCardTimers || []).forEach(clearTimeout);
   room.oneCardTimers = [];
-  const race = { id: (room.race ? room.race.id : 0) + 1, target: targetId, since: Date.now(), presses: [], doneAt: 0 };
+  const race = { id: (room.race ? room.race.id : 0) + 1, target: targetId, openAt: Date.now() + ONECARD_COUNTDOWN_MS, presses: [], doneAt: 0 };
   room.race = race;
   const fire = (callerId) => {
     if (room.game !== g || room.race !== race) return;
     if (pressOneCard(room, callerId)) after(room);
   };
-  const between = ([a, b]) => a + Math.random() * (b - a);
+  const between = ([a, b]) => ONECARD_COUNTDOWN_MS + a + Math.random() * (b - a); // 버튼이 열린 뒤부터 반응
   for (const m of room.members) {
     if (!m.bot) continue;
     const pl = g.find(m.id);

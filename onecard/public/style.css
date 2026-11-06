@@ -255,8 +255,11 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
   min-height: 154px; scrollbar-width: none; position: relative; z-index: 1;
 }
 .hand::-webkit-scrollbar { display: none; }
-.hand .card { margin-left: -32px; transition: transform .14s ease-out; cursor: default; }
-.hand .card:first-child { margin-left: 0; }
+.hand { flex-direction: column; align-items: center; overflow-x: hidden; }
+.hand-row { display: flex; justify-content: center; max-width: 100%; }
+.hand-row .card { margin-left: var(--ov, -32px); transition: transform .14s ease-out; cursor: default; }
+.hand-row .card:first-child { margin-left: 0; }
+.hand.two .hand-row + .hand-row { margin-top: -50px; } /* 두 번째 줄이 첫 줄 아래쪽을 덮어 숫자는 보이게 */
 .hand .card.dim { filter: brightness(.62) saturate(.7); }
 .hand .card.ok { cursor: pointer; transform: translateY(-12px); }
 .hand .card.ok:hover { transform: translateY(-20px); }
@@ -294,10 +297,8 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
   .card .court { inset: 5px 16px; }
   .card.joker .idx b { font-size: 7px; }
   .card.back { border-width: 4px; }
-  .hand { justify-content: flex-start; min-height: 124px; }
-  .hand .card { margin-left: -24px; }
-  .hand > .card:first-child { margin-left: auto; }
-  .hand > .card:last-child { margin-right: auto; }
+  .hand { min-height: 124px; }
+  .hand.two .hand-row + .hand-row { margin-top: -40px; }
   .suit-badge { right: -46px; top: 26px; width: 34px; height: 34px; font-size: 18px; }
   .center { gap: 28px; }
   .logo { font-size: 38px; }
@@ -353,18 +354,18 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
 .chat-form { display: flex; gap: 6px; }
 
 .emote-panel {
-  position: fixed; right: 16px; bottom: calc(270px + env(safe-area-inset-bottom)); z-index: 15;
-  width: min(300px, calc(100% - 32px)); background: var(--paper); color: var(--ink); border: 2px solid var(--ink);
-  border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; box-shadow: 5px 6px 0 rgba(0, 0, 0, .4);
+  position: fixed; right: 70px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 15;
+  width: min(232px, calc(100% - 86px)); background: var(--paper); color: var(--ink); border: 2px solid var(--ink);
+  border-radius: 6px; padding: 6px; display: flex; flex-direction: column; gap: 5px; box-shadow: 4px 5px 0 rgba(0, 0, 0, .4);
   animation: rise .14s ease-out;
 }
 @keyframes rise { from { transform: translateY(8px); opacity: 0; } }
-.emoji-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
-.emoji-row button { font-size: 24px; padding: 4px 0; border: none; border-radius: 4px; background: none; }
-.emoji-row button:hover { background: var(--paper-2); }
-.phrase-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; border-top: 1px dashed rgba(31, 26, 20, .3); padding-top: 8px; }
+.emoji-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; }
+.emoji-row button { font-size: 21px; padding: 3px 0; border: none; border-radius: 4px; background: none; line-height: 1.2; }
+.emoji-row button:active { background: var(--paper-2); }
+.phrase-list { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; border-top: 1px dashed rgba(31, 26, 20, .3); padding-top: 5px; }
 .phrase-list button {
-  font-size: 13px; font-weight: 600; padding: 7px 4px; border: 1.5px solid var(--ink); border-radius: 4px; background: #fffaf0;
+  font-size: 12px; font-weight: 600; padding: 6px 2px; border: 1.5px solid var(--ink); border-radius: 4px; background: #fffaf0;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .phrase-list button:active { background: var(--paper-2); }
@@ -491,24 +492,32 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
 #home > .panel, #lobby > .panel { margin: auto 0; }
 
 /* --- 원카드 반응 속도 --- */
+.one-pop .race-panel { display: none; }
+.one-pop.result { pointer-events: auto; background: rgba(8, 20, 14, .6); } /* 결과를 보는 동안 뒤의 버튼이 눌리지 않게 */
+.one-pop.result > p, .one-pop.result > .one-big { display: none; }
+.one-pop.result .race-panel { display: block; }
+.one-pop.count .one-big { background: #6d6a63; color: var(--cream); font-size: 64px; font-family: var(--serif); box-shadow: 0 10px 0 #3e3c38, 0 10px 0 2px var(--ink), 0 18px 24px rgba(0, 0, 0, .45); animation: none; cursor: default; }
+.one-pop.count .one-big:active { transform: none; }
+.one-pop.open .one-big { animation: goPop .25s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes goPop { from { transform: scale(.8); } }
 .one-pop.late { background: rgba(8, 20, 14, .35); }
-.one-pop.late .one-big { background: #8a8f8c; box-shadow: 0 10px 0 #555a57, 0 10px 0 2px var(--ink), 0 18px 24px rgba(0, 0, 0, .45); animation: none; }
+.one-pop.late .one-big { background: #8a8f8c; color: var(--cream); box-shadow: 0 10px 0 #555a57, 0 10px 0 2px var(--ink), 0 18px 24px rgba(0, 0, 0, .45); animation: none; }
 .race-panel {
-  position: fixed; left: 50%; bottom: calc(150px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 29; /* 결과·무늬 창보다 아래 */
-  width: min(300px, calc(100% - 32px)); background: var(--paper); color: var(--ink); border: 2px solid var(--ink); border-radius: 6px;
-  padding: 10px 12px; box-shadow: 5px 6px 0 rgba(0, 0, 0, .4); pointer-events: none;
+  width: min(320px, calc(100vw - 32px)); background: var(--paper); color: var(--ink); border: 2px solid var(--ink); border-radius: 6px;
+  padding: 14px 16px; box-shadow: 6px 7px 0 rgba(0, 0, 0, .45); animation: oneIn .28s cubic-bezier(.3, 1.5, .5, 1);
 }
-.race-panel.show { animation: rise .2s ease-out; }
 .race-head { font-size: 12px; font-weight: 700; color: var(--ink-soft); letter-spacing: .5px; }
-.race-out { font-size: 14px; font-weight: 700; margin: 2px 0 6px; }
+.race-out { font-size: 16px; font-weight: 700; margin: 4px 0 8px; }
 .race-panel ol { list-style: none; margin: 0; padding: 0; }
-.race-panel li { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-top: 1px dashed rgba(31, 26, 20, .25); font-size: 14px; }
+.race-panel li { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px dashed rgba(31, 26, 20, .25); font-size: 15px; }
 .race-panel li .rn { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .race-panel li b { font-family: var(--serif); }
 .race-panel li i { font-style: normal; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 3px; background: var(--red); color: var(--cream); }
 .race-panel li i.lt { background: transparent; color: var(--ink-soft); border: 1px solid var(--ink-soft); }
 .race-panel li.me { font-weight: 700; color: var(--red); }
-.race-best { margin-top: 6px; font-size: 12px; color: var(--ink-soft); }
+.race-best { margin-top: 8px; font-size: 12px; color: var(--ink-soft); }
+.race-tap { margin-top: 8px; font-size: 11px; color: var(--ink-soft); text-align: center; opacity: 0; animation: tapHint .3s 1.2s forwards; }
+@keyframes tapHint { to { opacity: 1; } }
 .results .note.win { color: var(--brass); font-weight: 700; }
 
 /* --- 튜토리얼 --- */
@@ -552,3 +561,26 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
 .tu-dots { display: flex; justify-content: center; gap: 6px; }
 .tu-dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(31, 26, 20, .25); }
 .tu-dots i.on { background: var(--red); }
+
+/* --- 나가기 버튼 (왼쪽 아래, 엄지가 닿는 곳) --- */
+.fab-quit { left: 16px; right: auto; bottom: calc(158px + env(safe-area-inset-bottom)); }
+
+/* --- 내 차례를 더 분명하게 --- */
+.my-turn-pill {
+  display: inline-block; background: var(--brass); color: var(--ink); padding: 2px 12px; border-radius: 999px;
+  border: 2px solid var(--ink); box-shadow: 0 2px 0 var(--ink); font-weight: 700;
+}
+.my-turn .hand { box-shadow: inset 0 3px 0 var(--brass); background: linear-gradient(to top, rgba(201, 154, 46, .32), rgba(201, 154, 46, .06) 85%); }
+#game:not(.my-turn) .hand .card:not(.sel):not(.pick) { filter: brightness(.82) saturate(.85); }
+.bubble.turn { color: var(--ink); border-color: var(--ink); background: var(--brass); font-size: 34px; }
+
+/* 두 줄 손패: 위 여백을 줄이고 겹침을 늘려 화면 안에 들어오게 */
+.hand.two { padding-top: 16px; }
+.hand.two .hand-row + .hand-row { margin-top: -56px; }
+@media (max-width: 520px) { .hand.two .hand-row + .hand-row { margin-top: -48px; } }
+/* 오른쪽·왼쪽 동그란 버튼을 손패(두 줄 포함) 위로 */
+.fab { bottom: calc(194px + env(safe-area-inset-bottom)); }
+.fab-emote { bottom: calc(250px + env(safe-area-inset-bottom)); }
+.fab-quit { bottom: calc(194px + env(safe-area-inset-bottom)); }
+/* 큰 알림은 원카드 창보다 아래 */
+.bubble { z-index: 32; }
