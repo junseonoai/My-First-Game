@@ -53,22 +53,41 @@ function broadcast(room) {
       lobby,
       me: m.id,
       game: room.game ? room.game.view(m.id) : null,
-      deadline: room.deadline || null,
+      turnLeft: room.deadline ? Math.max(0, room.deadline - Date.now()) : null, // 남은 시간 (기기 시계와 무관)
       race: raceView(room),
     });
   }
 }
 
+// 원카드 창이 화면을 가리는 동안(카운트다운 + 결과) 사람의 시간은 깎지 않는다
+const RACE_COVER_MS = 4800;
+function raceCoverLeft(room) {
+  const r = room.race;
+  if (!r || r.doneAt) return 0;
+  return Math.max(0, r.openAt - Date.now()) + RACE_COVER_MS;
+}
+
 function scheduleTurn(room) {
+  const g = room.game;
+  if (!g || g.finished) {
+    clearTimeout(room.turnTimer); clearTimeout(room.botTimer);
+    room.deadline = null; room.turnKey = null;
+    return;
+  }
+  const hadRace = room.race;
+  scheduleOneCard(room);
+  const cur = g.cur();
+  // 같은 차례가 이어지는 중이면(원카드 누름 등) 타이머를 처음부터 다시 시작하지 않는다
+  const key = `${g.moves || 0}:${cur.id}`;
+  if (key === room.turnKey) {
+    // 이 차례 도중에 원카드 경쟁이 새로 시작됐다면 그만큼 시간을 더 준다
+    if (room.race !== hadRace && room.deadline) extendTurn(room, raceCoverLeft(room));
+    return;
+  }
+  room.turnKey = key;
   clearTimeout(room.turnTimer);
   clearTimeout(room.botTimer);
   room.deadline = null;
-  const g = room.game;
-  if (!g || g.finished) return;
-
-  scheduleOneCard(room);
-
-  const cur = g.cur();
   room.lastTurnId = room.curTurnId;
   room.curTurnId = cur.id;
   const member = room.members.find((m) => m.id === cur.id);
@@ -80,15 +99,23 @@ function scheduleTurn(room) {
       }
     }, (room.lastTurnId === cur.id ? 1800 : 900) + Math.random() * 900); // 같은 봇이 연달아 내면 조금 더 천천히
   } else {
-    room.deadline = Date.now() + TURN_SECONDS * 1000;
-    room.turnTimer = setTimeout(() => {
-      if (room.game === g && !g.finished && g.cur().id === cur.id) {
-        g.addLog(`${cur.name}님 시간 초과`);
-        g.draw(cur.id);
-        after(room);
-      }
-    }, TURN_SECONDS * 1000);
+    room.deadline = Date.now();
+    extendTurn(room, TURN_SECONDS * 1000 + raceCoverLeft(room));
   }
+}
+
+function extendTurn(room, ms) {
+  const g = room.game;
+  const cur = g.cur();
+  room.deadline += ms;
+  clearTimeout(room.turnTimer);
+  room.turnTimer = setTimeout(() => {
+    if (room.game === g && !g.finished && g.cur().id === cur.id) {
+      g.addLog(`${cur.name}님 시간 초과`);
+      g.draw(cur.id);
+      after(room);
+    }
+  }, room.deadline - Date.now());
 }
 
 // --- 원카드 버튼 경쟁: 누가 몇 초 만에 눌렀는지 기록 ---
@@ -256,6 +283,7 @@ io.on('connection', (socket) => {
     if (room.members.length < 2) return fail('2명 이상 있어야 시작할 수 있어요. 봇을 추가해 보세요!');
     room.oneCardFor = null;
     room.race = null;
+    room.turnKey = null;
     room.game = new Game(room.members.map((m) => ({ id: m.id, name: m.name, bot: m.bot, tier: m.tier })));
     after(room);
   });

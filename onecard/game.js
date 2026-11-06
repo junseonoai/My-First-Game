@@ -192,6 +192,7 @@ class Game {
     }
 
     this.stall = 0;
+    this.moves = (this.moves || 0) + 1; // 수를 둘 때마다 늘어나는 번호 (서버가 차례가 바뀌었는지 알 때 씀)
     let steps = 1;
     let again = false;
     let qCount = 0;
@@ -263,6 +264,7 @@ class Game {
     const p = this.cur();
     if (p.id !== playerId) return { ok: false, error: '내 차례가 아닙니다.' };
     const n = this.penalty > 0 ? this.penalty : 1;
+    this.moves = (this.moves || 0) + 1;
     // 공격 없이 뽑았다면 그 순간 낼 무늬가 없었다는 뜻 (많이 먹은 경우는 정보가 흐려지므로 지움)
     if (this.penalty === 0 && this.activeSuit) this.voids[p.id] = this.activeSuit;
     else delete this.voids[p.id];

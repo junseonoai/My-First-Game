@@ -128,7 +128,10 @@
     const pip = `<text x="3.4" y="9" font-size="7.5" font-family="Georgia, serif" fill="${sc}">${SYM[suit]}</text>`;
     return `<g>${robe}${hair}${face}${hat}${extra}${pip}</g>`;
   }
-  function courtSVG(rank, suit) {
+  const artCache = {};
+  const cached = (key, make) => artCache[key] || (artCache[key] = make());
+  function courtSVG(rank, suit) { return cached(rank + suit, () => courtSVGRaw(rank, suit)); }
+  function courtSVGRaw(rank, suit) {
     const red = suit === 'H' || suit === 'D';
     const half = courtHalf(rank, suit);
     return `<svg class="art" viewBox="0 0 44 104" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
@@ -140,7 +143,8 @@
     </svg>`;
   }
   // 조커: 방울 달린 모자를 쓴 광대 (컬러 / 흑백)
-  function jokerSVG(color) {
+  function jokerSVG(color) { return cached('joker' + color, () => jokerSVGRaw(color)); }
+  function jokerSVGRaw(color) {
     const c = color ? [RED_C, GOLD, BLUE_C, GREEN_C] : [INK, '#fff', INK, '#fff'];
     const stroke = INK;
     // 마름모 무늬 옷 (몸통 밖으로 나간 부분은 카드 색으로 덮는다)
@@ -317,9 +321,10 @@
     $('ring').classList.toggle('ccw', g.dir !== 1);
     $('ring').hidden = n <= 2;
     $('game').classList.toggle('my-turn', myTurn);
+    updateTimer();
     // 내 차례가 막 시작되면 크게 알려 준다 (휴대폰은 짧게 진동)
     if (myTurn && !wasMyTurn && seenSeq) {
-      bubble('내 차례!', 'turn');
+      turnCue();
       try { if (navigator.vibrate) navigator.vibrate(40); } catch {}
     }
     wasMyTurn = myTurn;
@@ -440,6 +445,13 @@
     }
   }
 
+  // 내 차례가 시작될 때: 손패 위에 '내 차례' 띠가 올라왔다 사라진다
+  function turnCue() {
+    const el = $('turnCue');
+    el.hidden = true; void el.offsetWidth; el.hidden = false;
+    clearTimeout(el._t); el._t = setTimeout(() => { el.hidden = true; }, 1500);
+  }
+
   // --- 원카드 버튼: 카운트다운 → 누르기 → (늦었으면 잠깐 더) → 가운데에 결과 ---
   const LATE_MS = 1200, RESULT_MS = 3500, RESULT_MIN_MS = 1200;
   let raceSeen = {}; // race.id → { openAt, doneAt, closed } (새 판마다 비움)
@@ -505,8 +517,13 @@
   }
 
   // 반응 속도 결과 (가운데)
+  let raceDrawn = '';
   function renderRace(race, me) {
     const el = $('racePanel');
+    // 내용이 바뀔 때만 다시 그린다 (봇이 움직일 때마다 다시 튀어나오지 않게)
+    const drawn = gameNo + ':' + race.id + ':' + race.presses.length;
+    if (drawn === raceDrawn) return;
+    raceDrawn = drawn;
     const rows = race.presses.slice().sort((a, b) => a.ms - b.ms);
     const mine = race.presses.find((p) => p.id === me);
     let best = +store.get('onecard-best-ms') || 0, record = '';
@@ -637,11 +654,11 @@
     if (n > 0) {
       $('stackNum').textContent = n;
       const lv = n >= 15 ? 4 : n >= 10 ? 3 : n >= 5 ? 2 : 1;
-      el.className = 'stack lv' + lv;
       if (n > lastPenalty) {
-        el.classList.add('bump');
-        clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('bump'), 360);
+        el._bump = true;
+        clearTimeout(el._t); el._t = setTimeout(() => { el._bump = false; el.classList.remove('bump'); }, 360);
       }
+      el.className = 'stack lv' + lv + (el._bump ? ' bump' : '');
     }
     lastPenalty = n;
   }
@@ -713,14 +730,22 @@
     selected = [];
   }
 
-  // --- 타이머 표시 ---
-  setInterval(() => {
+  // --- 타이머 표시: 내 차례면 이름 줄의 초와 손패 위 시간 막대 ---
+  function updateTimer() {
     const t = $('timer');
-    if (!state || !state.game || !state.deadline || state.game.finished) { t.textContent = ''; return; }
-    const left = Math.max(0, Math.ceil((state.deadline - Date.now()) / 1000));
-    t.textContent = state.game.turn === state.me ? `${left}초` : '';
+    const bar = $('turnBar');
+    const g = state && state.game;
+    const mine = g && !g.finished && g.turn === state.me && state.localDeadline;
+    if (!mine) { t.textContent = ''; bar.hidden = true; return; }
+    const ms = Math.max(0, state.localDeadline - Date.now());
+    const left = Math.ceil(ms / 1000);
+    t.textContent = `${left}초`;
     t.classList.toggle('low', left <= 10);
-  }, 250);
+    bar.hidden = false;
+    bar.classList.toggle('low', left <= 10);
+    bar.firstElementChild.style.transform = `scaleX(${Math.min(1, ms / 30000)})`;
+  }
+  setInterval(updateTimer, 200);
 
   // --- 이벤트 ---
   $('btnCreate').onclick = () => { const n = myName(); if (n) socket.emit('create', { name: n, uid }); };
@@ -840,6 +865,7 @@
     const sameGame = prevGame && s.game && !(s.game && !s.game.finished && prevGame.finished);
     anim = { prev: sameGame ? prevGame : null, handRects };
     state = s;
+    state.localDeadline = s.turnLeft != null ? Date.now() + s.turnLeft : null;
     history.replaceState(null, '', `${location.pathname}?room=${s.lobby.code}`);
     render();
   });
