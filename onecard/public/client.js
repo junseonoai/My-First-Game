@@ -6,8 +6,14 @@
     get(k) { try { return localStorage.getItem(k); } catch { return null; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch {} },
   };
-  let uid = store.get('onecard-uid');
-  if (!uid) { uid = 'u-' + Math.random().toString(36).slice(2) + Date.now().toString(36); store.set('onecard-uid', uid); }
+  // 플레이어 ID는 탭마다 따로 (같은 브라우저에서 탭 두 개로 들어와도 다른 사람으로 인식)
+  const tabStore = {
+    get(k) { try { return sessionStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { sessionStorage.setItem(k, v); } catch {} },
+  };
+  const newUid = () => 'u-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+  let uid = tabStore.get('onecard-uid');
+  if (!uid) { uid = newUid(); tabStore.set('onecard-uid', uid); }
   $('name').value = store.get('onecard-name') || '';
 
   const params = new URLSearchParams(location.search);
@@ -312,6 +318,12 @@
     render();
   });
   socket.on('toast', toast);
+  // 같은 ID가 이미 다른 탭에서 접속 중이면 새 ID로 다시 참가
+  socket.on('uidTaken', ({ code }) => {
+    uid = newUid(); tabStore.set('onecard-uid', uid);
+    const name = store.get('onecard-name') || $('name').value.trim();
+    socket.emit('join', { name, uid, code });
+  });
   socket.on('chat', (c) => {
     chatLines.push(c);
     if ($('side').hidden) { $('btnLog').classList.add('dot'); toast(`💬 ${c.name}: ${c.text}`); }
@@ -323,9 +335,9 @@
   socket.on('connect', () => {
     const code = (state && state.lobby && state.lobby.code) || params.get('room');
     const name = store.get('onecard-name');
-    if (code && name && (state || store.get('onecard-last-room') === code.toUpperCase())) {
+    if (code && name && (state || tabStore.get('onecard-last-room') === code.toUpperCase())) {
       socket.emit('join', { name, uid, code });
     }
   });
-  socket.on('state', (s) => store.set('onecard-last-room', s.lobby.code));
+  socket.on('state', (s) => tabStore.set('onecard-last-room', s.lobby.code));
 })();

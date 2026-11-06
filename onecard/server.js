@@ -151,8 +151,12 @@ io.on('connection', (socket) => {
   socket.on('join', ({ name, uid, code }) => {
     if (room) return;
     const r = rooms.get(String(code || '').toUpperCase().trim());
-    if (!r) return fail('방을 찾을 수 없어요.');
+    if (!r) return fail('방을 찾을 수 없어요. 코드를 확인하거나 방을 새로 만들어 주세요.');
     const existing = r.members.find((m) => m.id === uid);
+    if (existing && existing.socketId && existing.socketId !== socket.id && io.sockets.sockets.has(existing.socketId)) {
+      // 같은 ID가 다른 탭에서 아직 접속 중 → 새 ID로 다시 참가하게 함
+      return socket.emit('uidTaken', { code: r.code });
+    }
     if (existing) {
       // 재접속
       clearTimeout(existing.graceTimer);
