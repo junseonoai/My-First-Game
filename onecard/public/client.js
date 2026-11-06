@@ -59,24 +59,134 @@
   }
 
   // --- 카드 그리기 ---
-  const cardFile = (c) => c.rank === 'JOKER' ? (c.suit === 'CJ' ? 'joker-color' : 'joker-black') : c.suit + c.rank;
+  // --- 카드 그림 (직접 그린 SVG) ---
+  const INK = '#1a1a1a', GOLD = '#d9a520', SKIN = '#f7e1c0', RED_C = '#b3232a', BLUE_C = '#23458f', GREEN_C = '#2f7a4f';
+  // 그림 카드 위쪽 절반 (44×52 안에 그림, 아래쪽은 뒤집어서 같은 그림)
+  function courtHalf(rank, suit) {
+    const red = suit === 'H' || suit === 'D';
+    const main = red ? RED_C : BLUE_C, alt = red ? BLUE_C : RED_C;
+    const sc = red ? RED_C : INK;
+    const robe = `
+      <path d="M4 52 L6 35 Q8 26 16 24 L28 24 Q36 26 38 35 L40 52 Z" fill="${main}" stroke="${INK}" stroke-width=".8"/>
+      <path d="M6 35 Q8 30 12 28 L12 52 L4 52 Z" fill="${alt}" stroke="${INK}" stroke-width=".5"/>
+      <path d="M38 35 Q36 30 32 28 L32 52 L40 52 Z" fill="${alt}" stroke="${INK}" stroke-width=".5"/>
+      <rect x="19" y="24" width="6" height="28" fill="${GOLD}" stroke="${INK}" stroke-width=".5"/>
+      ${[29, 34, 39, 44, 49].map((y) => `<path d="M22 ${y - 1.6} L23.4 ${y} L22 ${y + 1.6} L20.6 ${y} Z" fill="${INK}"/>`).join('')}
+      <path d="M13.5 25 Q22 32 30.5 25 L29.5 22.6 Q22 27.5 14.5 22.6 Z" fill="#fff" stroke="${INK}" stroke-width=".5"/>
+      ${[16, 19, 22, 25, 28].map((x) => `<line x1="${x}" y1="${x === 22 ? 27.4 : 25.6}" x2="${x}" y2="${x === 22 ? 29.6 : 27.8}" stroke="${INK}" stroke-width=".5"/>`).join('')}
+      <rect x="19.6" y="19.5" width="4.8" height="4" fill="${SKIN}" stroke="${INK}" stroke-width=".5"/>
+      <path d="M6.4 44 Q22 47 37.6 44 L37.8 46.4 Q22 49.4 6.2 46.4 Z" fill="${GOLD}" stroke="${INK}" stroke-width=".5"/>
+      <circle cx="22" cy="47" r="1.4" fill="${alt}" stroke="${INK}" stroke-width=".4"/>`;
+    // 소매와 손 (들고 있는 물건 쪽)
+    const arm = (sx, sy, hx, hy) => `<path d="M${sx - 3} ${sy} Q${(sx + hx) / 2} ${(sy + hy) / 2 + 3} ${hx - 1.6} ${hy + 1.2} L${hx + 1.6} ${hy - 1.2} Q${(sx + hx) / 2 + 2} ${(sy + hy) / 2 - 2} ${sx + 2} ${sy - 2} Z" fill="${alt}" stroke="${INK}" stroke-width=".5"/>
+      <circle cx="${hx}" cy="${hy}" r="1.7" fill="${SKIN}" stroke="${INK}" stroke-width=".45"/>`;
+    const face = `
+      <ellipse cx="22" cy="15" rx="5.4" ry="6.3" fill="${SKIN}" stroke="${INK}" stroke-width=".6"/>
+      <path d="M19.3 14 h1.6 M23.1 14 h1.6" stroke="${INK}" stroke-width=".7" stroke-linecap="round"/>
+      <path d="M22 14.6 L21.4 17 L22.4 17" fill="none" stroke="${INK}" stroke-width=".45"/>
+      <path d="M20.6 18.6 Q22 19.3 23.4 18.6" fill="none" stroke="${RED_C}" stroke-width=".6" stroke-linecap="round"/>`;
+    let hat = '', extra = '', hair = '';
+    if (rank === 'K') {
+      hair = `<path d="M16.4 13 Q15.6 20 18 22 L17.6 14 Z M27.6 13 Q28.4 20 26 22 L26.4 14 Z" fill="#8a5a2b" stroke="${INK}" stroke-width=".4"/>`;
+      extra = `<path d="M17.2 17.2 Q22 27 26.8 17.2 Q24.5 19.6 22 19.8 Q19.5 19.6 17.2 17.2 Z" fill="#8a5a2b" stroke="${INK}" stroke-width=".5"/>
+        <path d="M20.3 18.9 Q22 18.1 23.7 18.9" fill="none" stroke="${INK}" stroke-width=".5"/>
+        <line x1="37" y1="2" x2="37" y2="42" stroke="#9aa3ad" stroke-width="1.7"/>
+        <line x1="37" y1="2" x2="37" y2="42" stroke="${INK}" stroke-width=".35"/>
+        <rect x="33.5" y="30.5" width="7" height="1.8" rx=".6" fill="${GOLD}" stroke="${INK}" stroke-width=".4"/>
+        <circle cx="37" cy="44" r="1.3" fill="${GOLD}" stroke="${INK}" stroke-width=".4"/>
+        ${arm(30, 28, 37, 34)}`;
+      hat = `<path d="M15.6 10 L15.8 3 L18.6 6.4 L22 1.6 L25.4 6.4 L28.2 3 L28.4 10 Z" fill="${GOLD}" stroke="${INK}" stroke-width=".6"/>
+        <rect x="15.6" y="8.6" width="12.8" height="2.4" fill="${main}" stroke="${INK}" stroke-width=".5"/>
+        <circle cx="22" cy="4.8" r=".9" fill="${alt}"/><circle cx="18.2" cy="8" r=".6" fill="#fff"/><circle cx="25.8" cy="8" r=".6" fill="#fff"/>`;
+    } else if (rank === 'Q') {
+      hair = `<path d="M16.3 12 Q14 22 15.6 26 L18.4 24 Q16.8 18 17.6 13 Z M27.7 12 Q30 22 28.4 26 L25.6 24 Q27.2 18 26.4 13 Z" fill="#c98a2e" stroke="${INK}" stroke-width=".45"/>`;
+      hat = `<path d="M17 10.4 L17.6 5.6 L19.8 7.6 L22 4 L24.2 7.6 L26.4 5.6 L27 10.4 Q22 8.6 17 10.4 Z" fill="${GOLD}" stroke="${INK}" stroke-width=".55"/>
+        <circle cx="22" cy="6.6" r=".8" fill="${alt}"/>`;
+      extra = `<path d="M34 22 Q31 31 31.6 40" fill="none" stroke="${GREEN_C}" stroke-width="1"/>
+        <path d="M32.6 30 Q35.4 28.6 36 30.8 Q33.8 31.6 32.6 30 Z" fill="${GREEN_C}"/>
+        ${[0, 72, 144, 216, 288].map((a) => `<ellipse cx="34" cy="19.6" rx="1.3" ry="2.1" transform="rotate(${a} 34 22)" fill="${RED_C}" stroke="${INK}" stroke-width=".35"/>`).join('')}
+        <circle cx="34" cy="22" r="1.1" fill="${GOLD}"/>
+        ${arm(28, 28, 32.4, 33)}`;
+    } else {
+      hair = `<path d="M16.5 12.6 Q16 18 17.6 19.4 L17.8 13 Z M27.5 12.6 Q28 18 26.4 19.4 L26.2 13 Z" fill="#5a3a1e" stroke="${INK}" stroke-width=".4"/>`;
+      hat = `<path d="M14.6 11 Q15 4.2 22 4 Q29.6 4.2 30.4 9.8 L29.6 11 Z" fill="${main}" stroke="${INK}" stroke-width=".6"/>
+        <rect x="15.2" y="9.6" width="14.6" height="1.8" fill="${GOLD}" stroke="${INK}" stroke-width=".45"/>
+        <path d="M27.6 8 Q33 2 37.4 1.4 Q34 4.8 29 9" fill="${alt}" stroke="${INK}" stroke-width=".45"/>`;
+      extra = `<line x1="7.5" y1="4" x2="7.5" y2="46" stroke="#8a5a2b" stroke-width="1.3"/>
+        <path d="M7.5 .6 L9.4 4.6 L7.5 6 L5.6 4.6 Z" fill="#9aa3ad" stroke="${INK}" stroke-width=".4"/>
+        <path d="M5.6 7.6 Q7.5 6.4 9.4 7.6 L9.4 9 Q7.5 8 5.6 9 Z" fill="${GOLD}" stroke="${INK}" stroke-width=".35"/>
+        ${arm(15, 27, 7.6, 30)}`;
+    }
+    const pip = `<text x="3.4" y="9" font-size="7.5" font-family="Georgia, serif" fill="${sc}">${SYM[suit]}</text>`;
+    return `<g>${robe}${hair}${face}${hat}${extra}${pip}</g>`;
+  }
+  function courtSVG(rank, suit) {
+    const red = suit === 'H' || suit === 'D';
+    const half = courtHalf(rank, suit);
+    return `<svg class="art" viewBox="0 0 44 104" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <rect x=".5" y=".5" width="43" height="103" rx="1.5" fill="#fffdf6" stroke="${red ? RED_C : INK}" stroke-width=".8"/>
+      <svg x=".5" y=".5" width="43" height="103" viewBox="0 0 44 104" preserveAspectRatio="none">
+        ${half}<g transform="rotate(180 22 52)">${half}</g>
+      </svg>
+      <line x1="1" y1="52" x2="43" y2="52" stroke="${red ? RED_C : INK}" stroke-width=".6"/>
+    </svg>`;
+  }
+  // 조커: 방울 달린 모자를 쓴 광대 (컬러 / 흑백)
+  function jokerSVG(color) {
+    const c = color ? [RED_C, GOLD, BLUE_C, GREEN_C] : [INK, '#fff', INK, '#fff'];
+    const stroke = INK;
+    // 마름모 무늬 옷 (몸통 밖으로 나간 부분은 카드 색으로 덮는다)
+    const diamonds = [];
+    for (let r = 0; r < 5; r++) for (let k = 0; k < 6; k++) {
+      const x = 2 + k * 8 + (r % 2 ? 4 : 0), y = 62 + r * 8;
+      diamonds.push(`<path d="M${x} ${y - 4} L${x + 4} ${y} L${x} ${y + 4} L${x - 4} ${y} Z" fill="${c[(r + k) % 4]}" stroke="${stroke}" stroke-width=".4"/>`);
+    }
+    return `<svg class="art" viewBox="0 0 44 104" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      ${diamonds.join('')}
+      <path d="M-2 50 L22 53 Q12 54 8 64 L6 100 L6 106 L-2 106 Z" fill="#fbf8f1"/>
+      <path d="M46 50 L22 53 Q32 54 36 64 L38 100 L38 106 L46 106 Z" fill="#fbf8f1"/>
+      <rect x="-2" y="100" width="48" height="6" fill="#fbf8f1"/>
+      <path d="M6 100 L8 64 Q12 54 22 53 Q32 54 36 64 L38 100 Z" fill="none" stroke="${stroke}" stroke-width=".8"/>
+      <path d="M8 58 L11 54 L14 58 L17 54 L20 58 L22 54 L24 58 L27 54 L30 58 L33 54 L36 58 Q22 64 8 58 Z" fill="#fff" stroke="${stroke}" stroke-width=".6"/>
+      <ellipse cx="22" cy="44" rx="7.6" ry="9" fill="${color ? SKIN : '#fff'}" stroke="${stroke}" stroke-width=".7"/>
+      <path d="M17.6 42 q1.4 -1.6 2.8 0 M23.6 42 q1.4 -1.6 2.8 0" fill="none" stroke="${INK}" stroke-width=".7" stroke-linecap="round"/>
+      <path d="M17 47 Q22 53 27 47" fill="none" stroke="${color ? RED_C : INK}" stroke-width=".9" stroke-linecap="round"/>
+      <circle cx="16.6" cy="46" r="1.5" fill="${color ? '#f2a2a2' : '#bbb'}"/><circle cx="27.4" cy="46" r="1.5" fill="${color ? '#f2a2a2' : '#bbb'}"/>
+      <path d="M22 36 L22.8 39 L21.2 39 Z" fill="${INK}"/>
+      <path d="M14 37 Q4 30 3 18 Q10 24 16 30 Z" fill="${c[0]}" stroke="${stroke}" stroke-width=".7"/>
+      <path d="M16 33 Q16 16 22 8 Q28 16 28 33 Z" fill="${c[2]}" stroke="${stroke}" stroke-width=".7"/>
+      <path d="M30 37 Q40 30 41 18 Q34 24 28 30 Z" fill="${c[3 % 4] === '#fff' ? INK : c[3]}" stroke="${stroke}" stroke-width=".7"/>
+      <path d="M13.4 36.6 Q22 31 30.6 36.6 L30 39 Q22 34.4 14 39 Z" fill="${c[1] === '#fff' ? '#fff' : GOLD}" stroke="${stroke}" stroke-width=".6"/>
+      <circle cx="3" cy="17" r="2.2" fill="${GOLD}" stroke="${stroke}" stroke-width=".6"/>
+      <circle cx="22" cy="7" r="2.2" fill="${GOLD}" stroke="${stroke}" stroke-width=".6"/>
+      <circle cx="41" cy="17" r="2.2" fill="${GOLD}" stroke="${stroke}" stroke-width=".6"/>
+      <text x="22" y="24" text-anchor="middle" font-size="6" font-family="Georgia, serif" fill="${color ? GOLD : '#fff'}">★</text>
+    </svg>`;
+  }
+
   function cardEl(c, tag = 'div') {
     const el = document.createElement(tag);
-    el.className = 'card art';
+    el.className = 'card';
     el.dataset.id = c.id;
-    el.innerHTML = `<img src="cards/${cardFile(c)}.svg" alt="" draggable="false">`;
     if (c.rank === 'JOKER') {
-      el.classList.add('joker', c.suit === 'CJ' ? 'color' : 'black');
-      el.insertAdjacentHTML('beforeend', '<span class="jk tl">JOKER</span><span class="jk br">JOKER</span>');
-      el.setAttribute('aria-label', c.suit === 'CJ' ? '컬러 조커' : '흑백 조커');
+      const color = c.suit === 'CJ';
+      el.classList.add('joker');
+      if (color) el.classList.add('color', 'red');
+      const idx = '<b>JOKER</b>';
+      el.innerHTML = `<div class="idx tl">${idx}</div><div class="court">${jokerSVG(color)}</div><div class="idx br">${idx}</div>`;
+      el.setAttribute('aria-label', color ? '컬러 조커' : '흑백 조커');
     } else {
-      el.setAttribute('aria-label', SYM[c.suit] + c.rank);
+      if (RED[c.suit]) el.classList.add('red');
+      const s = SYM[c.suit];
+      const idx = `<b>${c.rank}</b><s>${s}</s>`;
+      const mid = ['J', 'Q', 'K'].includes(c.rank)
+        ? `<div class="court">${courtSVG(c.rank, c.suit)}</div>`
+        : `<div class="pip">${s}</div>`;
+      el.innerHTML = `<div class="idx tl">${idx}</div>${mid}<div class="idx br">${idx}</div>`;
+      el.setAttribute('aria-label', s + c.rank);
     }
     return el;
   }
-  // 카드 그림 미리 불러오기 (날아가는 중에 깜빡이지 않게)
-  for (const s of ['S', 'H', 'D', 'C']) for (const r of ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']) new Image().src = `cards/${s}${r}.svg`;
-  new Image().src = 'cards/joker-color.svg'; new Image().src = 'cards/joker-black.svg';
   function backEl() { const el = document.createElement('div'); el.className = 'card back'; return el; }
 
   // --- 날아가는 카드 ---

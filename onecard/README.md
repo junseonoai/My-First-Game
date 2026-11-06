@@ -46,4 +46,3 @@ npm test   # 봇끼리 3000판을 돌려 규칙 엔진을 검사
 - `game.js` — 게임 규칙 (서버에서만 실행, 손패는 본인에게만 전송)
 - `server.js` — Express + Socket.IO 방/턴/봇 관리
 - `public/` — 브라우저 화면
-- `public/cards/` — 카드 그림. Adrian Kennard의 트럼프 카드(https://www.me.uk/cards/, CC0 퍼블릭 도메인)를 SVG로 변환

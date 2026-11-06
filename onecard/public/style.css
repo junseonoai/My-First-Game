@@ -202,17 +202,17 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
   border: 1px solid rgba(0, 0, 0, .18); box-shadow: 1px 2px 0 rgba(0, 0, 0, .25), 0 4px 10px rgba(0, 0, 0, .25);
   position: relative; padding: 0; user-select: none; flex: none; font-family: var(--serif);
 }
-/* 카드 앞면: 트럼프 그림 (Adrian Kennard, CC0) */
-.card.art { background: #fff; border: none; overflow: visible; }
-.card.art img { display: block; width: 100%; height: 100%; border-radius: inherit; pointer-events: none; user-select: none; }
-.card .jk {
-  position: absolute; writing-mode: vertical-rl; text-orientation: upright; font-family: var(--serif); font-weight: 700;
-  font-size: 10px; letter-spacing: -2px; line-height: 1;
-}
-.card .jk.tl { top: 7px; left: 5px; }
-.card .jk.br { bottom: 7px; right: 5px; transform: rotate(180deg); }
-.card.joker.color .jk { color: var(--card-red); }
-.card.joker.black .jk { color: var(--card-ink); }
+.card.red { color: var(--card-red); }
+.card .idx { position: absolute; display: flex; flex-direction: column; align-items: center; line-height: 1; font-weight: 700; }
+.card .idx b { font-size: 19px; letter-spacing: -1px; }
+.card .idx s { text-decoration: none; font-size: 15px; margin-top: 1px; }
+.card .tl { top: 6px; left: 6px; }
+.card .br { bottom: 6px; right: 6px; transform: rotate(180deg); }
+.card .pip { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+/* 그림 카드(J·Q·K)와 조커: 직접 그린 SVG */
+.card .court { position: absolute; inset: 7px 21px; pointer-events: none; }
+.card .court svg { display: block; width: 100%; height: 100%; }
+.card.joker .idx b { font-size: 9px; letter-spacing: 0; writing-mode: vertical-rl; text-orientation: upright; }
 
 /* 카드 뒷면: 격자 무늬 */
 .card.back {
@@ -286,10 +286,14 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
 @media (max-width: 520px) {
   .card { width: 62px; height: 89px; border-radius: 6px; }
   .pile { width: 62px; height: 89px; }
+  .card .pip { font-size: 28px; }
+  .card .idx b { font-size: 15px; }
+  .card .idx s { font-size: 12px; }
+  .card .tl { top: 4px; left: 4px; }
+  .card .br { bottom: 4px; right: 4px; }
+  .card .court { inset: 5px 16px; }
+  .card.joker .idx b { font-size: 7px; }
   .card.back { border-width: 4px; }
-  .card .jk { font-size: 8px; }
-  .card .jk.tl { top: 5px; left: 3px; }
-  .card .jk.br { bottom: 5px; right: 3px; }
   .hand { justify-content: flex-start; min-height: 124px; }
   .hand .card { margin-left: -24px; }
   .hand > .card:first-child { margin-left: auto; }
