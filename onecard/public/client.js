@@ -313,7 +313,7 @@
     const cur = g.players.find((p) => p.id === g.turn);
     let st = '';
     if (g.finished) st = '게임 종료';
-    else if (myTurn) st = '<span class="my-turn-pill">내 차례</span>';
+    else if (myTurn) st = g.penalty > 0 ? '받아치거나 막거나, 먹으세요' : '낼 카드를 고르세요'; // 내 차례 표시는 아래 상자 탭에
     else st = `${cur ? escapeHtml(cur.name) : ''}님 차례`;
     if (n > 2) st += `<span class="dir">· ${g.dir === 1 ? '시계 방향 ↻' : '반시계 방향 ↺'}</span>`;
     $('status').innerHTML = st;
@@ -321,7 +321,9 @@
     $('ring').classList.toggle('ccw', g.dir !== 1);
     $('ring').hidden = n <= 2;
     $('game').classList.toggle('my-turn', myTurn);
-    $('trayLabel').textContent = g.finished ? '끝' : myTurn ? '내 차례' : '대기';
+    // 상자 탭: 내 차례면 크게, 아니면 누구 차례인지
+    const tabName = cur ? cur.name : '';
+    $('tabLabel').textContent = g.finished ? '게임 종료' : myTurn ? '내 차례' : `${tabName}님 차례`;
     updateTimer();
     // 내 차례가 막 시작되면 크게 알려 준다 (휴대폰은 짧게 진동)
     if (myTurn && !wasMyTurn && seenSeq) {
@@ -448,9 +450,8 @@
 
   // 내 차례가 시작될 때: 손패 위에 '내 차례' 띠가 올라왔다 사라진다
   function turnCue() {
-    const el = $('turnCue');
-    el.hidden = true; void el.offsetWidth; el.hidden = false;
-    clearTimeout(el._t); el._t = setTimeout(() => { el.hidden = true; }, 1500);
+    const el = $('trayTab');
+    el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
   }
 
   // --- 원카드 버튼: 카운트다운 → 누르기 → (늦었으면 잠깐 더) → 가운데에 결과 ---
@@ -733,20 +734,39 @@
 
   // --- 타이머 표시: 내 차례면 이름 줄의 초와 손패 위 시간 막대 ---
   function updateTimer() {
-    const t = $('timer');
+    const t = $('tabTime');
     const bar = $('turnBar');
     const g = state && state.game;
     const mine = g && !g.finished && g.turn === state.me && state.localDeadline;
-    if (!mine) { t.textContent = ''; bar.hidden = true; return; }
+    if (!mine) { t.textContent = ''; bar.hidden = true; $('trayTab').classList.remove('low'); return; }
     const ms = Math.max(0, state.localDeadline - Date.now());
     const left = Math.ceil(ms / 1000);
-    t.textContent = `${left}초`;
-    t.classList.toggle('low', left <= 10);
+    if (t.textContent !== String(left)) {
+      t.textContent = left;
+      // 10초부터는 숫자가 바뀔 때마다 톡 튄다
+      if (left <= 10) { t.classList.remove('tick'); void t.offsetWidth; t.classList.add('tick'); }
+    }
+    $('trayTab').classList.toggle('low', left <= 10);
     bar.hidden = false;
     bar.classList.toggle('low', left <= 10);
     bar.firstElementChild.style.transform = `scaleX(${Math.min(1, ms / 30000)})`;
   }
   setInterval(updateTimer, 200);
+
+  // --- 테이블 색 (이 기기에 기억) ---
+  const BGS = ['green', 'navy', 'burgundy', 'wood', 'charcoal'];
+  function setBg(v) {
+    if (!BGS.includes(v)) v = 'green';
+    document.body.dataset.bg = v;
+    store.set('onecard-bg', v);
+    document.querySelectorAll('#bgModal [data-bg]').forEach((b) => b.classList.toggle('on', b.dataset.bg === v));
+  }
+  setBg(store.get('onecard-bg'));
+  document.querySelectorAll('#bgModal [data-bg]').forEach((b) => { b.onclick = () => setBg(b.dataset.bg); });
+  const openBg = () => { $('bgModal').hidden = false; };
+  $('btnBg').onclick = openBg;
+  $('btnBgHome').onclick = openBg;
+  $('bgClose').onclick = () => { $('bgModal').hidden = true; };
 
   // --- 이벤트 ---
   $('btnCreate').onclick = () => { const n = myName(); if (n) socket.emit('create', { name: n, uid }); };

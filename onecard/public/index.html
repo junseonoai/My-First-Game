@@ -26,6 +26,7 @@
       <button id="btnJoin" class="btn">참가</button>
     </div>
     <button id="btnTutorial" class="btn tutorial-btn">튜토리얼 <span id="tutorialHint" class="new-tag" hidden>처음이라면</span></button>
+    <button id="btnBgHome" class="btn ghost bg-link">테이블 색 바꾸기</button>
     <details class="rules">
       <summary>게임 규칙</summary>
       <ul>
@@ -95,19 +96,19 @@
     </div>
   </div>
 
-  <div id="turnCue" class="turn-cue" hidden aria-hidden="true">내 차례</div>
   <!-- 내 카드 상자: 내 차례면 상자 색이 바뀐다 -->
   <div id="tray" class="tray">
+    <!-- 상자 윗변에 걸친 탭: 누구 차례인지 + 내 남은 시간 -->
+    <div id="trayTab" class="tray-tab"><b id="tabLabel">대기</b><span id="tabTime" class="tab-time"></span></div>
     <div class="me-bar" id="meBar">
-      <span id="trayLabel" class="tray-label">대기</span>
       <span id="myName" class="nm"></span>
-      <span id="timer" class="timer"></span>
       <button id="btnSort" class="btn small sort">모양순</button>
     </div>
     <div id="turnBar" class="turn-bar" hidden aria-hidden="true"><i></i></div>
     <div id="hand" class="hand"></div>
   </div>
 
+  <button id="btnBg" class="fab fab-bg" aria-label="테이블 색 바꾸기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.8-.5-1.2-.3-.4-.5-.7-.5-1.2 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2" fill="currentColor"/><circle cx="10.5" cy="7.2" r="1.2" fill="currentColor"/><circle cx="15" cy="7.5" r="1.2" fill="currentColor"/></svg></button>
   <button id="btnQuit" class="fab fab-quit" aria-label="게임에서 나가기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 16l-4-4 4-4M6 12h10"/></svg></button>
   <button id="btnEmote" class="fab fab-emote" aria-label="빠른 이모티콘과 채팅"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><path d="M9 9.5v.5M15 9.5v.5"/></svg></button>
   <div id="emotePanel" class="emote-panel" hidden>
@@ -143,6 +144,21 @@
   <p id="oneMsg"></p>
   <button id="btnOne" class="one-big">원카드!</button>
   <div id="racePanel" class="race-panel" aria-live="polite"></div>
+</div>
+
+<!-- 테이블 색 -->
+<div id="bgModal" class="modal" hidden role="dialog" aria-labelledby="bgTitle">
+  <div class="panel">
+    <h2 id="bgTitle">테이블 색</h2>
+    <div class="swatches">
+      <button data-bg="green"><i style="background:#1d4a37"></i>초록</button>
+      <button data-bg="navy"><i style="background:#1f3a5c"></i>남색</button>
+      <button data-bg="burgundy"><i style="background:#5e2030"></i>와인</button>
+      <button data-bg="wood"><i style="background:#6e4b2c"></i>나무</button>
+      <button data-bg="charcoal"><i style="background:#2b2e33"></i>차콜</button>
+    </div>
+    <button id="bgClose" class="btn primary">닫기</button>
+  </div>
 </div>
 
 <!-- 나가기 확인 -->
