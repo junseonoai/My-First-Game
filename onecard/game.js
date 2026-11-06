@@ -4,15 +4,15 @@
 // 공격: 2 → 2장, A → 3장, A♠ → 5장, 흑백 조커 → 5장, 컬러 조커 → 7장 (누적)
 //   공격받는 중에는 공격 카드(무늬/숫자 일치) 또는 조커로 되받아치거나 (A 공격도 2로 받아칠 수 있음),
 //   조커 공격은 조커나 A♠로만 받아칠 수 있다.
-//   2 공격에 같은 무늬의 3을 내면 방어(공격 무효). 못 막으면 쌓인 장수만큼 먹는다.
+//   2나 A 공격에 같은 무늬의 3을 내면 막기(공격 무효). 못 막으면 쌓인 장수만큼 먹는다.
 // 특수: J 다음 사람 건너뛰기, Q 방향 바꾸기, K 한 번 더, 7 무늬 바꾸기
 // 한 장 남으면 '원카드!'를 외쳐야 한다. 다른 사람이 먼저 누르면 1장 벌칙.
-// 손패가 20장 이상이면 파산(탈락). 마지막까지 남은 순서대로 순위.
+// 손패가 30장 이상이면 파산(탈락). 마지막까지 남은 순서대로 순위.
 
 const SUITS = ['S', 'H', 'D', 'C'];
 const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 const START_HAND = 7;
-const BANKRUPT = 20;
+const BANKRUPT = 30;
 const MAX_TURNS = 500;
 
 function makeDeck() {
@@ -78,14 +78,27 @@ class Game {
       if (isJoker(card)) return true;
       // 조커 공격은 조커 또는 A♠로 받아칠 수 있다
       if (isJoker(top)) return card.rank === 'A' && card.suit === 'S';
-      // 2 공격 → 같은 무늬 3으로 방어
-      if (top.rank === '2' && card.rank === '3' && card.suit === top.suit) return true;
+      // 2·A 공격 → 같은 무늬 3으로 막기 (공격 무효)
+      if (this.isBlock(card)) return true;
       if (attackValue(card) === 0) return false;
       return card.suit === top.suit || card.rank === top.rank;
     }
     if (isJoker(card)) return true;
     if (this.activeSuit === null) return true; // 조커 뒤 아무 카드
     return card.suit === this.activeSuit || (!isJoker(top) && card.rank === top.rank);
+  }
+
+  // 공격 중 막기 카드인가: 2나 A 공격에 같은 무늬 3
+  isBlock(card) {
+    const top = this.top();
+    return this.penalty > 0 && card.rank === '3' && !isJoker(top) && (top.rank === '2' || top.rank === 'A') && card.suit === top.suit;
+  }
+
+  // 낼 수 있는 카드의 종류 (화면 윤곽선 색)
+  playKind(card) {
+    if (isJoker(card)) return 'joker';
+    if (this.penalty > 0) return this.isBlock(card) ? 'block' : 'counter';
+    return 'normal';
   }
 
   advance(steps = 1) {
@@ -189,10 +202,10 @@ class Game {
       this.penalty += attackValue(card);
       this.activeSuit = null;
       msg += ` (공격 +${attackValue(card)}, 누적 ${this.penalty})`;
-    } else if (this.penalty > 0 && card.rank === '3') {
+    } else if (this.penalty > 0 && this.isBlock(card)) {
       this.penalty = 0;
       this.activeSuit = card.suit;
-      msg += ' 🛡️ 방어!';
+      msg += ' 🛡️ 막기!';
     } else if (attackValue(card) > 0) {
       this.penalty += attackValue(card);
       this.activeSuit = card.suit;
@@ -293,6 +306,8 @@ class Game {
       })),
       hand: me ? sortHand(me.hand) : [],
       playable: me && this.cur().id === me.id && !this.finished ? me.hand.filter((c) => this.canPlay(c)).map((c) => c.id) : [],
+      playKind: me && this.cur().id === me.id && !this.finished
+        ? Object.fromEntries(me.hand.filter((c) => this.canPlay(c)).map((c) => [c.id, this.playKind(c)])) : {},
       top: this.top(),
       activeSuit: this.activeSuit,
       penalty: this.penalty,

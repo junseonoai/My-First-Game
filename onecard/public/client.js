@@ -137,7 +137,6 @@
     if (g.finished) st = '게임 종료!';
     else if (myTurn) st = '내 차례!';
     else st = `${cur ? cur.name : ''}님 차례`;
-    if (g.penalty > 0 && !g.finished) st += ` <span class="atk">· 공격 ${g.penalty}장!</span>`;
     st += ` <span style="color:var(--muted)">${g.dir === 1 ? '↻' : '↺'}</span>`;
     $('status').innerHTML = st;
 
@@ -158,13 +157,23 @@
     $('deckCount').textContent = g.deckCount;
     $('deck').classList.toggle('can', myTurn);
 
+    // 쌓인 공격 장수: 많을수록 더 크게, 더 격하게
+    renderStack(g.finished ? 0 : g.penalty);
+
     // 버튼
     const meP = g.players[myIdx];
     $('btnDraw').disabled = !myTurn;
     $('btnDraw').textContent = g.penalty > 0 && myTurn ? `${g.penalty}장 먹기` : '카드 뽑기';
+    $('btnDraw').classList.toggle('danger', g.penalty > 0 && myTurn);
+
+    // 원카드 선착순 팝업
     const canOne = !!g.oneCard && !g.finished && !(meP && meP.out && g.oneCard !== me);
-    $('btnOne').disabled = !canOne;
-    $('btnOne').classList.toggle('pulse', g.oneCard === me);
+    $('onePop').hidden = !canOne;
+    if (canOne) {
+      const owner = g.players.find((p) => p.id === g.oneCard);
+      $('oneMsg').textContent = g.oneCard === me ? '한 장 남았어요! 먼저 누르세요!' : `${owner ? owner.name : ''}님이 한 장! 먼저 누르면 벌칙!`;
+      $('onePop').classList.toggle('mine', g.oneCard === me);
+    }
 
     // 내 이름/타이머
     $('myName').textContent = (meP ? meP.name : '') + ` · ${g.hand.length}장` + (meP && meP.rank ? ` · 🏆 ${meP.rank}등` : '') + (meP && meP.bankrupt ? ' · 💥 파산' : '');
@@ -174,10 +183,11 @@
     const hand = $('hand');
     hand.innerHTML = '';
     const ok = new Set(g.playable);
-    for (const c of g.hand) {
+    const kinds = g.playKind || {};
+    for (const c of sortCards(g.hand)) {
       const el = cardEl(c, 'button');
       el.type = 'button';
-      if (myTurn) el.classList.add(ok.has(c.id) ? 'ok' : 'dim');
+      if (myTurn) el.classList.add(...(ok.has(c.id) ? ['ok', 'k-' + (kinds[c.id] || 'normal')] : ['dim']));
       el.onclick = () => playCard(c, ok.has(c.id), g);
       hand.appendChild(el);
     }
@@ -189,7 +199,7 @@
         if (line.includes('원카드!')) bubble('원카드!');
         else if (line.includes('벌칙')) bubble('🚨 벌칙!');
         else if (line.includes('파산')) bubble('💥 파산!');
-        else if (line.includes('방어')) bubble('🛡️ 방어!');
+        else if (line.includes('막기')) bubble('🛡️ 막기!');
         else if (line.includes('등!')) bubble(line.replace(/^🏆\s*/, '🏆 '));
       }
     }
@@ -201,6 +211,39 @@
       shownResult = true;
       setTimeout(() => showResults(g, me, lobby), 900);
     }
+  }
+
+  // --- 손패 정렬 ---
+  const RANK_ORDER = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'JOKER'];
+  const SUIT_ORDER = { S: 0, H: 1, D: 2, C: 3, BJ: 4, CJ: 5 };
+  let sortMode = store.get('onecard-sort') === 'rank' ? 'rank' : 'suit';
+  function sortCards(hand) {
+    const bySuit = (a, b) => SUIT_ORDER[a.suit] - SUIT_ORDER[b.suit];
+    const byRank = (a, b) => RANK_ORDER.indexOf(a.rank) - RANK_ORDER.indexOf(b.rank);
+    return hand.slice().sort(sortMode === 'rank' ? (a, b) => byRank(a, b) || bySuit(a, b) : (a, b) => bySuit(a, b) || byRank(a, b));
+  }
+  function updateSortBtn() { $('btnSort').textContent = sortMode === 'rank' ? '🔢 숫자순' : '♠ 모양순'; }
+  updateSortBtn();
+  $('btnSort').onclick = () => {
+    sortMode = sortMode === 'rank' ? 'suit' : 'rank';
+    store.set('onecard-sort', sortMode);
+    updateSortBtn();
+    render();
+  };
+
+  // --- 쌓인 공격 표시 ---
+  let lastPenalty = 0;
+  function renderStack(n) {
+    const el = $('stack');
+    el.hidden = n <= 0;
+    document.body.classList.toggle('danger-zone', n >= 10);
+    if (n > 0) {
+      $('stackNum').textContent = n;
+      const lv = n >= 15 ? 4 : n >= 10 ? 3 : n >= 5 ? 2 : 1;
+      el.className = 'stack lv' + lv;
+      if (n > lastPenalty) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+    }
+    lastPenalty = n;
   }
 
   function renderLog(lines) {
