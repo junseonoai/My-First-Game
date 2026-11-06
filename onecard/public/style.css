@@ -215,3 +215,35 @@ input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 }
 @keyframes pop { 0% { transform: translate(-50%, -50%) scale(.5); opacity: 0; } 20% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
 .modal .panel { background: #0c2a1c; }
+
+/* 빠른 이모티콘 / 채팅 */
+.fab-emote { bottom: calc(220px + env(safe-area-inset-bottom)); }
+.emote-panel {
+  position: fixed; right: 16px; bottom: calc(276px + env(safe-area-inset-bottom)); z-index: 15;
+  width: min(300px, calc(100% - 32px)); background: rgba(8, 30, 20, .96); border: 1px solid rgba(255, 255, 255, .15);
+  border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 6px 20px #0008;
+}
+.emoji-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.emoji-row button { font-size: 26px; padding: 4px 0; border: none; border-radius: 8px; background: rgba(255, 255, 255, .06); }
+.emoji-row button:active { transform: scale(.9); }
+.phrase-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.phrase-list button {
+  font-size: 13px; padding: 8px 4px; border: none; border-radius: 8px; background: rgba(255, 255, 255, .08); color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.emote-float {
+  position: fixed; z-index: 36; pointer-events: none; transform: translate(-50%, -100%);
+  animation: floatUp 2.2s ease-out forwards; white-space: nowrap;
+}
+.emote-float.emoji { font-size: 44px; filter: drop-shadow(0 3px 6px #0008); }
+.emote-float.phrase {
+  font-size: 15px; background: var(--card); color: var(--card-ink); padding: 6px 12px; border-radius: 14px;
+  box-shadow: 0 3px 10px #0007; max-width: 220px; overflow: hidden; text-overflow: ellipsis;
+}
+@keyframes floatUp {
+  0% { opacity: 0; transform: translate(-50%, -80%) scale(.6); }
+  15% { opacity: 1; transform: translate(-50%, -100%) scale(1.1); }
+  25% { transform: translate(-50%, -100%) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -150%); }
+}

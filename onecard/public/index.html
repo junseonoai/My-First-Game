@@ -27,7 +27,8 @@
       <summary>게임 규칙</summary>
       <ul>
         <li>바닥 카드와 <b>무늬</b> 또는 <b>숫자</b>가 같은 카드를 냅니다. 낼 카드가 없으면 1장 뽑아요.</li>
-        <li><b>공격</b>: 2 → 2장, A → 3장, A♠ → 5장, 흑백 조커 → 5장, 컬러 조커 → 7장. 공격 카드로 되받아치면 장수가 쌓여요.</li>
+        <li><b>공격</b>: 2 → 2장, A → 3장, A♠ → 5장, 흑백 조커 → 5장, 컬러 조커 → 7장. 무늬나 숫자가 맞는 공격 카드로 되받아치면 장수가 쌓여요. (A 공격은 2로도 받아칠 수 있어요)</li>
+        <li><b>조커 공격</b>은 조커나 <b>A♠</b>로 받아칠 수 있어요.</li>
         <li><b>방어</b>: 2 공격에는 같은 무늬 3으로 막을 수 있어요.</li>
         <li><b>J</b> 건너뛰기 · <b>Q</b> 방향 바꾸기 · <b>K</b> 한 번 더 · <b>7</b> 무늬 바꾸기</li>
         <li>한 장 남으면 <b>원카드!</b> 버튼을 누르세요. 다른 사람이 먼저 누르면 1장 벌칙!</li>
@@ -42,7 +43,7 @@
   <div class="panel">
     <p class="sub">방 코드</p>
     <div class="room-code" id="roomCode">----</div>
-    <button id="btnCopy" class="btn small">초대 링크 복사</button>
+    <button id="btnCopy" class="btn small">코드 복사</button>
     <ul id="members" class="members"></ul>
     <div id="hostControls" class="row">
       <button id="btnBot" class="btn">🤖 봇 추가</button>
@@ -76,6 +77,11 @@
   </div>
   <div id="hand" class="hand"></div>
 
+  <button id="btnEmote" class="fab fab-emote" aria-label="빠른 이모티콘과 채팅">😀</button>
+  <div id="emotePanel" class="emote-panel" hidden>
+    <div id="emojiRow" class="emoji-row"></div>
+    <div id="phraseList" class="phrase-list"></div>
+  </div>
   <button id="btnLog" class="fab" aria-label="기록과 채팅">💬</button>
   <aside id="side" class="side" hidden>
     <div class="side-head"><b>기록 · 채팅</b><button id="btnCloseSide" class="btn small ghost">닫기</button></div>

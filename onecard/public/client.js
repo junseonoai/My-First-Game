@@ -125,6 +125,7 @@
       else if (p.out) badge = '<div class="badge bad">나감</div>';
       else if (!online && !p.bot) badge = '<div class="badge bad">연결 끊김</div>';
       else if (g.oneCard === p.id) badge = '<div class="badge bad">원카드?</div>';
+      d.dataset.id = p.id;
       d.innerHTML = `<div class="nm"></div><div class="cnt"><span class="mini"></span>${p.out ? '-' : p.count}</div>${badge}`;
       d.querySelector('.nm').textContent = (p.bot ? '🤖 ' : '') + p.name;
       opp.appendChild(d);
@@ -266,9 +267,9 @@
   $('name').addEventListener('keydown', (e) => { if (e.key === 'Enter') ($('code').value ? $('btnJoin') : $('btnCreate')).click(); });
 
   $('btnCopy').onclick = async () => {
-    const url = `${location.origin}${location.pathname}?room=${state.lobby.code}`;
-    try { await navigator.clipboard.writeText(url); toast('초대 링크를 복사했어요!'); }
-    catch { toast(url); }
+    const code = state.lobby.code;
+    try { await navigator.clipboard.writeText(code); toast(`방 코드 ${code}를 복사했어요!`); }
+    catch { toast(`방 코드: ${code}`); }
   };
   $('btnBot').onclick = () => socket.emit('addBot');
   $('btnStart').onclick = () => socket.emit('start');
@@ -296,6 +297,39 @@
 
   $('btnAgain').onclick = () => { $('resultModal').hidden = true; socket.emit('start'); };
   $('btnToLobby').onclick = () => { $('resultModal').hidden = true; shownResult = 'closed'; render(); };
+
+  // --- 빠른 이모티콘 / 채팅 ---
+  const EMOJIS = ['😀', '😂', '😎', '😭', '😡', '😱', '👍', '👏', '🔥', '💀'];
+  const PHRASES = ['빨리 내요!', '잘했어요 👍', '아 안 돼!', '봐주세요 🙏', '원카드 조심!', '공격 간다!', '운이 좋네요', '한 판 더?', 'ㅋㅋㅋㅋ', '안녕하세요 👋'];
+  for (const e of EMOJIS) {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = e;
+    b.onclick = () => { socket.emit('emote', e); $('emotePanel').hidden = true; };
+    $('emojiRow').appendChild(b);
+  }
+  for (const t of PHRASES) {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = t;
+    b.onclick = () => { socket.emit('emote', t); $('emotePanel').hidden = true; };
+    $('phraseList').appendChild(b);
+  }
+  $('btnEmote').onclick = (e) => { e.stopPropagation(); $('emotePanel').hidden = !$('emotePanel').hidden; };
+  document.addEventListener('click', (e) => {
+    if (!$('emotePanel').hidden && !$('emotePanel').contains(e.target)) $('emotePanel').hidden = true;
+  });
+
+  function floatEmote({ id, text, kind }) {
+    // 보낸 사람 자리 위에 띄움 (나는 손패 위)
+    let anchor = state && id === state.me ? document.querySelector('.me-bar') : document.querySelector(`.opp[data-id="${id}"]`);
+    if (!anchor || $('game').hidden) return;
+    const r = anchor.getBoundingClientRect();
+    const el = document.createElement('div');
+    el.className = 'emote-float ' + kind;
+    el.textContent = text;
+    const isOpp = id !== state.me;
+    el.style.left = Math.min(Math.max(r.left + r.width / 2, 60), window.innerWidth - 60) + 'px';
+    el.style.top = (isOpp ? r.bottom + 56 : r.top) + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2300);
+  }
 
   $('btnLog').onclick = () => { $('side').hidden = false; $('btnLog').classList.remove('dot'); };
   $('btnCloseSide').onclick = () => { $('side').hidden = true; };
@@ -328,6 +362,13 @@
     chatLines.push(c);
     if ($('side').hidden) { $('btnLog').classList.add('dot'); toast(`💬 ${c.name}: ${c.text}`); }
     if (state && state.game) renderLog(state.game.log);
+  });
+  socket.on('emote', (m) => {
+    floatEmote(m);
+    if (m.kind === 'phrase') {
+      chatLines.push({ name: m.name, text: m.text });
+      if (state && state.game) renderLog(state.game.log);
+    }
   });
   socket.on('kicked', () => { state = null; show('home'); toast('방에서 내보내졌어요.'); history.replaceState(null, '', location.pathname); });
 

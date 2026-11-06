@@ -2,7 +2,8 @@
 //
 // 기본: 무늬(suit) 또는 숫자(rank)가 같으면 낼 수 있다. 조커는 언제든 낼 수 있다.
 // 공격: 2 → 2장, A → 3장, A♠ → 5장, 흑백 조커 → 5장, 컬러 조커 → 7장 (누적)
-//   공격받는 중에는 공격 카드(무늬/숫자 일치) 또는 조커로 되받아치거나,
+//   공격받는 중에는 공격 카드(무늬/숫자 일치) 또는 조커로 되받아치거나 (A 공격도 2로 받아칠 수 있음),
+//   조커 공격은 조커나 A♠로만 받아칠 수 있다.
 //   2 공격에 같은 무늬의 3을 내면 방어(공격 무효). 못 막으면 쌓인 장수만큼 먹는다.
 // 특수: J 다음 사람 건너뛰기, Q 방향 바꾸기, K 한 번 더, 7 무늬 바꾸기
 // 한 장 남으면 '원카드!'를 외쳐야 한다. 다른 사람이 먼저 누르면 1장 벌칙.
@@ -75,7 +76,8 @@ class Game {
     const top = this.top();
     if (this.penalty > 0) {
       if (isJoker(card)) return true;
-      if (isJoker(top)) return false; // 조커 공격은 조커로만
+      // 조커 공격은 조커 또는 A♠로 받아칠 수 있다
+      if (isJoker(top)) return card.rank === 'A' && card.suit === 'S';
       // 2 공격 → 같은 무늬 3으로 방어
       if (top.rank === '2' && card.rank === '3' && card.suit === top.suit) return true;
       if (attackValue(card) === 0) return false;

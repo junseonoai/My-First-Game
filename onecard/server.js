@@ -8,6 +8,8 @@ const PORT = process.env.PORT || 3000;
 const MAX_PLAYERS = 6;
 const TURN_SECONDS = 30;
 const RECONNECT_GRACE_MS = 60_000;
+const EMOJIS = ['😀', '😂', '😎', '😭', '😡', '😱', '👍', '👏', '🔥', '💀'];
+const PHRASES = ['빨리 내요!', '잘했어요 👍', '아 안 돼!', '봐주세요 🙏', '원카드 조심!', '공격 간다!', '운이 좋네요', '한 판 더?', 'ㅋㅋㅋㅋ', '안녕하세요 👋'];
 const BOT_NAMES = ['봇 철수', '봇 영희', '봇 민수', '봇 지수', '봇 하늘'];
 
 const app = express();
@@ -227,6 +229,19 @@ io.on('connection', (socket) => {
     const t = String(text || '').trim().slice(0, 100);
     if (!m || !t) return;
     io.to(room.code).emit('chat', { name: m.name, text: t });
+  });
+
+  let lastEmote = 0;
+  socket.on('emote', (text) => {
+    if (!room) return;
+    const m = room.members.find((x) => x.id === memberId);
+    if (!m) return;
+    const kind = EMOJIS.includes(text) ? 'emoji' : PHRASES.includes(text) ? 'phrase' : null;
+    if (!kind) return;
+    const now = Date.now();
+    if (now - lastEmote < 800) return;
+    lastEmote = now;
+    io.to(room.code).emit('emote', { id: m.id, name: m.name, text, kind });
   });
 
   socket.on('leave', () => {
