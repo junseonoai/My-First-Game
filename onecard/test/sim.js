@@ -42,4 +42,21 @@ assert(!g.canPlay({ suit: 'H', rank: 'A' }), 'other A on joker');
 assert(!g.canPlay({ suit: 'S', rank: '2' }), '2 on joker');
 assert(!g.canPlay({ suit: 'S', rank: '3' }), '3 does not block joker');
 assert(g.canPlay({ suit: 'BJ', rank: 'JOKER' }), 'joker on joker');
+// 여러 장 동시에 내기
+{
+  const h = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }, { id: 'c', name: 'C' }]);
+  h.turn = 0; h.dir = 1; h.penalty = 0;
+  h.discard.push({ id: 800, suit: 'H', rank: '9' }); h.activeSuit = 'H';
+  h.players[0].hand = [{ id: 801, suit: 'H', rank: '2' }, { id: 802, suit: 'S', rank: '2' }, { id: 803, suit: 'C', rank: '5' }];
+  assert(h.play('a', [801, 802]).ok, 'multi 2');
+  assert.strictEqual(h.penalty, 4, 'penalties add');
+  assert.strictEqual(h.top().id, 802, 'last card on top');
+  assert.strictEqual(h.cur().id, 'b');
+  assert(!h.play('b', [801, 803]).ok, 'not own cards');
+  h.players[1].hand = [{ id: 810, suit: 'S', rank: 'J' }, { id: 811, suit: 'D', rank: 'J' }, { id: 812, suit: 'D', rank: '4' }];
+  h.penalty = 0;
+  assert(!h.play('b', [810, 812]).ok, 'mixed ranks rejected');
+  assert(h.play('b', [810, 811]).ok, 'double J');
+  assert.strictEqual(h.cur().id, 'b', 'J×2 with 3 players skips both others');
+}
 console.log(`ok — ${N}판, 평균 ${(turnsTotal / N).toFixed(1)}턴, 파산 ${bankrupt}명, 턴제한 종료 ${capped}판`);

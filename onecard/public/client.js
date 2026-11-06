@@ -21,7 +21,9 @@
 
   let state = null;
   let seenSeq = 0;
-  let pendingSeven = null;
+  let pendingSeven = null; // 7을 낼 때 무늬 고르기 대기 중인 카드 id 목록
+  let selected = []; // 여러 장 내기: 고른 카드 id (내는 순서)
+  let selTurnKey = null;
   let lastTop = null;
   let shownResult = false;
   const chatLines = [];
@@ -184,13 +186,30 @@
     hand.innerHTML = '';
     const ok = new Set(g.playable);
     const kinds = g.playKind || {};
+    // 차례가 바뀌거나 카드가 없어지면 선택 초기화
+    const turnKey = `${g.turn}|${g.top.id}|${g.hand.length}|${g.penalty}`;
+    if (!myTurn || selected.some((id) => !g.hand.find((c) => c.id === id))) selected = [];
+    if (selTurnKey !== turnKey) { selected = []; selTurnKey = turnKey; }
+    const selRank = selected.length ? (g.hand.find((c) => c.id === selected[0]) || {}).rank : null;
     for (const c of sortCards(g.hand)) {
       const el = cardEl(c, 'button');
       el.type = 'button';
-      if (myTurn) el.classList.add(...(ok.has(c.id) ? ['ok', 'k-' + (kinds[c.id] || 'normal')] : ['dim']));
+      const si = selected.indexOf(c.id);
+      if (si >= 0) {
+        el.classList.add('sel');
+        el.insertAdjacentHTML('beforeend', `<span class="sel-no">${si + 1}</span>`);
+      } else if (selRank && c.rank === selRank) {
+        el.classList.add('pick');
+      } else if (myTurn) el.classList.add(...(ok.has(c.id) ? ['ok', 'k-' + (kinds[c.id] || 'normal')] : ['dim']));
       el.onclick = () => playCard(c, ok.has(c.id), g);
       hand.appendChild(el);
     }
+    const selecting = selected.length > 0;
+    $('btnMulti').hidden = !selecting;
+    $('btnMultiCancel').hidden = !selecting;
+    $('btnDraw').hidden = selecting;
+    $('multiHint').hidden = !selecting;
+    $('btnMulti').textContent = `${selected.length}장 내기`;
 
     // 기록
     const newCount = Math.min((g.logSeq || 0) - seenSeq, g.log.length);
@@ -280,13 +299,32 @@
 
   function playCard(c, playable, g) {
     if (g.turn !== state.me) return toast('내 차례가 아니에요.');
+    const selRank = selected.length ? (g.hand.find((x) => x.id === selected[0]) || {}).rank : null;
+    // 선택 중: 같은 숫자면 넣거나 빼기
+    if (selRank && c.rank === selRank) {
+      const i = selected.indexOf(c.id);
+      if (i === 0) selected = []; // 첫 장을 빼면 선택 취소
+      else if (i > 0) selected.splice(i, 1);
+      else selected.push(c.id);
+      return render();
+    }
     if (!playable) return toast('낼 수 없는 카드예요.');
-    if (c.rank === '7' && g.penalty === 0) {
-      pendingSeven = c.id;
+    const partners = g.hand.filter((x) => x.id !== c.id && x.rank === c.rank);
+    if (partners.length === 0) { selected = []; return submitPlay([c.id], g); }
+    // 같은 숫자가 더 있으면 여러 장 고르기 시작
+    selected = [c.id];
+    render();
+  }
+
+  function submitPlay(ids, g) {
+    const first = g.hand.find((x) => x.id === ids[0]);
+    if (first && first.rank === '7' && g.penalty === 0) {
+      pendingSeven = ids;
       $('suitModal').hidden = false;
       return;
     }
-    socket.emit('play', { cardId: c.id });
+    socket.emit('play', { cardIds: ids });
+    selected = [];
   }
 
   // --- 타이머 표시 ---
@@ -322,6 +360,8 @@
   };
 
   $('btnDraw').onclick = () => socket.emit('draw');
+  $('btnMulti').onclick = () => { if (state && state.game && selected.length) submitPlay(selected.slice(), state.game); };
+  $('btnMultiCancel').onclick = () => { selected = []; render(); };
   $('deck').onclick = () => { if (state && state.game && state.game.turn === state.me) socket.emit('draw'); };
   $('btnOne').onclick = () => socket.emit('oneCard');
   document.addEventListener('keydown', (e) => {
@@ -332,7 +372,8 @@
   document.querySelectorAll('#suitModal [data-suit]').forEach((b) => {
     b.onclick = () => {
       $('suitModal').hidden = true;
-      if (pendingSeven !== null) socket.emit('play', { cardId: pendingSeven, suit: b.dataset.suit });
+      if (pendingSeven !== null) socket.emit('play', { cardIds: pendingSeven, suit: b.dataset.suit });
+      selected = [];
       pendingSeven = null;
     };
   });

@@ -6,6 +6,7 @@
 //   조커 공격은 조커나 A♠로만 받아칠 수 있다.
 //   2나 A 공격에 같은 무늬의 3을 내면 막기(공격 무효). 못 막으면 쌓인 장수만큼 먹는다.
 // 특수: J 다음 사람 건너뛰기, Q 방향 바꾸기, K 한 번 더, 7 무늬 바꾸기
+// 같은 숫자 카드는 여러 장을 한 번에 낼 수 있다 (첫 장만 낼 수 있으면 됨, 효과는 합쳐짐)
 // 한 장 남으면 '원카드!'를 외쳐야 한다. 다른 사람이 먼저 누르면 1장 벌칙.
 // 손패가 30장 이상이면 파산(탈락). 마지막까지 남은 순서대로 순위.
 
@@ -173,60 +174,67 @@ class Game {
   }
 
   // 반환: { ok, error }
-  play(playerId, cardId, chosenSuit) {
+  // cardIds: 카드 하나(숫자) 또는 같은 숫자 카드 여러 장(배열, 내는 순서대로. 마지막 카드가 바닥 맨 위)
+  play(playerId, cardIds, chosenSuit) {
     if (this.finished) return { ok: false, error: '게임이 끝났습니다.' };
     const p = this.cur();
     if (p.id !== playerId) return { ok: false, error: '내 차례가 아닙니다.' };
-    const idx = p.hand.findIndex((c) => c.id === cardId);
-    if (idx < 0) return { ok: false, error: '없는 카드입니다.' };
-    const card = p.hand[idx];
-    if (!this.canPlay(card)) return { ok: false, error: '낼 수 없는 카드입니다.' };
-    if (card.rank === '7' && this.penalty === 0 && !SUITS.includes(chosenSuit)) {
+    const ids = Array.isArray(cardIds) ? cardIds : [cardIds];
+    if (ids.length === 0 || new Set(ids).size !== ids.length) return { ok: false, error: '카드를 다시 골라주세요.' };
+    const cards = ids.map((id) => p.hand.find((c) => c.id === id));
+    if (cards.some((c) => !c)) return { ok: false, error: '없는 카드입니다.' };
+    if (cards.some((c) => c.rank !== cards[0].rank)) return { ok: false, error: '같은 숫자만 함께 낼 수 있어요.' };
+    if (!this.canPlay(cards[0])) return { ok: false, error: '낼 수 없는 카드입니다.' };
+    if (cards[0].rank === '7' && this.penalty === 0 && !SUITS.includes(chosenSuit)) {
       return { ok: false, error: '바꿀 무늬를 골라주세요.' };
     }
 
-    p.hand.splice(idx, 1);
-    this.discard.push(card);
     this.stall = 0;
-    const label = cardLabel(card);
+    let steps = 1;
+    let again = false;
+    let qCount = 0;
+    const notes = [];
+    const attackBefore = this.penalty;
+    let blocked = false;
+
+    for (const card of cards) {
+      p.hand.splice(p.hand.indexOf(card), 1);
+      const isBlock = this.isBlock(card);
+      this.discard.push(card);
+      if (isJoker(card)) {
+        this.penalty += attackValue(card);
+        this.activeSuit = null;
+      } else if (isBlock) {
+        this.penalty = 0;
+        this.activeSuit = card.suit;
+        blocked = true;
+      } else if (attackValue(card) > 0) {
+        this.penalty += attackValue(card);
+        this.activeSuit = card.suit;
+      } else {
+        this.activeSuit = card.suit;
+        if (card.rank === 'J') steps++;
+        else if (card.rank === 'Q') { this.dir *= -1; qCount++; }
+        else if (card.rank === 'K') again = true;
+      }
+    }
+    const rank = cards[0].rank;
+    if (rank === '7' && this.penalty === 0 && !isJoker(cards[0])) {
+      this.activeSuit = chosenSuit;
+      notes.push(`${SUIT_NAME[chosenSuit]}(으)로 변경`);
+    }
+    if (blocked) notes.push('🛡️ 막기!');
+    if (this.penalty > attackBefore || (blocked && this.penalty > 0)) notes.push(`공격 누적 ${this.penalty}장`);
+    if (rank === 'J') notes.push(steps > 2 ? `${steps - 1}명 건너뛰기` : '건너뛰기');
+    if (rank === 'Q') notes.push(qCount % 2 ? '방향 전환' : '방향 그대로');
+    if (rank === 'K') notes.push('한 번 더');
 
     // 원카드 상태 갱신: 한 장 남으면 외치기 대기 (누군가 버튼을 누를 때까지 유지)
     if (p.hand.length === 1) this.oneCard = { playerId: p.id };
     else if (this.oneCard && this.oneCard.playerId === p.id) this.oneCard = null;
 
-    let msg = `${p.name}: ${label}`;
-    let steps = 1;
-    let again = false;
-
-    if (isJoker(card)) {
-      this.penalty += attackValue(card);
-      this.activeSuit = null;
-      msg += ` (공격 +${attackValue(card)}, 누적 ${this.penalty})`;
-    } else if (this.penalty > 0 && this.isBlock(card)) {
-      this.penalty = 0;
-      this.activeSuit = card.suit;
-      msg += ' 🛡️ 막기!';
-    } else if (attackValue(card) > 0) {
-      this.penalty += attackValue(card);
-      this.activeSuit = card.suit;
-      msg += ` (공격 +${attackValue(card)}, 누적 ${this.penalty})`;
-    } else {
-      this.activeSuit = card.suit;
-      if (card.rank === '7') {
-        this.activeSuit = chosenSuit;
-        msg += ` → ${SUIT_NAME[chosenSuit]}(으)로 변경`;
-      } else if (card.rank === 'J') {
-        steps = 2;
-        msg += ' (건너뛰기)';
-      } else if (card.rank === 'Q') {
-        this.dir *= -1;
-        msg += ' (방향 전환)';
-      } else if (card.rank === 'K') {
-        again = true;
-        msg += ' (한 번 더)';
-      }
-    }
-    this.addLog(msg);
+    const multi = cards.length > 1 ? ` (${cards.length}장 동시!)` : '';
+    this.addLog(`${p.name}: ${cards.map(cardLabel).join(' ')}${multi}${notes.length ? ' · ' + notes.join(' · ') : ''}`);
 
     if (p.hand.length === 0) {
       this.finish(p);
@@ -237,11 +245,9 @@ class Game {
 
     this.tick();
     if (this.finished) return { ok: true };
-    if (!again) {
-      // 두 명일 때 Q는 한 번 더와 같음
-      if (card.rank === 'Q' && this.alive().length === 2) again = true;
-      else this.advance(steps);
-    }
+    // 두 명일 때 Q(홀수 장)는 한 번 더와 같음
+    if (rank === 'Q' && qCount % 2 === 1 && this.alive().length === 2) again = true;
+    if (!again) this.advance(steps);
     return { ok: true };
   }
 
@@ -342,7 +348,10 @@ class Game {
       for (const c of p.hand) if (c.id !== card.id && SUITS.includes(c.suit)) counts[c.suit] = (counts[c.suit] || 0) + 1;
       suit = SUITS.slice().sort((a, b) => (counts[b] || 0) - (counts[a] || 0))[0];
     }
-    return this.play(botId, card.id, suit);
+    // 같은 숫자가 더 있으면 함께 낸다 (조커 제외)
+    const ids = [card.id];
+    if (!isJoker(card)) for (const c of p.hand) if (c.id !== card.id && c.rank === card.rank) ids.push(c.id);
+    return this.play(botId, ids, suit);
   }
 }
 

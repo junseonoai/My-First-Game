@@ -202,9 +202,10 @@ io.on('connection', (socket) => {
     after(room);
   });
 
-  socket.on('play', ({ cardId, suit }) => {
+  socket.on('play', ({ cardId, cardIds, suit } = {}) => {
     if (!room || !room.game) return;
-    const res = room.game.play(memberId, cardId, suit);
+    const ids = Array.isArray(cardIds) ? cardIds.slice(0, 4) : cardId;
+    const res = room.game.play(memberId, ids, suit);
     if (!res.ok) return fail(res.error);
     after(room);
   });
