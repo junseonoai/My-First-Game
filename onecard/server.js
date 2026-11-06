@@ -3,6 +3,7 @@ const http = require('http');
 const express = require('express');
 const { Server } = require('socket.io');
 const { Game } = require('./game');
+const { TIERS, REACTION } = require('./bots');
 
 const PORT = process.env.PORT || 3000;
 const MAX_PLAYERS = 6;
@@ -37,7 +38,7 @@ function lobbyState(room) {
   return {
     code: room.code,
     host: room.host,
-    members: room.members.map((m) => ({ id: m.id, name: m.name, bot: m.bot, online: m.bot || !!m.socketId })),
+    members: room.members.map((m) => ({ id: m.id, name: m.name, bot: m.bot, tier: m.tier, online: m.bot || !!m.socketId })),
     playing: !!room.game && !room.game.finished,
   };
 }
@@ -71,7 +72,7 @@ function scheduleTurn(room) {
   if (member && member.bot) {
     room.botTimer = setTimeout(() => {
       if (room.game === g && !g.finished && g.cur().id === cur.id) {
-        g.botMove(cur.id);
+        g.botMove(cur.id, member.tier);
         after(room);
       }
     }, (room.lastTurnId === cur.id ? 1800 : 900) + Math.random() * 900); // 같은 봇이 연달아 내면 조금 더 천천히
@@ -87,27 +88,30 @@ function scheduleTurn(room) {
   }
 }
 
-// 봇의 원카드 외치기/잡기 (대상이 바뀔 때만 타이머 재설정)
+// 봇의 원카드 외치기/잡기: 단계마다 반응 속도와 정확도가 다르다 (대상이 바뀔 때만 타이머 재설정)
 function scheduleOneCard(room) {
   const g = room.game;
   const targetId = g && !g.finished && g.oneCard ? g.oneCard.playerId : null;
   if (targetId === room.oneCardFor) return;
-  clearTimeout(room.oneCardTimer);
+  (room.oneCardTimers || []).forEach(clearTimeout);
+  room.oneCardTimers = [];
   room.oneCardFor = targetId;
   if (!targetId) return;
-  const owner = room.members.find((m) => m.id === targetId);
-  const bots = room.members.filter((m) => m.bot && m.id !== targetId && g.find(m.id) && !g.find(m.id).out);
   const fire = (callerId) => {
     if (room.game === g && g.oneCard && g.oneCard.playerId === targetId) {
       g.callOneCard(callerId);
       after(room);
     }
   };
-  if (owner && owner.bot && Math.random() < 0.85) {
-    room.oneCardTimer = setTimeout(() => fire(owner.id), 500 + Math.random() * 1500);
-  } else if (bots.length) {
-    const catcher = bots[Math.floor(Math.random() * bots.length)];
-    room.oneCardTimer = setTimeout(() => fire(catcher.id), 3000 + Math.random() * 3000);
+  const between = ([a, b]) => a + Math.random() * (b - a);
+  for (const m of room.members) {
+    if (!m.bot) continue;
+    const pl = g.find(m.id);
+    if (!pl || (pl.out && m.id !== targetId)) continue;
+    const r = REACTION[m.tier] || REACTION.gold;
+    // 자기 원카드는 외치고, 남의 원카드는 잡는다. 가장 먼저 누른 사람이 이긴다
+    if (m.id === targetId) { if (Math.random() < r.self) room.oneCardTimers.push(setTimeout(() => fire(m.id), between(r.selfMs))); }
+    else if (Math.random() < r.catch) room.oneCardTimers.push(setTimeout(() => fire(m.id), between(r.catchMs)));
   }
 }
 
@@ -126,7 +130,7 @@ function leaveRoom(room, memberId) {
   if (humans.length === 0) {
     clearTimeout(room.turnTimer);
     clearTimeout(room.botTimer);
-    clearTimeout(room.oneCardTimer);
+    (room.oneCardTimers || []).forEach(clearTimeout);
     rooms.delete(room.code);
     return;
   }
@@ -176,13 +180,22 @@ io.on('connection', (socket) => {
     broadcast(r);
   });
 
-  socket.on('addBot', () => {
+  socket.on('addBot', (tier) => {
     if (!room || room.host !== memberId) return;
     if (room.game && !room.game.finished) return;
     if (room.members.length >= MAX_PLAYERS) return fail('방이 가득 찼어요.');
     const used = new Set(room.members.map((m) => m.name));
     const name = BOT_NAMES.find((n) => !used.has(n)) || '봇';
-    room.members.push({ id: 'bot-' + Math.random().toString(36).slice(2, 9), name, bot: true });
+    room.members.push({ id: 'bot-' + Math.random().toString(36).slice(2, 9), name, bot: true, tier: TIERS.includes(tier) ? tier : 'gold' });
+    broadcast(room);
+  });
+
+  socket.on('setBotTier', ({ id, tier } = {}) => {
+    if (!room || room.host !== memberId || !TIERS.includes(tier)) return;
+    if (room.game && !room.game.finished) return;
+    const m = room.members.find((x) => x.id === id && x.bot);
+    if (!m) return;
+    m.tier = tier;
     broadcast(room);
   });
 
@@ -200,7 +213,7 @@ io.on('connection', (socket) => {
     if (room.game && !room.game.finished) return;
     if (room.members.length < 2) return fail('2명 이상 있어야 시작할 수 있어요. 봇을 추가해 보세요!');
     room.oneCardFor = null;
-    room.game = new Game(room.members.map((m) => ({ id: m.id, name: m.name, bot: m.bot })));
+    room.game = new Game(room.members.map((m) => ({ id: m.id, name: m.name, bot: m.bot, tier: m.tier })));
     after(room);
   });
 

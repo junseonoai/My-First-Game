@@ -57,6 +57,7 @@ class Game {
     this.finished = false;
     this.nextRank = 1;
     this.log = [];
+    this.voids = {}; // 공개 정보: 카드를 못 내고 뽑은 사람 → 그때 없던 무늬 (봇이 추리에 씀)
 
     for (const p of this.players) p.hand = this.deck.splice(0, START_HAND);
     // 첫 카드는 특수/공격 카드가 아닌 것으로
@@ -197,6 +198,7 @@ class Game {
     const attackBefore = this.penalty;
     let blocked = false;
 
+    if (this.voids[p.id] && cards.some((c) => c.suit === this.voids[p.id])) delete this.voids[p.id];
     for (const card of cards) {
       p.hand.splice(p.hand.indexOf(card), 1);
       const isBlock = this.isBlock(card);
@@ -260,6 +262,9 @@ class Game {
     const p = this.cur();
     if (p.id !== playerId) return { ok: false, error: '내 차례가 아닙니다.' };
     const n = this.penalty > 0 ? this.penalty : 1;
+    // 공격 없이 뽑았다면 그 순간 낼 무늬가 없었다는 뜻 (많이 먹은 경우는 정보가 흐려지므로 지움)
+    if (this.penalty === 0 && this.activeSuit) this.voids[p.id] = this.activeSuit;
+    else delete this.voids[p.id];
     const got = this.drawCards(p, n);
     this.addLog(this.penalty > 0 ? `${p.name}: 공격을 받아 ${got}장 먹음` : `${p.name}: 1장 뽑음`);
     if (this.penalty > 0) {
@@ -311,7 +316,7 @@ class Game {
     const me = this.find(forId);
     return {
       players: this.players.map((p) => ({
-        id: p.id, name: p.name, bot: !!p.bot, count: p.hand.length,
+        id: p.id, name: p.name, bot: !!p.bot, tier: p.tier, count: p.hand.length,
         out: p.out, rank: p.rank, bankrupt: p.bankrupt,
       })),
       hand: me ? sortHand(me.hand) : [],
@@ -333,10 +338,17 @@ class Game {
   }
 
   // --- 봇 ---
-  botMove(botId) {
+  // tier: silver | gold | platinum | master | grandmaster
+  botMove(botId, tier = 'gold') {
+    const move = require('./bots').chooseMove(this, botId, tier);
+    if (!move || move.draw) return this.draw(botId);
+    return this.play(botId, move.ids, move.suit);
+  }
+
+  // 골드 봇 (예전 기본 봇): 공격 카드 먼저, 같은 숫자는 몰아서
+  goldMove(botId) {
     const p = this.find(botId);
     const playable = p.hand.filter((c) => this.canPlay(c));
-    if (playable.length === 0) return this.draw(botId);
     // 우선순위: 방어/공격 > 일반 > 조커(아껴둠)
     const score = (c) => {
       if (isJoker(c)) return this.penalty > 0 ? 50 : 5;
@@ -345,6 +357,7 @@ class Game {
       if (c.rank === '7') return 10;
       return 20;
     };
+    if (playable.length === 0) return { draw: true };
     playable.sort((a, b) => score(b) - score(a));
     const card = playable[0];
     let suit;
@@ -356,7 +369,7 @@ class Game {
     // 같은 숫자가 더 있으면 함께 낸다 (조커 제외)
     const ids = [card.id];
     if (!isJoker(card)) for (const c of p.hand) if (c.id !== card.id && c.rank === card.rank) ids.push(c.id);
-    return this.play(botId, ids, suit);
+    return { ids, suit };
   }
 }
 
@@ -374,4 +387,4 @@ function sortHand(hand) {
   return hand.slice().sort((a, b) => so[a.suit] - so[b.suit] || RANKS.indexOf(a.rank) - RANKS.indexOf(b.rank));
 }
 
-module.exports = { Game, makeDeck, attackValue, SUITS };
+module.exports = { Game, makeDeck, attackValue, isJoker, SUITS };

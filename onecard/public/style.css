@@ -464,3 +464,28 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* --- 봇 등급 --- */
+:root { --t-silver: #8b97a3; --t-gold: #c99a2e; --t-platinum: #2f8f8a; --t-master: #7b4bb0; --t-grandmaster: #b3262e; }
+.t-silver { --tc: var(--t-silver); } .t-gold { --tc: var(--t-gold); } .t-platinum { --tc: var(--t-platinum); }
+.t-master { --tc: var(--t-master); } .t-grandmaster { --tc: var(--t-grandmaster); }
+.tier { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 3px; background: var(--tc); color: #fff; white-space: nowrap; }
+.host-controls { display: flex; flex-direction: column; gap: 10px; }
+.tier-pick { border: 2px dashed rgba(31, 26, 20, .35); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.tier-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.tier-btn {
+  flex: 1 1 auto; padding: 8px 10px; border-radius: 4px; border: 2px solid var(--ink); background: var(--tc); color: #fff;
+  font-size: 13px; font-weight: 700; box-shadow: 0 2px 0 var(--ink);
+}
+.tier-btn:active { transform: translateY(2px); box-shadow: none; }
+.tier-select {
+  margin-left: 4px; padding: 3px 6px; border-radius: 4px; border: 2px solid var(--tc); background: #fffaf0; color: var(--ink);
+  font: inherit; font-size: 12px; font-weight: 700; width: auto;
+}
+.members .kick { margin-left: auto; }
+.opp .nm .bot { background: var(--tc); color: #fff; border-color: var(--ink); }
+.opp.turn .nm .bot { background: var(--tc); color: #fff; }
+
+/* 시작·대기실: 내용이 길면 스크롤 (가운데 정렬 유지) */
+#home, #lobby { overflow-y: auto; justify-content: flex-start; }
+#home > .panel, #lobby > .panel { margin: auto 0; }

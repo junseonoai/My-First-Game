@@ -32,6 +32,9 @@
   const chatLines = [];
 
   const SYM = { S: '♠', H: '♥', D: '♦', C: '♣' };
+  const TIER_NAME = { silver: '실버', gold: '골드', platinum: '플래티넘', master: '마스터', grandmaster: '그랜드마스터' };
+  const TIER_SHORT = { silver: '실버', gold: '골드', platinum: '플래', master: '마스터', grandmaster: '그마' };
+  const tierTag = (t, short) => `<span class="tier t-${t || 'gold'}">${(short ? TIER_SHORT : TIER_NAME)[t || 'gold']}</span>`;
   const RED = { H: 1, D: 1 };
 
   function show(screen) {
@@ -230,7 +233,17 @@
       li.innerHTML = `<span class="seat">${lobby.members.indexOf(m) + 1}</span><span class="n"></span>`;
       li.querySelector('.n').textContent = m.name + (m.id === me ? ' (나)' : '');
       if (m.id === lobby.host) li.insertAdjacentHTML('beforeend', '<span class="tag host">방장</span>');
-      if (m.bot) li.insertAdjacentHTML('beforeend', '<span class="tag">BOT</span>');
+      if (m.bot) {
+        if (lobby.host === me && !lobby.playing) {
+          // 방장은 봇 등급을 바꿀 수 있다
+          const sel = document.createElement('select');
+          sel.className = `tier-select t-${m.tier || 'gold'}`;
+          sel.setAttribute('aria-label', `${m.name} 봇 등급`);
+          for (const t of Object.keys(TIER_NAME)) sel.insertAdjacentHTML('beforeend', `<option value="${t}"${t === (m.tier || 'gold') ? ' selected' : ''}>${TIER_NAME[t]}</option>`);
+          sel.onchange = () => socket.emit('setBotTier', { id: m.id, tier: sel.value });
+          li.appendChild(sel);
+        } else li.insertAdjacentHTML('beforeend', tierTag(m.tier));
+      }
       if (!m.online) li.insertAdjacentHTML('beforeend', '<span class="tag off">연결 끊김</span>');
       if (lobby.host === me && m.id !== me) {
         const k = document.createElement('button');
@@ -278,7 +291,7 @@
         const a = (k - (shown - 1) / 2) * 7;
         fan += `<i style="left:calc(50% - 9px + ${(k - (shown - 1) / 2) * 6}px);transform:rotate(${a}deg)"></i>`;
       }
-      d.innerHTML = `<div class="nm">${p.bot ? '<span class="bot">BOT</span>' : ''}<span></span></div><div class="fan">${fan}</div><div class="cnt">${p.out ? '–' : p.count + '장'}</div>${badge}`;
+      d.innerHTML = `<div class="nm">${p.bot ? `<span class="bot t-${p.tier || 'gold'}">${TIER_SHORT[p.tier || 'gold']}</span>` : ''}<span></span></div><div class="fan">${fan}</div><div class="cnt">${p.out ? '–' : p.count + '장'}</div>${badge}`;
       d.querySelector('.nm span:last-child').textContent = p.name;
       // 테이블을 둘러앉은 것처럼 가운데 자리는 위로, 바깥 자리는 아래로
       const off = Math.abs((i - 1) - (nOpp - 1) / 2);
@@ -531,6 +544,7 @@
       if (p.id === me) li.className = 'me';
       li.innerHTML = `<span class="pl">${p.rank || '–'}</span><span class="n"></span><span class="note">${p.bankrupt ? '파산' : !p.rank ? '나감' : ''}</span>`;
       li.querySelector('.n').textContent = p.name + (p.id === me ? ' (나)' : '');
+      if (p.bot) li.querySelector('.n').insertAdjacentHTML('afterend', tierTag(p.tier));
       ol.appendChild(li);
     }
     const isHost = state.lobby.host === me;
@@ -593,7 +607,10 @@
     try { await navigator.clipboard.writeText(code); toast(`방 코드 ${code}를 복사했어요!`); }
     catch { toast(`방 코드: ${code}`); }
   };
-  $('btnBot').onclick = () => socket.emit('addBot');
+  $('btnBot').onclick = () => { $('tierPick').hidden = !$('tierPick').hidden; };
+  document.querySelectorAll('#tierPick [data-tier]').forEach((b) => {
+    b.onclick = () => { socket.emit('addBot', b.dataset.tier); };
+  });
   $('btnStart').onclick = () => socket.emit('start');
   $('btnLeave').onclick = () => {
     socket.emit('leave'); state = null; show('home');

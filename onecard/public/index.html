@@ -49,9 +49,21 @@
     <div class="room-code" id="roomCode">----</div>
     <button id="btnCopy" class="btn small">코드 복사</button>
     <ul id="members" class="members"></ul>
-    <div id="hostControls" class="row">
-      <button id="btnBot" class="btn">봇 추가</button>
-      <button id="btnStart" class="btn primary">게임 시작</button>
+    <div id="hostControls" class="host-controls">
+      <div id="tierPick" class="tier-pick" hidden>
+        <p class="sub">추가할 봇의 등급</p>
+        <div class="tier-row">
+          <button class="tier-btn t-silver" data-tier="silver">실버</button>
+          <button class="tier-btn t-gold" data-tier="gold">골드</button>
+          <button class="tier-btn t-platinum" data-tier="platinum">플래티넘</button>
+          <button class="tier-btn t-master" data-tier="master">마스터</button>
+          <button class="tier-btn t-grandmaster" data-tier="grandmaster">그랜드마스터</button>
+        </div>
+      </div>
+      <div class="row">
+        <button id="btnBot" class="btn">봇 추가</button>
+        <button id="btnStart" class="btn primary">게임 시작</button>
+      </div>
     </div>
     <p id="waitMsg" class="sub" hidden>방장이 게임을 시작하길 기다리는 중…</p>
     <button id="btnLeave" class="btn ghost">나가기</button>
