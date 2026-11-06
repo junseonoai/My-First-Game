@@ -10,7 +10,9 @@ const MAX_PLAYERS = 6;
 const TURN_SECONDS = 30;
 const RECONNECT_GRACE_MS = 60_000;
 const ONECARD_COUNTDOWN_MS = 3000; // 원카드 버튼은 3초 카운트다운 뒤에 열린다
-const LATE_PRESS_MS = 2500; // 승부가 난 뒤에도 이 시간 안에 누르면 반응 속도만 기록
+const LATE_PRESS_MS = 2500;
+const NO_PRESS_MS = 5000; // 버튼이 열리고 이 시간 안에 아무도 안 누르면 경쟁 끝 (게임이 멈추지 않게)
+const RESULT_PAUSE_MS = 2500; // 결과를 보는 동안 판을 잠깐 멈춘다 // 승부가 난 뒤에도 이 시간 안에 누르면 반응 속도만 기록
 const EMOJIS = ['😀', '😂', '😎', '😭', '😡', '😱', '👍', '👏', '🔥', '💀'];
 const PHRASES = ['빨리 내요!', '잘했어요', '아 안 돼!', '봐주세요', '원카드 조심!', '공격 간다!', '운이 좋네요', '한 판 더?', 'ㅋㅋㅋㅋ', '안녕하세요'];
 const BOT_NAMES = ['철수', '영희', '민수', '지수', '하늘'];
@@ -60,11 +62,25 @@ function broadcast(room) {
 }
 
 // 원카드 창이 화면을 가리는 동안(카운트다운 + 결과) 사람의 시간은 깎지 않는다
-const RACE_COVER_MS = 4800;
+const RACE_COVER_MS = NO_PRESS_MS + RESULT_PAUSE_MS;
 function raceCoverLeft(room) {
   const r = room.race;
   if (!r || r.doneAt) return 0;
   return Math.max(0, r.openAt - Date.now()) + RACE_COVER_MS;
+}
+
+// 원카드 경쟁 중이면 판을 멈춘다: 남은 멈춤 시간 (모르면 짧게 다시 확인)
+function pausedFor(room) {
+  const r = room.race;
+  if (!r) return 0;
+  if (!r.doneAt) return 300;
+  return Math.max(0, r.doneAt + RESULT_PAUSE_MS - Date.now());
+}
+// 멈춤이 끝난 뒤에 fn 실행
+function whenUnpaused(room, fn, timerKey) {
+  const wait = pausedFor(room);
+  if (wait > 0) { room[timerKey] = setTimeout(() => whenUnpaused(room, fn, timerKey), wait); return; }
+  fn();
 }
 
 function scheduleTurn(room) {
@@ -92,12 +108,12 @@ function scheduleTurn(room) {
   room.curTurnId = cur.id;
   const member = room.members.find((m) => m.id === cur.id);
   if (member && member.bot) {
-    room.botTimer = setTimeout(() => {
+    room.botTimer = setTimeout(() => whenUnpaused(room, () => {
       if (room.game === g && !g.finished && g.cur().id === cur.id) {
         g.botMove(cur.id, member.tier);
         after(room);
       }
-    }, (room.lastTurnId === cur.id ? 1800 : 900) + Math.random() * 900); // 같은 봇이 연달아 내면 조금 더 천천히
+    }, 'botTimer'), (room.lastTurnId === cur.id ? 1800 : 900) + Math.random() * 900); // 같은 봇이 연달아 내면 조금 더 천천히
   } else {
     room.deadline = Date.now();
     extendTurn(room, TURN_SECONDS * 1000 + raceCoverLeft(room));
@@ -109,13 +125,13 @@ function extendTurn(room, ms) {
   const cur = g.cur();
   room.deadline += ms;
   clearTimeout(room.turnTimer);
-  room.turnTimer = setTimeout(() => {
+  room.turnTimer = setTimeout(() => whenUnpaused(room, () => {
     if (room.game === g && !g.finished && g.cur().id === cur.id) {
       g.addLog(`${cur.name}님 시간 초과`);
       g.draw(cur.id);
       after(room);
     }
-  }, room.deadline - Date.now());
+  }, 'turnTimer'), room.deadline - Date.now());
 }
 
 // --- 원카드 버튼 경쟁: 누가 몇 초 만에 눌렀는지 기록 ---
@@ -166,8 +182,14 @@ function scheduleOneCard(room) {
   if (!targetId) return; // 승부가 나도 남은 봇 타이머는 늦은 기록용으로 둔다
   (room.oneCardTimers || []).forEach(clearTimeout);
   room.oneCardTimers = [];
-  const race = { id: (room.race ? room.race.id : 0) + 1, target: targetId, openAt: Date.now() + ONECARD_COUNTDOWN_MS, presses: [], doneAt: 0 };
+  const race = { id: (room.race ? room.race.id : 0) + 1, target: targetId, openAt: Date.now() + ONECARD_COUNTDOWN_MS, presses: [], doneAt: 0, moves: g.moves };
   room.race = race;
+  room.oneCardTimers.push(setTimeout(() => {
+    if (room.game !== g || room.race !== race || race.doneAt) return;
+    race.doneAt = Date.now();
+    if (g.oneCard && g.oneCard.playerId === race.target) g.oneCard = null; // 아무도 안 눌렀으니 벌칙 없음
+    after(room);
+  }, ONECARD_COUNTDOWN_MS + NO_PRESS_MS));
   const fire = (callerId) => {
     if (room.game !== g || room.race !== race) return;
     if (pressOneCard(room, callerId)) after(room);
@@ -187,6 +209,24 @@ function scheduleOneCard(room) {
 function after(room) {
   scheduleTurn(room);
   broadcast(room);
+  if (process.env.ONECARD_CHECK) checkInvariants(room);
+}
+
+// 개발용 점검 (ONECARD_CHECK=1): 카드 수, 차례, 원카드 중 멈춤
+function checkInvariants(room) {
+  const g = room.game;
+  if (!g) return;
+  const ids = [...g.deck, ...g.discard, ...g.players.flatMap((p) => p.hand)].map((c) => c.id);
+  const bad = [];
+  if (ids.length !== 54) bad.push(`카드 수 ${ids.length}`);
+  if (new Set(ids).size !== ids.length) bad.push('같은 카드가 두 장');
+  if (!g.finished && g.cur().out) bad.push('나간 사람 차례');
+  const r = room.race;
+  if (r) {
+    if (r.moves === undefined) r.moves = g.moves;
+    if ((!r.doneAt || Date.now() < r.doneAt + RESULT_PAUSE_MS - 50) && g.moves !== r.moves && !g.finished) bad.push(`원카드 중에 수를 둠 (${r.moves}→${g.moves})`);
+  }
+  if (bad.length) console.error('INVARIANT', room.code, bad.join(', '));
 }
 
 function leaveRoom(room, memberId) {
@@ -290,6 +330,7 @@ io.on('connection', (socket) => {
 
   socket.on('play', ({ cardId, cardIds, suit } = {}) => {
     if (!room || !room.game) return;
+    if (pausedFor(room) > 0) return fail('원카드 확인 중이에요. 잠깐만요!');
     const ids = Array.isArray(cardIds) ? cardIds.slice(0, 4) : cardId;
     const res = room.game.play(memberId, ids, suit);
     if (!res.ok) return fail(res.error);
@@ -298,6 +339,7 @@ io.on('connection', (socket) => {
 
   socket.on('draw', () => {
     if (!room || !room.game) return;
+    if (pausedFor(room) > 0) return fail('원카드 확인 중이에요. 잠깐만요!');
     const res = room.game.draw(memberId);
     if (!res.ok) return fail(res.error);
     after(room);

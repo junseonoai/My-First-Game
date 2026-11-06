@@ -455,7 +455,7 @@
   }
 
   // --- 원카드 버튼: 카운트다운 → 누르기 → (늦었으면 잠깐 더) → 가운데에 결과 ---
-  const LATE_MS = 1200, RESULT_MS = 3500, RESULT_MIN_MS = 1200;
+  const LATE_MS = 1200, RESULT_MS = 3500, RESULT_MIN_MS = 2500; // 서버가 결과 뒤 2.5초 판을 멈추므로 그때까지는 닫히지 않게
   let raceSeen = {}; // race.id → { openAt, doneAt, closed } (새 판마다 비움)
   const counted = new Set(); // 최고 기록에 이미 반영한 경쟁
   let oneTicker = null;
@@ -481,7 +481,7 @@
       return now < info.openAt ? 'count' : 'open';
     }
     if (info.closed) return null;
-    if (!pressed && eligible && now - info.doneAt < LATE_MS) return 'late';
+    if (!pressed && eligible && race.presses.length && now - info.doneAt < LATE_MS) return 'late';
     if (now - info.doneAt < RESULT_MS + (pressed || !eligible ? 0 : LATE_MS)) return 'result';
     info.closed = true;
     guardUntil = now + 600;
