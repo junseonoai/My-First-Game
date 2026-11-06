@@ -59,29 +59,24 @@
   }
 
   // --- 카드 그리기 ---
+  const cardFile = (c) => c.rank === 'JOKER' ? (c.suit === 'CJ' ? 'joker-color' : 'joker-black') : c.suit + c.rank;
   function cardEl(c, tag = 'div') {
     const el = document.createElement(tag);
-    el.className = 'card';
+    el.className = 'card art';
     el.dataset.id = c.id;
+    el.innerHTML = `<img src="cards/${cardFile(c)}.svg" alt="" draggable="false">`;
     if (c.rank === 'JOKER') {
-      const color = c.suit === 'CJ';
-      el.classList.add('joker');
-      if (color) el.classList.add('color', 'red');
-      const idx = '<b>JOKER</b>';
-      el.innerHTML = `<div class="idx tl">${idx}</div><div class="quad"><span>♠</span><span>♥</span><span>♦</span><span>♣</span></div><div class="idx br">${idx}</div>`;
-      el.setAttribute('aria-label', color ? '컬러 조커' : '흑백 조커');
+      el.classList.add('joker', c.suit === 'CJ' ? 'color' : 'black');
+      el.insertAdjacentHTML('beforeend', '<span class="jk tl">JOKER</span><span class="jk br">JOKER</span>');
+      el.setAttribute('aria-label', c.suit === 'CJ' ? '컬러 조커' : '흑백 조커');
     } else {
-      if (RED[c.suit]) el.classList.add('red');
-      const s = SYM[c.suit];
-      const idx = `<b>${c.rank}</b><s>${s}</s>`;
-      const mid = ['J', 'Q', 'K'].includes(c.rank)
-        ? `<div class="face"><b>${c.rank}</b><s>${s}</s></div>`
-        : `<div class="pip">${s}</div>`;
-      el.innerHTML = `<div class="idx tl">${idx}</div>${mid}<div class="idx br">${idx}</div>`;
-      el.setAttribute('aria-label', s + c.rank);
+      el.setAttribute('aria-label', SYM[c.suit] + c.rank);
     }
     return el;
   }
+  // 카드 그림 미리 불러오기 (날아가는 중에 깜빡이지 않게)
+  for (const s of ['S', 'H', 'D', 'C']) for (const r of ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']) new Image().src = `cards/${s}${r}.svg`;
+  new Image().src = 'cards/joker-color.svg'; new Image().src = 'cards/joker-black.svg';
   function backEl() { const el = document.createElement('div'); el.className = 'card back'; return el; }
 
   // --- 날아가는 카드 ---
@@ -149,7 +144,13 @@
     const opp = $('opponents');
     opp.innerHTML = '';
     const n = g.players.length;
+    const nOpp = n - 1;
+    opp.classList.toggle('many', nOpp >= 4);
     for (let i = 1; i < n; i++) {
+      if (i > 1) {
+        // 자리 사이 진행 방향 화살표 (왼쪽 → 오른쪽이 시계 방향)
+        opp.insertAdjacentHTML('beforeend', `<span class="flow ${g.dir === 1 ? '' : 'rev'}" aria-hidden="true">›</span>`);
+      }
       const p = g.players[(myIdx + i) % n];
       const online = (lobby.members.find((m) => m.id === p.id) || {}).online;
       const d = document.createElement('div');
@@ -161,7 +162,7 @@
       else if (!online && !p.bot) badge = '<div class="badge bad">연결 끊김</div>';
       else if (g.oneCard === p.id) badge = '<div class="badge bad">원카드?</div>';
       d.dataset.id = p.id;
-      const shown = p.out ? 0 : Math.min(p.count, 7);
+      const shown = p.out ? 0 : Math.min(p.count, nOpp >= 4 ? 4 : 7);
       let fan = '';
       for (let k = 0; k < shown; k++) {
         const a = (k - (shown - 1) / 2) * 7;
@@ -169,6 +170,9 @@
       }
       d.innerHTML = `<div class="nm">${p.bot ? '<span class="bot">BOT</span>' : ''}<span></span></div><div class="fan">${fan}</div><div class="cnt">${p.out ? '–' : p.count + '장'}</div>${badge}`;
       d.querySelector('.nm span:last-child').textContent = p.name;
+      // 테이블을 둘러앉은 것처럼 가운데 자리는 위로, 바깥 자리는 아래로
+      const off = Math.abs((i - 1) - (nOpp - 1) / 2);
+      if (nOpp >= 3) d.style.marginTop = `${Math.round(off * off * 7)}px`;
       opp.appendChild(d);
     }
 
@@ -178,9 +182,12 @@
     if (g.finished) st = '게임 종료';
     else if (myTurn) st = '내 차례';
     else st = `${cur ? escapeHtml(cur.name) : ''}님 차례`;
-    st += `<span class="dir" title="진행 방향">${g.dir === 1 ? '↻' : '↺'}</span>`;
+    if (n > 2) st += `<span class="dir">· ${g.dir === 1 ? '시계 방향 ↻' : '반시계 방향 ↺'}</span>`;
     $('status').innerHTML = st;
     $('status').classList.toggle('mine', myTurn);
+    $('ring').classList.toggle('ccw', g.dir !== 1);
+    $('ring').hidden = n <= 2;
+    $('game').classList.toggle('my-turn', myTurn);
 
     // 바닥: 최근 카드 몇 장이 살짝 비뚤게 쌓임. 새로 낸 카드는 낸 사람 자리에서 날아온다.
     const pile = $('pile');
@@ -262,6 +269,8 @@
         el.insertAdjacentHTML('beforeend', `<span class="sel-no">${si + 1}</span>`);
       } else if (selRank && c.rank === selRank) {
         el.classList.add('pick');
+      } else if (selRank) {
+        el.classList.add('dim');
       } else if (myTurn) el.classList.add(...(ok.has(c.id) ? ['ok', 'k-' + (kinds[c.id] || 'normal')] : ['dim']));
       el.onclick = () => playCard(c, ok.has(c.id), g);
       if (newHandIds.has(c.id)) el.style.visibility = 'hidden';
@@ -283,12 +292,15 @@
         else if (line.includes('벌칙')) bubble('벌칙 1장');
         else if (line.includes('파산')) bubble('파산');
         else if (line.includes('막기')) bubble('막기!');
+        else if (line.includes('방향 전환') && g.players.length > 2) bubble(g.dir === 1 ? '시계 방향 ↻' : '반시계 방향 ↺');
         else if (line.includes('한 번 더!')) bubble((line.match(/· ([^·]+? 한 번 더!)/) || [0, '한 번 더!'])[1]);
         else if (line.includes('등!')) bubble(line.replace(/!$/, ''));
       }
     }
     seenSeq = g.logSeq || 0;
     renderLog(g.log);
+    anim = { prev: null, handRects: {} }; // 같은 변화로 애니메이션이 다시 나오지 않게
+    placeTurnToken(g, me);
 
     // 결과
     if (g.finished && !shownResult) {
@@ -296,6 +308,21 @@
       setTimeout(() => showResults(g, me, lobby), 900);
     }
   }
+
+  // --- 차례 말: 지금 차례인 자리로 미끄러져 간다 ---
+  function placeTurnToken(g, me) {
+    const tok = $('turnToken');
+    if (g.finished || $('game').hidden) { tok.hidden = true; return; }
+    const target = g.turn === me ? $('meBar') : document.querySelector(`.opp[data-id="${g.turn}"]`);
+    if (!target) { tok.hidden = true; return; }
+    const r = target.getBoundingClientRect();
+    tok.hidden = false;
+    tok.textContent = g.turn === me ? '내 차례' : '차례';
+    const x = r.left + r.width / 2;
+    const y = g.turn === me ? r.top - 4 : r.bottom + 2;
+    tok.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px) translate(-50%, ${g.turn === me ? '-100%' : '0'})`;
+  }
+  window.addEventListener('resize', () => { if (state && state.game) placeTurnToken(state.game, state.me); });
 
   // --- 카드 뽑기 애니메이션: 덱에서 받은 사람에게 ---
   function animateDraws(g, me) {

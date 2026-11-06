@@ -60,7 +60,11 @@
 
 <!-- 게임 -->
 <section id="game" class="screen" hidden>
+  <div id="ring" class="ring" aria-hidden="true">
+    <i class="ar top"></i><i class="ar right"></i><i class="ar bottom"></i><i class="ar left"></i>
+  </div>
   <div id="opponents" class="opponents"></div>
+  <div id="turnToken" class="turn-token" hidden></div>
 
   <div class="table">
     <div class="status" id="status"></div>
@@ -78,7 +82,7 @@
     </div>
   </div>
 
-  <div class="me-bar">
+  <div class="me-bar" id="meBar">
     <span id="myName" class="nm"></span>
     <span id="timer" class="timer"></span>
     <button id="btnSort" class="btn small sort">모양순</button>
