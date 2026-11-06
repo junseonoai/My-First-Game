@@ -139,14 +139,14 @@ class Game {
     player.bankrupt = true;
     this.discard.splice(0, 0, ...player.hand); // 바닥 아래로
     player.hand = [];
-    this.addLog(`💥 ${player.name}님 파산! (${BANKRUPT}장 이상)`);
+    this.addLog(`${player.name}님 파산! (${BANKRUPT}장 이상)`);
     this.checkEnd();
   }
 
   finish(player) {
     player.out = true;
     player.rank = this.nextRank++;
-    this.addLog(`🏆 ${player.name}님 ${player.rank}등!`);
+    this.addLog(`${player.name}님 ${player.rank}등!`);
     this.checkEnd();
   }
 
@@ -223,7 +223,7 @@ class Game {
       this.activeSuit = chosenSuit;
       notes.push(`${SUIT_NAME[chosenSuit]}(으)로 변경`);
     }
-    if (blocked) notes.push('🛡️ 막기!');
+    if (blocked) notes.push('막기!');
     if (this.penalty > attackBefore || (blocked && this.penalty > 0)) notes.push(`공격 누적 ${this.penalty}장`);
     if (rank === 'J') notes.push(steps > 2 ? `${steps - 1}명 건너뛰기` : '건너뛰기');
     if (rank === 'Q') notes.push(qCount % 2 ? '방향 전환' : '방향 그대로');
@@ -248,8 +248,8 @@ class Game {
     if (rank === 'Q' && qCount % 2 === 1 && this.alive().length === 2) again = true;
     if (!again) this.advance(steps);
     // 차례가 다시 나에게 돌아오면 (K, 2인 Q, J로 모두 건너뜀) 분명히 알려 준다
-    if (this.cur().id === p.id && rank !== 'K') notes.push(`🔁 ${p.name} 한 번 더!`);
-    else if (rank === 'K') notes[notes.indexOf('한 번 더')] = `🔁 ${p.name} 한 번 더!`;
+    if (this.cur().id === p.id && rank !== 'K') notes.push(`${p.name} 한 번 더!`);
+    else if (rank === 'K') notes[notes.indexOf('한 번 더')] = `${p.name} 한 번 더!`;
     this.addLog(line());
     this.tick();
     return { ok: true };
@@ -282,9 +282,9 @@ class Game {
     if (!target || !caller) return { ok: false };
     this.oneCard = null;
     if (caller.id === target.id) {
-      this.addLog(`📢 ${target.name}: 원카드!`);
+      this.addLog(`${target.name}: 원카드!`);
     } else {
-      this.addLog(`🚨 ${caller.name}님이 먼저 외쳤다! ${target.name}님 1장 벌칙`);
+      this.addLog(`${caller.name}님이 먼저 눌렀다! ${target.name}님 1장 벌칙`);
       this.drawCards(target, 1);
       if (target.out && !this.finished && this.cur().id === target.id) this.advance(1);
     }
@@ -319,6 +319,7 @@ class Game {
       playKind: me && this.cur().id === me.id && !this.finished
         ? Object.fromEntries(me.hand.filter((c) => this.canPlay(c)).map((c) => [c.id, this.playKind(c)])) : {},
       top: this.top(),
+      recent: this.discard.slice(-4),
       activeSuit: this.activeSuit,
       penalty: this.penalty,
       dir: this.dir,

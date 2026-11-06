@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>온라인 원카드</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gowun+Dodum&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;600;700&family=Libre+Baskerville:wght@400;700&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,12 +14,13 @@
 <!-- 시작 화면 -->
 <section id="home" class="screen">
   <div class="panel">
-    <h1 class="logo"><span class="red">♥</span> 원카드 <span>♠</span></h1>
+    <h1 class="logo"><span class="suit red">♥</span>원카드<span class="suit">♠</span></h1>
     <p class="sub">친구와 함께하는 온라인 카드 게임</p>
     <label class="field">닉네임
       <input id="name" maxlength="12" placeholder="닉네임을 입력하세요" autocomplete="off">
     </label>
     <button id="btnCreate" class="btn primary">방 만들기</button>
+    <div class="divider">또는 코드로 참가</div>
     <div class="join">
       <input id="code" maxlength="4" placeholder="방 코드" autocomplete="off">
       <button id="btnJoin" class="btn">참가</button>
@@ -33,7 +35,7 @@
         <li><b>같은 숫자</b>는 여러 장을 한 번에 낼 수 있어요. 첫 장만 낼 수 있으면 되고, 효과는 합쳐져요. (2 두 장 → 4장 공격, J 두 장 → 두 명 건너뛰기)</li>
         <li><b>J</b> 건너뛰기 · <b>Q</b> 방향 바꾸기 · <b>K</b> 한 번 더 · <b>7</b> 무늬 바꾸기</li>
         <li>누군가 한 장 남으면 화면에 <b>원카드!</b> 버튼이 떠요. 선착순! 본인이 먼저 누르면 안전, 다른 사람이 먼저 누르면 1장 벌칙!</li>
-        <li>낼 수 있는 카드 테두리: <b style="color:#ff5a4f">빨강</b> 받아치기 · <b style="color:#ffd84a">노랑</b> 막기 · <b>무지개</b> 조커</li>
+        <li>낼 수 있는 카드 테두리: <i class="sw" style="background:#d6403a"></i><b>빨강</b> 받아치기 · <i class="sw" style="background:#e3b23c"></i><b>노랑</b> 막기 · <i class="sw" style="background:linear-gradient(90deg,#d6403a,#e3b23c,#3f9b6b,#2f63b5)"></i><b>무지개</b> 조커</li>
         <li>손패가 30장 이상이 되면 <b>파산</b>(탈락)입니다.</li>
       </ul>
     </details>
@@ -48,7 +50,7 @@
     <button id="btnCopy" class="btn small">코드 복사</button>
     <ul id="members" class="members"></ul>
     <div id="hostControls" class="row">
-      <button id="btnBot" class="btn">🤖 봇 추가</button>
+      <button id="btnBot" class="btn">봇 추가</button>
       <button id="btnStart" class="btn primary">게임 시작</button>
     </div>
     <p id="waitMsg" class="sub" hidden>방장이 게임을 시작하길 기다리는 중…</p>
@@ -62,9 +64,9 @@
 
   <div class="table">
     <div class="status" id="status"></div>
-    <div id="stack" class="stack" hidden><span class="stack-label">공격</span><span id="stackNum" class="stack-num"></span><span class="stack-unit">장</span></div>
+    <div id="stack" class="stack" hidden><span id="stackNum" class="stack-num"></span><span class="stack-label">장 공격</span></div>
     <div class="center">
-      <button id="deck" class="deck card back" aria-label="카드 뽑기"><span id="deckCount"></span></button>
+      <div class="deck-wrap"><button id="deck" class="deck card back" aria-label="카드 뽑기"></button><span id="deckCount" class="deck-count"></span></div>
       <div id="pile" class="pile"></div>
       <div id="suitBadge" class="suit-badge"></div>
     </div>
@@ -77,18 +79,18 @@
   </div>
 
   <div class="me-bar">
-    <span id="myName"></span>
+    <span id="myName" class="nm"></span>
     <span id="timer" class="timer"></span>
     <button id="btnSort" class="btn small sort">모양순</button>
   </div>
   <div id="hand" class="hand"></div>
 
-  <button id="btnEmote" class="fab fab-emote" aria-label="빠른 이모티콘과 채팅">😀</button>
+  <button id="btnEmote" class="fab fab-emote" aria-label="빠른 이모티콘과 채팅"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><path d="M9 9.5v.5M15 9.5v.5"/></svg></button>
   <div id="emotePanel" class="emote-panel" hidden>
     <div id="emojiRow" class="emoji-row"></div>
     <div id="phraseList" class="phrase-list"></div>
   </div>
-  <button id="btnLog" class="fab" aria-label="기록과 채팅">💬</button>
+  <button id="btnLog" class="fab" aria-label="기록과 채팅"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h16v11H10l-4 3.5V16H4z"/><path d="M8 9h8M8 12h5" stroke-linecap="round"/></svg></button>
   <aside id="side" class="side" hidden>
     <div class="side-head"><b>기록 · 채팅</b><button id="btnCloseSide" class="btn small ghost">닫기</button></div>
     <ul id="log" class="log"></ul>

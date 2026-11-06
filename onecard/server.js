@@ -9,8 +9,8 @@ const MAX_PLAYERS = 6;
 const TURN_SECONDS = 30;
 const RECONNECT_GRACE_MS = 60_000;
 const EMOJIS = ['😀', '😂', '😎', '😭', '😡', '😱', '👍', '👏', '🔥', '💀'];
-const PHRASES = ['빨리 내요!', '잘했어요 👍', '아 안 돼!', '봐주세요 🙏', '원카드 조심!', '공격 간다!', '운이 좋네요', '한 판 더?', 'ㅋㅋㅋㅋ', '안녕하세요 👋'];
-const BOT_NAMES = ['봇 철수', '봇 영희', '봇 민수', '봇 지수', '봇 하늘'];
+const PHRASES = ['빨리 내요!', '잘했어요', '아 안 돼!', '봐주세요', '원카드 조심!', '공격 간다!', '운이 좋네요', '한 판 더?', 'ㅋㅋㅋㅋ', '안녕하세요'];
+const BOT_NAMES = ['철수', '영희', '민수', '지수', '하늘'];
 
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
@@ -79,7 +79,7 @@ function scheduleTurn(room) {
     room.deadline = Date.now() + TURN_SECONDS * 1000;
     room.turnTimer = setTimeout(() => {
       if (room.game === g && !g.finished && g.cur().id === cur.id) {
-        g.addLog(`⏰ ${cur.name}님 시간 초과`);
+        g.addLog(`${cur.name}님 시간 초과`);
         g.draw(cur.id);
         after(room);
       }
