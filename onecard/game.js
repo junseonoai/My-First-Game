@@ -234,20 +234,24 @@ class Game {
     else if (this.oneCard && this.oneCard.playerId === p.id) this.oneCard = null;
 
     const multi = cards.length > 1 ? ` (${cards.length}장 동시!)` : '';
-    this.addLog(`${p.name}: ${cards.map(cardLabel).join(' ')}${multi}${notes.length ? ' · ' + notes.join(' · ') : ''}`);
+    const line = () => `${p.name}: ${cards.map(cardLabel).join(' ')}${multi}${notes.length ? ' · ' + notes.join(' · ') : ''}`;
 
     if (p.hand.length === 0) {
+      this.addLog(line());
       this.finish(p);
       if (this.finished) return { ok: true };
       this.advance(1);
       return { ok: true };
     }
 
-    this.tick();
-    if (this.finished) return { ok: true };
     // 두 명일 때 Q(홀수 장)는 한 번 더와 같음
     if (rank === 'Q' && qCount % 2 === 1 && this.alive().length === 2) again = true;
     if (!again) this.advance(steps);
+    // 차례가 다시 나에게 돌아오면 (K, 2인 Q, J로 모두 건너뜀) 분명히 알려 준다
+    if (this.cur().id === p.id && rank !== 'K') notes.push(`🔁 ${p.name} 한 번 더!`);
+    else if (rank === 'K') notes[notes.indexOf('한 번 더')] = `🔁 ${p.name} 한 번 더!`;
+    this.addLog(line());
+    this.tick();
     return { ok: true };
   }
 

@@ -219,6 +219,7 @@
         else if (line.includes('벌칙')) bubble('🚨 벌칙!');
         else if (line.includes('파산')) bubble('💥 파산!');
         else if (line.includes('막기')) bubble('🛡️ 막기!');
+        else if (line.includes('한 번 더!')) bubble((line.match(/🔁 .+? 한 번 더!/) || ['🔁 한 번 더!'])[0]);
         else if (line.includes('등!')) bubble(line.replace(/^🏆\s*/, '🏆 '));
       }
     }

@@ -65,6 +65,8 @@ function scheduleTurn(room) {
   scheduleOneCard(room);
 
   const cur = g.cur();
+  room.lastTurnId = room.curTurnId;
+  room.curTurnId = cur.id;
   const member = room.members.find((m) => m.id === cur.id);
   if (member && member.bot) {
     room.botTimer = setTimeout(() => {
@@ -72,7 +74,7 @@ function scheduleTurn(room) {
         g.botMove(cur.id);
         after(room);
       }
-    }, 900 + Math.random() * 900);
+    }, (room.lastTurnId === cur.id ? 1800 : 900) + Math.random() * 900); // 같은 봇이 연달아 내면 조금 더 천천히
   } else {
     room.deadline = Date.now() + TURN_SECONDS * 1000;
     room.turnTimer = setTimeout(() => {
