@@ -147,7 +147,8 @@ class Game {
   finish(player) {
     player.out = true;
     player.rank = this.nextRank++;
-    this.addLog(`${player.name}님 ${player.rank}등!`);
+    // 둘이 할 때는 순위 대신 우승
+    this.addLog(this.players.length === 2 ? `${player.name}님 우승!` : `${player.name}님 ${player.rank}등!`);
     this.checkEnd();
   }
 

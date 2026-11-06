@@ -34,6 +34,8 @@
   const SYM = { S: '♠', H: '♥', D: '♦', C: '♣' };
   const TIER_NAME = { silver: '실버', gold: '골드', platinum: '플래티넘', master: '마스터', grandmaster: '그랜드마스터' };
   const TIER_SHORT = { silver: '실버', gold: '골드', platinum: '플래', master: '마스터', grandmaster: '그마' };
+  // 둘이 할 때는 1등·2등 대신 우승·패배
+  const rankLabel = (rank, n) => n === 2 ? (rank === 1 ? '우승' : '패배') : `${rank}등`;
   const tierTag = (t, short) => `<span class="tier t-${t || 'gold'}">${(short ? TIER_SHORT : TIER_NAME)[t || 'gold']}</span>`;
   const RED = { H: 1, D: 1 };
 
@@ -190,6 +192,7 @@
     }
     return el;
   }
+  window.oneCardUI = { cardEl: (c) => cardEl(c), reaction: () => ({ best: +store.get('onecard-best-ms') || 0 }) };
   function backEl() { const el = document.createElement('div'); el.className = 'card back'; return el; }
 
   // --- 날아가는 카드 ---
@@ -279,7 +282,7 @@
       const d = document.createElement('div');
       d.className = 'opp' + (p.id === g.turn && !g.finished ? ' turn' : '') + (p.out ? ' out' : '') + (p.count === 1 ? ' warn' : '');
       let badge = '';
-      if (p.rank) badge = `<div class="badge">${p.rank}등</div>`;
+      if (p.rank) badge = `<div class="badge">${rankLabel(p.rank, n)}</div>`;
       else if (p.bankrupt) badge = '<div class="badge bad">파산</div>';
       else if (p.out) badge = '<div class="badge bad">나감</div>';
       else if (!online && !p.bot) badge = '<div class="badge bad">연결 끊김</div>';
@@ -358,16 +361,10 @@
     $('btnDraw').classList.toggle('danger', g.penalty > 0 && myTurn);
 
     // 원카드 선착순 팝업
-    const canOne = !!g.oneCard && !g.finished && !(meP && meP.out && g.oneCard !== me);
-    $('onePop').hidden = !canOne;
-    if (canOne) {
-      const owner = g.players.find((p) => p.id === g.oneCard);
-      $('oneMsg').textContent = g.oneCard === me ? '한 장 남았어요! 먼저 누르세요!' : `${owner ? owner.name : ''}님이 한 장! 먼저 누르면 벌칙!`;
-      $('onePop').classList.toggle('mine', g.oneCard === me);
-    }
+    renderOnePop(g, me, meP);
 
     // 내 이름/타이머
-    $('myName').textContent = (meP ? meP.name : '') + ` · ${g.hand.length}장` + (meP && meP.rank ? ` · ${meP.rank}등` : '') + (meP && meP.bankrupt ? ' · 파산' : '');
+    $('myName').textContent = (meP ? meP.name : '') + ` · ${g.hand.length}장` + (meP && meP.rank ? ` · ${rankLabel(meP.rank, n)}` : '') + (meP && meP.bankrupt ? ' · 파산' : '');
     document.querySelector('.me-bar').classList.toggle('turn', myTurn);
 
     // 손패
@@ -417,7 +414,7 @@
         else if (line.includes('막기')) bubble('막기!');
         else if (line.includes('방향 전환') && g.players.length > 2) bubble(g.dir === 1 ? '시계 방향 ↻' : '반시계 방향 ↺');
         else if (line.includes('한 번 더!')) bubble((line.match(/· ([^·]+? 한 번 더!)/) || [0, '한 번 더!'])[1]);
-        else if (line.includes('등!')) bubble(line.replace(/!$/, ''));
+        else if (line.includes('등!') || line.includes('우승!')) bubble(line.replace(/!$/, ''));
       }
     }
     seenSeq = g.logSeq || 0;
@@ -430,6 +427,63 @@
       shownResult = true;
       setTimeout(() => showResults(g, me, lobby), 900);
     }
+  }
+
+  // --- 원카드 버튼과 반응 속도 ---
+  let lateUntil = 0, lateRace = null, lateTimer = null;
+  function renderOnePop(g, me, meP) {
+    const race = state.race;
+    const eligible = meP && (!meP.out || g.oneCard === me);
+    const canOne = !!g.oneCard && !g.finished && eligible;
+    const pressed = race && race.presses.some((p) => p.id === me);
+    // 누가 먼저 눌렀는데 나는 아직 안 눌렀다면 1.2초 동안 버튼을 남겨 내 반응 속도도 잰다
+    if (!canOne && race && race.presses.length && !pressed && eligible && lateRace !== race.id) {
+      lateRace = race.id; lateUntil = Date.now() + 1200;
+      clearTimeout(lateTimer); lateTimer = setTimeout(render, 1250);
+    }
+    const late = !canOne && race && lateRace === race.id && !pressed && Date.now() < lateUntil;
+    $('onePop').hidden = !(canOne || late);
+    $('onePop').classList.toggle('late', !!late);
+    if (late) {
+      const first = race.presses.find((p) => p.first);
+      $('oneMsg').textContent = `${first ? first.name : ''}님이 먼저 눌렀어요! 내 속도도 재 보기`;
+      $('onePop').classList.remove('mine');
+    } else if (canOne) {
+      const owner = g.players.find((p) => p.id === g.oneCard);
+      $('oneMsg').textContent = g.oneCard === me ? '한 장 남았어요! 먼저 누르세요!' : `${owner ? owner.name : ''}님이 한 장! 먼저 누르면 벌칙!`;
+      $('onePop').classList.toggle('mine', g.oneCard === me);
+    }
+    renderRace(race, me);
+  }
+
+  // 반응 속도 결과: 누가 몇 초 만에 눌렀는지
+  let raceHideTimer = null, raceKey = '';
+  function renderRace(race, me) {
+    const el = $('racePanel');
+    if (!race || !race.presses.length) return;
+    const key = race.id + ':' + race.presses.length;
+    if (key === raceKey) return;
+    raceKey = key;
+    const rows = race.presses.slice().sort((a, b) => a.ms - b.ms);
+    const mine = race.presses.find((p) => p.id === me);
+    let best = +store.get('onecard-best-ms') || 0, record = '';
+    if (mine && (!best || mine.ms < best)) { store.set('onecard-best-ms', mine.ms); record = best ? ' · 새 기록!' : ''; best = mine.ms; }
+    const winner = race.presses.find((p) => p.first);
+    const outcome = winner ? (winner.id === race.target ? `${winner.name}님이 원카드를 외쳤어요` : `${winner.name}님이 잡았어요! ${race.targetName}님 1장 벌칙`) : '';
+    el.innerHTML = `<div class="race-head">원카드 반응 속도</div><div class="race-out"></div><ol></ol>${best ? `<div class="race-best">내 최고 ${(best / 1000).toFixed(2)}초${record}</div>` : ''}`;
+    el.querySelector('.race-out').textContent = outcome;
+    const ol = el.querySelector('ol');
+    for (const p of rows) {
+      const li = document.createElement('li');
+      if (p.id === me) li.className = 'me';
+      li.innerHTML = `<span class="rn"></span><b>${(p.ms / 1000).toFixed(2)}초</b>${p.first ? '<i>먼저!</i>' : '<i class="lt">늦음</i>'}`;
+      li.querySelector('.rn').textContent = p.name + (p.id === me ? ' (나)' : '');
+      ol.appendChild(li);
+    }
+    el.hidden = false;
+    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+    clearTimeout(raceHideTimer);
+    raceHideTimer = setTimeout(() => { el.hidden = true; }, 4500);
   }
 
   // --- 차례 말: 지금 차례인 자리로 미끄러져 간다 ---
@@ -542,13 +596,19 @@
     for (const p of list) {
       const li = document.createElement('li');
       if (p.id === me) li.className = 'me';
-      li.innerHTML = `<span class="pl">${p.rank || '–'}</span><span class="n"></span><span class="note">${p.bankrupt ? '파산' : !p.rank ? '나감' : ''}</span>`;
+      const duel = list.length === 2;
+      const mark = duel ? (p.rank === 1 ? '승' : '패') : (p.rank || '–');
+      const note = p.bankrupt ? '파산' : !p.rank ? '나감' : duel ? rankLabel(p.rank, 2) : '';
+      li.innerHTML = `<span class="pl">${mark}</span><span class="n"></span><span class="note${duel && p.rank === 1 ? ' win' : ''}">${note}</span>`;
       li.querySelector('.n').textContent = p.name + (p.id === me ? ' (나)' : '');
       if (p.bot) li.querySelector('.n').insertAdjacentHTML('afterend', tierTag(p.tier));
       ol.appendChild(li);
     }
+    $('racePanel').hidden = true;
     const isHost = state.lobby.host === me;
     $('btnAgain').hidden = !isHost;
+    const mine = g.players.find((p) => p.id === me);
+    $('resultTitle').textContent = list.length === 2 ? (mine && mine.rank === 1 ? '우승!' : '패배') : '게임 결과';
     $('resultModal').hidden = false;
   }
 
@@ -687,7 +747,7 @@
     const prevGame = state && state.game;
     // 새 게임이 시작되면 결과 상태 초기화
     if (s.game && !s.game.finished && (!prevGame || prevGame.finished)) {
-      shownResult = false; seenSeq = 0; $('resultModal').hidden = true; pileSeen.clear();
+      shownResult = false; seenSeq = 0; $('resultModal').hidden = true; pileSeen.clear(); raceKey = ''; $('racePanel').hidden = true;
     }
     // 애니메이션용: 바뀌기 전 상태와 내 카드 위치
     const handRects = {};

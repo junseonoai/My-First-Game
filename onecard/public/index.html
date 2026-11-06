@@ -25,6 +25,7 @@
       <input id="code" maxlength="4" placeholder="방 코드" autocomplete="off">
       <button id="btnJoin" class="btn">참가</button>
     </div>
+    <button id="btnTutorial" class="btn tutorial-btn">튜토리얼 <span id="tutorialHint" class="new-tag" hidden>처음이라면</span></button>
     <details class="rules">
       <summary>게임 규칙</summary>
       <ul>
@@ -117,6 +118,19 @@
   </aside>
 </section>
 
+<!-- 튜토리얼 -->
+<div id="tutorial" class="modal" hidden role="dialog" aria-labelledby="tuTitle">
+  <div class="panel tu-panel">
+    <div class="tu-top"><span id="tuStep" class="sub"></span><button id="tuClose" class="btn small ghost">닫기</button></div>
+    <h2 id="tuTitle"></h2>
+    <p id="tuBody" class="tu-body"></p>
+    <p id="tuTask" class="tu-task"></p>
+    <div id="tuDemo" class="tu-demo"></div>
+    <div id="tuDots" class="tu-dots"></div>
+    <div class="row"><button id="tuPrev" class="btn">이전</button><button id="tuNext" class="btn primary">다음</button></div>
+  </div>
+</div>
+
 <!-- 원카드 선착순 버튼 -->
 <div id="onePop" class="one-pop" hidden>
   <p id="oneMsg"></p>
@@ -140,17 +154,19 @@
 <!-- 결과 -->
 <div id="resultModal" class="modal" hidden>
   <div class="panel">
-    <h2>게임 결과</h2>
+    <h2 id="resultTitle">게임 결과</h2>
     <ol id="results" class="results"></ol>
     <button id="btnAgain" class="btn primary">다시 하기</button>
     <button id="btnToLobby" class="btn ghost">대기실로</button>
   </div>
 </div>
 
+<div id="racePanel" class="race-panel" hidden aria-live="polite"></div>
 <div id="toast" class="toast" hidden></div>
 <div id="bubble" class="bubble" hidden></div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="client.js"></script>
+<script src="tutorial.js"></script>
 </body>
 </html>
