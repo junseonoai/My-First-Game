@@ -96,13 +96,17 @@
   </div>
 
   <div id="turnCue" class="turn-cue" hidden aria-hidden="true">내 차례</div>
-  <div id="turnBar" class="turn-bar" hidden aria-hidden="true"><i></i></div>
-  <div class="me-bar" id="meBar">
-    <span id="myName" class="nm"></span>
-    <span id="timer" class="timer"></span>
-    <button id="btnSort" class="btn small sort">모양순</button>
+  <!-- 내 카드 상자: 내 차례면 상자 색이 바뀐다 -->
+  <div id="tray" class="tray">
+    <div class="me-bar" id="meBar">
+      <span id="trayLabel" class="tray-label">대기</span>
+      <span id="myName" class="nm"></span>
+      <span id="timer" class="timer"></span>
+      <button id="btnSort" class="btn small sort">모양순</button>
+    </div>
+    <div id="turnBar" class="turn-bar" hidden aria-hidden="true"><i></i></div>
+    <div id="hand" class="hand"></div>
   </div>
-  <div id="hand" class="hand"></div>
 
   <button id="btnQuit" class="fab fab-quit" aria-label="게임에서 나가기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 16l-4-4 4-4M6 12h10"/></svg></button>
   <button id="btnEmote" class="fab fab-emote" aria-label="빠른 이모티콘과 채팅"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><path d="M9 9.5v.5M15 9.5v.5"/></svg></button>

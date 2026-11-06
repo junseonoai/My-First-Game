@@ -321,6 +321,7 @@
     $('ring').classList.toggle('ccw', g.dir !== 1);
     $('ring').hidden = n <= 2;
     $('game').classList.toggle('my-turn', myTurn);
+    $('trayLabel').textContent = g.finished ? '끝' : myTurn ? '내 차례' : '대기';
     updateTimer();
     // 내 차례가 막 시작되면 크게 알려 준다 (휴대폰은 짧게 진동)
     if (myTurn && !wasMyTurn && seenSeq) {
@@ -615,7 +616,7 @@
     const mobile = window.innerWidth <= 520;
     const cw = mobile ? 62 : 84;
     const normalStep = cw - (mobile ? 24 : 32);
-    const avail = Math.max(cw, hand.clientWidth - 32);
+    const avail = Math.max(cw, hand.clientWidth - 24);
     const cap = Math.max(1, Math.floor((avail - cw) / normalStep) + 1);
     const two = n > cap;
     const per = two ? Math.ceil(n / 2) : n;
