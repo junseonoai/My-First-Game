@@ -730,3 +730,139 @@ body[data-bg="charcoal"] { --felt: #2b2e33; --felt-deep: #1b1d21; --tray: #14161
   85% { opacity: 1; }
   100% { opacity: 0; }
 }
+
+/* --- 바닥·덱 자리 고정: 알림이나 손패 줄 수가 바뀌어도 가운데가 움직이지 않게 --- */
+#game { justify-content: flex-start; }
+.table { flex: 1 1 auto; justify-content: center; min-height: 0; }
+.tray { flex: none; }
+.status-row { height: 26px; display: flex; align-items: center; justify-content: center; gap: 8px; max-width: 100%; padding: 0 12px; }
+.status-row .status { min-height: 0; padding: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.multi-hint { display: none !important; }
+/* 쌓인 공격 칩은 덱 왼쪽에 떠 있다 (흐름에 끼지 않음) */
+.center .stack { position: absolute; right: calc(100% + 14px); top: 50%; margin-top: calc(var(--size) / -2 - 8px); z-index: 2; }
+@media (max-width: 520px) {
+  .center .stack { --size: 56px; right: calc(100% + 10px); }
+  .center .stack.lv2 { --size: 64px; } .center .stack.lv3 { --size: 74px; } .center .stack.lv4 { --size: 84px; }
+  .stack-label { font-size: 9px; letter-spacing: 0; }
+}
+/* 상대 자리 높이 고정 (원카드? 같은 표시가 생겨도 그대로) */
+.opp .badge { min-height: 15px; line-height: 15px; }
+/* 손패 상자 높이 고정: 한 줄이든 두 줄이든 같은 높이 */
+.tray .hand { height: 216px; justify-content: flex-end; padding-top: 16px; }
+@media (max-width: 520px) { .tray .hand { height: 160px; min-height: 0; } }
+
+/* --- 도는 방향: 가운데 위에 크게 + 다음 사람 표시 --- */
+.dir-chip {
+  flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px 2px 6px; border-radius: 999px;
+  background: rgba(243, 234, 214, .14); border: 1.5px solid rgba(243, 234, 214, .45); color: var(--cream); font-size: 13px; font-weight: 700;
+}
+.dir-chip[hidden] { display: none; }
+.dir-chip i { font-style: normal; font-size: 18px; line-height: 1; display: inline-block; animation: spinCw 2.4s linear infinite; }
+.dir-chip.ccw i { animation-name: spinCcw; }
+.dir-chip.flip { animation: chipFlip .6s cubic-bezier(.3, 1.6, .5, 1); background: var(--brass); color: var(--ink); border-color: var(--ink); }
+@keyframes spinCw { to { transform: rotate(360deg); } }
+@keyframes spinCcw { to { transform: rotate(-360deg); } }
+@keyframes chipFlip { from { transform: scale(1.5); } }
+.dir-flash {
+  position: fixed; z-index: 31; pointer-events: none; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--cream);
+  animation: dirFade 1.5s ease-out forwards;
+}
+.dir-flash i { font-style: normal; font-size: 120px; line-height: 1; font-weight: 700; text-shadow: 0 4px 0 rgba(0, 0, 0, .45); animation: dirSpin 1.2s cubic-bezier(.2, .7, .3, 1) forwards; }
+.dir-flash.ccw i { animation-name: dirSpinCcw; }
+.dir-flash b { font-size: 18px; background: var(--ink); color: #ffd978; padding: 3px 12px; border-radius: 6px; border: 2px solid #ffd978; }
+@keyframes dirSpin { from { transform: rotate(-200deg) scale(.5); } to { transform: rotate(0) scale(1); } }
+@keyframes dirSpinCcw { from { transform: rotate(200deg) scale(.5); } to { transform: rotate(0) scale(1); } }
+@keyframes dirFade { 0% { opacity: 0; } 12% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; } }
+.flow { display: inline-flex; color: var(--brass); font-size: 22px; font-weight: 700; }
+.flow i { font-style: normal; animation: march 1.1s ease-in-out infinite; margin-left: -4px; }
+.flow i + i { animation-delay: .18s; }
+.opponents.many .flow { font-size: 18px; }
+@keyframes march { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+.ring .ar::before { border-color: rgba(243, 234, 214, .85); }
+.next-tag {
+  position: absolute; left: 50%; top: -9px; transform: translateX(-50%); z-index: 2; white-space: nowrap;
+  font-size: 10px; font-weight: 700; padding: 0 6px; line-height: 15px; border-radius: 3px;
+  background: var(--cream); color: var(--ink); border: 1.5px solid var(--ink);
+}
+.opp.next { border-color: rgba(243, 234, 214, .7); border-style: dashed; }
+
+/* --- 카드를 받으면 크게 '+N장' --- */
+.draw-mark {
+  position: fixed; z-index: 36; pointer-events: none; transform: translate(-50%, -50%); white-space: nowrap;
+  font-size: 15px; font-weight: 700; padding: 3px 11px; border-radius: 999px;
+  background: var(--paper); color: var(--ink); border: 2.5px solid var(--ink); box-shadow: 0 3px 0 rgba(0, 0, 0, .4);
+  animation: markPop 1.6s cubic-bezier(.3, 1.4, .5, 1) forwards;
+}
+.draw-mark b { font-family: var(--serif); font-size: 22px; margin-right: 1px; }
+.draw-mark.big { background: var(--red); color: var(--cream); border-color: var(--ink); font-size: 17px; }
+.draw-mark.big b { font-size: 30px; }
+.draw-mark.mine { transform: translate(-50%, -100%); animation-name: markPopMe; }
+@keyframes markPop {
+  0% { transform: translate(-50%, -50%) scale(.3); opacity: 0; }
+  15% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+  25% { transform: translate(-50%, -50%) scale(1); }
+  80% { opacity: 1; }
+  100% { transform: translate(-50%, -90%) scale(1); opacity: 0; }
+}
+@keyframes markPopMe {
+  0% { transform: translate(-50%, -60%) scale(.3); opacity: 0; }
+  15% { transform: translate(-50%, -100%) scale(1.15); opacity: 1; }
+  25% { transform: translate(-50%, -100%) scale(1); }
+  80% { opacity: 1; }
+  100% { transform: translate(-50%, -140%) scale(1); opacity: 0; }
+}
+.tray.got { animation: trayGot .5s ease-out; }
+@keyframes trayGot { 0% { translate: 0 0; } 20% { translate: 0 6px; } 45% { translate: 0 -3px; } 100% { translate: 0 0; } }
+
+/* --- 원카드 전체 결과: 가운데에 잠깐 (판은 멈춤), 끝나면 다 함께 재개 --- */
+#racePanel.race-panel { top: 50%; z-index: 34; transform: translate(-50%, -50%); }
+#racePanel.show { animation: raceIn2 .25s cubic-bezier(.3, 1.4, .5, 1); }
+@keyframes raceIn2 { from { transform: translate(-50%, -50%) scale(.85); opacity: 0; } }
+.one-pop.result > * { display: none; }
+.race-stamp {
+  display: block; width: fit-content; margin: 0 auto 6px; padding: 2px 14px; font-size: 26px; font-weight: 700; letter-spacing: -1px;
+  border: 3px solid currentColor; border-radius: 6px; transform: rotate(-3deg); animation: stampIn .35s cubic-bezier(.3, 1.6, .5, 1);
+}
+.race-stamp.ok { color: #2f7a4f; }
+.race-stamp.bad { color: var(--red); }
+.race-stamp.none { color: var(--ink-soft); }
+@keyframes stampIn { from { transform: rotate(-8deg) scale(1.6); opacity: 0; } }
+#racePanel .race-out { text-align: center; font-size: 14px; margin-bottom: 8px; }
+
+/* --- 먼저 할 사람 고르기 --- */
+.intro-pop {
+  position: fixed; inset: 0; z-index: 35; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  background: rgba(8, 20, 14, .7); animation: fadeIn .2s ease-out;
+}
+.intro-pop[hidden] { display: none; }
+.intro-title {
+  margin: 0; padding: 6px 16px; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); border-radius: 4px;
+  font-size: 16px; font-weight: 700; box-shadow: var(--shadow-hard); transform: rotate(-2deg);
+}
+.intro-stage { position: relative; width: 260px; height: 260px; display: flex; align-items: center; justify-content: center; perspective: 700px; }
+.intro-msg { margin: 0; min-height: 34px; font-size: 24px; font-weight: 700; color: #ffd978; text-shadow: 0 2px 0 rgba(0, 0, 0, .5); }
+.intro-pop.reveal .intro-msg { animation: stampIn .35s cubic-bezier(.3, 1.6, .5, 1); }
+.coin { position: relative; width: 150px; height: 150px; transform-style: preserve-3d; }
+.coin .face {
+  position: absolute; inset: 0; border-radius: 50%; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 14px;
+  background: radial-gradient(circle at 35% 30%, #ffe9a6, #d9ab3c 55%, #9c7420); color: var(--ink);
+  border: 4px solid var(--ink); box-shadow: inset 0 0 0 6px rgba(255, 255, 255, .25), inset 0 0 0 8px rgba(31, 26, 20, .35);
+}
+.coin .face.b { transform: rotateY(180deg); background: radial-gradient(circle at 35% 30%, #f1f1f1, #b9bec4 55%, #7a8088); }
+.coin .face small { font-size: 12px; font-weight: 700; opacity: .7; }
+.coin .face span { font-size: 22px; font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.coin-shadow { position: absolute; bottom: 18px; width: 120px; height: 18px; border-radius: 50%; background: rgba(0, 0, 0, .5); filter: blur(3px); }
+.wheel { width: 250px; height: 250px; filter: drop-shadow(0 6px 0 rgba(0, 0, 0, .45)); }
+.wheel path.win { stroke: #fff; stroke-width: 5; }
+.wheel-pin {
+  position: absolute; top: -8px; left: 50%; z-index: 2; width: 0; height: 0; margin-left: -14px;
+  border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 26px solid var(--cream);
+  filter: drop-shadow(0 2px 0 var(--ink)) drop-shadow(0 -1px 0 var(--ink));
+}
+/* 시간 막대와 남은 카드 글자도 자리를 늘 차지 (차례가 바뀌어도 판이 움직이지 않게) */
+.tray .turn-bar.off { visibility: hidden; }
+.deck-wrap { width: 84px; }
+.deck-count { white-space: nowrap; }
+@media (max-width: 520px) { .deck-wrap { width: 62px; } }

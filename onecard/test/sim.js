@@ -59,4 +59,14 @@ assert(g.canPlay({ suit: 'BJ', rank: 'JOKER' }), 'joker on joker');
   assert(h.play('b', [810, 811]).ok, 'double J');
   assert.strictEqual(h.cur().id, 'b', 'J×2 with 3 players skips both others');
 }
+// 둘이 할 때 J·Q는 몇 장이든 다시 내 차례
+for (const [rank, n] of [['J', 1], ['J', 2], ['J', 3], ['Q', 1], ['Q', 2], ['Q', 3]]) {
+  const h = new Game([{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }]);
+  h.turn = 0; h.dir = 1; h.penalty = 0;
+  h.discard.push({ id: 900, suit: 'H', rank: '9' }); h.activeSuit = 'H';
+  const cards = ['H', 'S', 'D'].slice(0, n).map((suit, i) => ({ id: 901 + i, suit, rank }));
+  h.players[0].hand = [...cards, { id: 950, suit: 'C', rank: '5' }];
+  assert(h.play('a', cards.map((c) => c.id)).ok, `2p ${rank}×${n}`);
+  assert.strictEqual(h.cur().id, 'a', `2p ${rank}×${n} returns to me`);
+}
 console.log(`ok — ${N}판, 평균 ${(turnsTotal / N).toFixed(1)}턴, 파산 ${bankrupt}명, 턴제한 종료 ${capped}판`);

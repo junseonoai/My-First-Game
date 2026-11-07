@@ -35,7 +35,7 @@
         <li><b>조커 공격</b>은 조커나 <b>A♠</b>로 받아칠 수 있어요.</li>
         <li><b>막기</b>: 2나 A 공격은 같은 무늬 <b>3</b>으로 막을 수 있어요. (공격이 사라져요)</li>
         <li><b>같은 숫자</b>는 여러 장을 한 번에 낼 수 있어요. 첫 장만 낼 수 있으면 되고, 효과는 합쳐져요. (2 두 장 → 4장 공격, J 두 장 → 두 명 건너뛰기)</li>
-        <li><b>J</b> 건너뛰기 · <b>Q</b> 방향 바꾸기 · <b>K</b> 한 번 더 · <b>7</b> 무늬 바꾸기</li>
+        <li><b>J</b> 건너뛰기 · <b>Q</b> 방향 바꾸기 · <b>K</b> 한 번 더 · <b>7</b> 무늬 바꾸기 (둘이 할 때 J·Q는 몇 장이든 한 번 더)</li>
         <li>누군가 한 장 남으면 화면에 <b>원카드!</b> 버튼이 떠요. 선착순! 본인이 먼저 누르면 안전, 다른 사람이 먼저 누르면 1장 벌칙!</li>
         <li>낼 수 있는 카드 테두리: <i class="sw" style="background:#d6403a"></i><b>빨강</b> 받아치기 · <i class="sw" style="background:#e3b23c"></i><b>노랑</b> 막기 · <i class="sw" style="background:linear-gradient(90deg,#d6403a,#e3b23c,#3f9b6b,#2f63b5)"></i><b>무지개</b> 조커</li>
         <li>손패가 30장 이상이 되면 <b>파산</b>(탈락)입니다.</li>
@@ -88,9 +88,9 @@
   <div id="turnToken" class="turn-token" hidden></div>
 
   <div class="table">
-    <div class="status" id="status"></div>
-    <div id="stack" class="stack" hidden><span id="stackNum" class="stack-num"></span><span class="stack-label">장 공격</span></div>
+    <div class="status-row"><div class="status" id="status"></div><span id="dirChip" class="dir-chip" hidden></span></div>
     <div class="center">
+      <div id="stack" class="stack" hidden><span id="stackNum" class="stack-num"></span><span class="stack-label">장 공격</span></div>
       <div class="deck-wrap"><button id="deck" class="deck card back" aria-label="카드 뽑기"></button><span id="deckCount" class="deck-count"></span></div>
       <div id="pile" class="pile"></div>
       <div id="suitBadge" class="suit-badge"></div>
@@ -153,6 +153,13 @@
   <div class="one-bar"><i id="oneBar"></i></div>
 </div>
 <div id="racePanel" class="race-panel" hidden aria-live="polite"></div>
+
+<!-- 먼저 할 사람 고르기: 둘이면 동전, 셋 이상이면 룰렛 -->
+<div id="introPop" class="intro-pop" hidden aria-live="polite">
+  <p id="introTitle" class="intro-title"></p>
+  <div id="introStage" class="intro-stage"></div>
+  <p id="introMsg" class="intro-msg"></p>
+</div>
 
 <!-- 테이블 색 -->
 <div id="bgModal" class="modal" hidden role="dialog" aria-labelledby="bgTitle">

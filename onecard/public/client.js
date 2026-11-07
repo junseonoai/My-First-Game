@@ -279,16 +279,17 @@
     const n = g.players.length;
     const nOpp = n - 1;
     opp.classList.toggle('many', nOpp >= 4);
+    const nextId = n > 2 && !g.finished ? nextAlive(g) : null; // 셋 이상: 다음 차례인 사람 표시
     for (let i = 1; i < n; i++) {
       if (i > 1) {
         // 자리 사이 진행 방향 화살표 (왼쪽 → 오른쪽이 시계 방향)
-        opp.insertAdjacentHTML('beforeend', `<span class="flow ${g.dir === 1 ? '' : 'rev'}" aria-hidden="true">›</span>`);
+        opp.insertAdjacentHTML('beforeend', `<span class="flow ${g.dir === 1 ? '' : 'rev'}" aria-hidden="true"><i>›</i><i>›</i></span>`);
       }
       const p = g.players[(myIdx + i) % n];
       const online = (lobby.members.find((m) => m.id === p.id) || {}).online;
       const d = document.createElement('div');
-      d.className = 'opp' + (p.id === g.turn && !g.finished ? ' turn' : '') + (p.out ? ' out' : '') + (p.count === 1 ? ' warn' : '');
-      let badge = '';
+      d.className = 'opp' + (p.id === g.turn && !g.finished ? ' turn' : '') + (p.id === nextId ? ' next' : '') + (p.out ? ' out' : '') + (p.count === 1 ? ' warn' : '');
+      let badge = '<div class="badge"></div>'; // 줄 높이를 늘 같게 (자리가 들썩이지 않게)
       if (p.rank) badge = `<div class="badge">${rankLabel(p.rank, n)}</div>`;
       else if (p.bankrupt) badge = '<div class="badge bad">파산</div>';
       else if (p.out) badge = '<div class="badge bad">나감</div>';
@@ -301,7 +302,7 @@
         const a = (k - (shown - 1) / 2) * 7;
         fan += `<i style="left:calc(50% - 9px + ${(k - (shown - 1) / 2) * 6}px);transform:rotate(${a}deg)"></i>`;
       }
-      d.innerHTML = `<div class="nm">${p.bot ? `<span class="bot t-${p.tier || 'gold'}">${TIER_SHORT[p.tier || 'gold']}</span>` : ''}<span></span></div><div class="fan">${fan}</div><div class="cnt">${p.out ? '–' : p.count + '장'}</div>${badge}`;
+      d.innerHTML = `${p.id === nextId ? '<span class="next-tag">다음</span>' : ''}<div class="nm">${p.bot ? `<span class="bot t-${p.tier || 'gold'}">${TIER_SHORT[p.tier || 'gold']}</span>` : ''}<span></span></div><div class="fan">${fan}</div><div class="cnt">${p.out ? '–' : p.count + '장'}</div>${badge}`;
       d.querySelector('.nm span:last-child').textContent = p.name;
       // 테이블을 둘러앉은 것처럼 가운데 자리는 위로, 바깥 자리는 아래로
       const off = Math.abs((i - 1) - (nOpp - 1) / 2);
@@ -312,18 +313,25 @@
     // 상태 문구
     const cur = g.players.find((p) => p.id === g.turn);
     let st = '';
+    const selectingNow = myTurn && selected.length > 0;
     if (g.finished) st = '게임 종료';
+    else if (selectingNow) st = '같은 숫자를 더 골라 함께 내요';
     else if (myTurn) st = g.penalty > 0 ? '받아치거나 막거나, 먹으세요' : '낼 카드를 고르세요'; // 내 차례 표시는 아래 상자 탭에
     else st = `${cur ? escapeHtml(cur.name) : ''}님 차례`;
-    if (n > 2) st += `<span class="dir">· ${g.dir === 1 ? '시계 방향 ↻' : '반시계 방향 ↺'}</span>`;
     $('status').innerHTML = st;
+    // 셋 이상: 도는 방향을 가운데에 크게 (바뀌면 한 바퀴 돈다)
+    const dirEl = $('dirChip');
+    dirEl.hidden = n <= 2 || g.finished;
+    dirEl.className = 'dir-chip' + (g.dir === 1 ? '' : ' ccw');
+    dirEl.innerHTML = `<i>${g.dir === 1 ? '↻' : '↺'}</i>${g.dir === 1 ? '시계 방향' : '반시계 방향'}`;
+    if (anim.prev && anim.prev.dir !== g.dir && n > 2) { dirEl.classList.add('flip'); dirFlash(g.dir); }
     $('status').classList.toggle('mine', myTurn);
     $('ring').classList.toggle('ccw', g.dir !== 1);
     $('ring').hidden = n <= 2;
     $('game').classList.toggle('my-turn', myTurn);
     // 상자 탭: 내 차례면 크게, 아니면 누구 차례인지
     const tabName = cur ? cur.name : '';
-    $('tabLabel').textContent = g.finished ? '게임 종료' : myTurn ? '내 차례' : `${tabName}님 차례`;
+    $('tabLabel').textContent = g.finished ? '게임 종료' : myTurn ? '내 차례' : `${tabName}님 차례` + (nextId === me ? ' · 다음은 나' : '');
     updateTimer();
     // 내 차례가 막 시작되면 크게 알려 준다 (휴대폰은 짧게 진동)
     if (myTurn && !wasMyTurn && seenSeq) {
@@ -423,18 +431,16 @@
     $('btnMulti').hidden = !selecting;
     $('btnMultiCancel').hidden = !selecting;
     $('btnDraw').hidden = selecting;
-    $('multiHint').hidden = !selecting;
+    $('multiHint').hidden = true; // 안내는 위 상태 줄에 (자리가 밀리지 않게)
     $('btnMulti').textContent = `${selected.length}장 내기`;
 
     // 기록
     const newCount = Math.min((g.logSeq || 0) - seenSeq, g.log.length);
     if (seenSeq && newCount > 0) {
       for (const line of g.log.slice(-newCount)) {
-        if (line.includes('원카드!')) bubble('원카드!');
-        else if (line.includes('벌칙')) bubble('벌칙 1장');
-        else if (line.includes('파산')) bubble('파산');
+        if (line.includes('원카드!') || line.includes('벌칙')) continue; // 원카드 결과는 결과 창에서
+        if (line.includes('파산')) bubble('파산');
         else if (line.includes('막기')) bubble('막기!');
-        else if (line.includes('방향 전환') && g.players.length > 2) bubble(g.dir === 1 ? '시계 방향 ↻' : '반시계 방향 ↺');
         else if (line.includes('한 번 더!')) bubble((line.match(/· ([^·]+? 한 번 더!)/) || [0, '한 번 더!'])[1]);
         else if (line.includes('등!') || line.includes('우승!')) bubble(line.replace(/!$/, ''));
       }
@@ -444,11 +450,112 @@
     anim = { prev: null, handRects: {} }; // 같은 변화로 애니메이션이 다시 나오지 않게
     placeTurnToken(g, me);
 
+    renderIntro();
+
     // 결과
     if (g.finished && !shownResult) {
       shownResult = true;
       setTimeout(() => showResults(g, me, lobby), 900);
     }
+  }
+
+  // 다음 차례인 사람 (지금 방향으로 한 칸)
+  function nextAlive(g) {
+    const n = g.players.length;
+    let t = g.players.findIndex((p) => p.id === g.turn);
+    for (let k = 0; k < n; k++) {
+      t = (t + g.dir + n) % n;
+      if (!g.players[t].out) return g.players[t].id;
+    }
+    return null;
+  }
+
+  // 방향이 바뀌면 가운데에 큰 화살표가 돈다
+  function dirFlash(dir) {
+    const el = document.createElement('div');
+    el.className = 'dir-flash' + (dir === 1 ? '' : ' ccw');
+    el.innerHTML = `<i>${dir === 1 ? '↻' : '↺'}</i><b>${dir === 1 ? '시계 방향' : '반시계 방향'}</b>`;
+    const r = $('pile').getBoundingClientRect();
+    el.style.left = (r.left + r.width / 2) + 'px';
+    el.style.top = (r.top + r.height / 2) + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1500);
+  }
+
+  // 카드를 받으면 받은 사람 자리에 '+N장'이 크게 뜬다 (공격을 먹으면 빨갛게)
+  function drawMark(id, n, me) {
+    const anchor = id === me ? $('trayTab') : document.querySelector(`.opp[data-id="${id}"]`);
+    if (!anchor) return;
+    const r = anchor.getBoundingClientRect();
+    const el = document.createElement('div');
+    el.className = 'draw-mark' + (n >= 2 ? ' big' : '') + (id === me ? ' mine' : '');
+    el.innerHTML = `<b>+${n}</b>장${n >= 2 ? ' 먹음' : ''}`;
+    el.style.left = Math.min(Math.max(r.left + r.width / 2, 50), window.innerWidth - 50) + 'px';
+    el.style.top = (id === me ? r.top - 10 : r.top + r.height * .45) + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1600);
+    if (id === me) { const t = $('tray'); t.classList.remove('got'); void t.offsetWidth; t.classList.add('got'); }
+  }
+
+  // --- 먼저 할 사람 고르기: 둘이면 동전 던지기, 셋 이상이면 룰렛 ---
+  const introDone = new Set();
+  let introTimers = [];
+  function renderIntro() {
+    const it = state && state.intro;
+    if (!it || !state.game) return;
+    const key = state.lobby.code + ':' + it.id;
+    if (introDone.has(key)) return;
+    introDone.add(key);
+    if (it.left < 1200 || reduceMotion) return; // 거의 끝났으면 건너뛴다
+    playIntro(it, state.game, state.me);
+  }
+  function playIntro(it, g, me) {
+    const pop = $('introPop'), stage = $('introStage');
+    introTimers.forEach(clearTimeout); introTimers = [];
+    const name = (id) => { const p = g.players.find((x) => x.id === id); return p ? (id === me ? '나' : p.name) : '?'; };
+    const total = it.left, reveal = 1100, spin = Math.max(900, total - reveal - 150);
+    pop.hidden = false;
+    pop.className = 'intro-pop k-' + it.kind;
+    $('introMsg').textContent = '';
+    stage.innerHTML = '';
+    const starterIdx = Math.max(0, it.order.indexOf(it.starter));
+    if (it.kind === 'coin') {
+      $('introTitle').textContent = '동전 던지기 · 누가 먼저?';
+      stage.innerHTML = `<div class="coin"><div class="face a"><small>앞</small><span></span></div><div class="face b"><small>뒤</small><span></span></div></div><div class="coin-shadow"></div>`;
+      stage.querySelector('.face.a span').textContent = name(it.order[0]);
+      stage.querySelector('.face.b span').textContent = name(it.order[1]);
+      const end = 360 * 6 + (starterIdx === 1 ? 180 : 0);
+      stage.querySelector('.coin').animate([
+        { transform: 'translateY(0) rotateY(0deg) scale(1)' },
+        { transform: `translateY(-120px) rotateY(${end * .55}deg) scale(1.15)`, offset: .45 },
+        { transform: `translateY(0) rotateY(${end - 25}deg) scale(1)`, offset: .85 },
+        { transform: `translateY(0) rotateY(${end}deg) scale(1)` },
+      ], { duration: spin, easing: 'cubic-bezier(.3,.6,.4,1)', fill: 'forwards' });
+      stage.querySelector('.coin-shadow').animate([{ transform: 'scale(1)', opacity: .5 }, { transform: 'scale(.5)', opacity: .2, offset: .45 }, { transform: 'scale(1)', opacity: .5 }], { duration: spin * .85, fill: 'forwards' });
+    } else {
+      $('introTitle').textContent = '룰렛 · 누가 먼저?';
+      const n = it.order.length, seg = 360 / n, R = 110;
+      const COLORS = ['#b3262e', '#d9ab3c', '#2f8f8a', '#23458f', '#7b4bb0', '#3f7a3a'];
+      const pt = (a, r) => [120 + r * Math.sin(a * Math.PI / 180), 120 - r * Math.cos(a * Math.PI / 180)];
+      let svg = '';
+      it.order.forEach((id, i) => {
+        const [x1, y1] = pt(i * seg, R), [x2, y2] = pt((i + 1) * seg, R);
+        const mid = (i + .5) * seg, [tx, ty] = pt(mid, R * .62);
+        svg += `<path d="M120 120 L${x1} ${y1} A${R} ${R} 0 ${seg > 180 ? 1 : 0} 1 ${x2} ${y2} Z" fill="${COLORS[i % COLORS.length]}" stroke="#1f1a14" stroke-width="2" data-i="${i}"/>`;
+        svg += `<text x="${tx}" y="${ty}" transform="rotate(${mid} ${tx} ${ty})" text-anchor="middle" dominant-baseline="middle" font-size="${n >= 5 ? 13 : 15}" font-weight="700" fill="#fff" stroke="#1f1a14" stroke-width="3" paint-order="stroke">${escapeHtml(name(id).slice(0, 6))}</text>`;
+      });
+      stage.innerHTML = `<div class="wheel-pin"></div><svg class="wheel" viewBox="0 0 240 240">${svg}<circle cx="120" cy="120" r="16" fill="#f3ead6" stroke="#1f1a14" stroke-width="3"/></svg>`;
+      const jitter = (Math.random() - .5) * seg * .6;
+      const end = 360 * 5 + (360 - (starterIdx + .5) * seg) + jitter; // 고른 칸이 위쪽 바늘에 멈춘다
+      stage.querySelector('.wheel').animate([{ transform: 'rotate(0deg)' }, { transform: `rotate(${end}deg)` }],
+        { duration: spin, easing: 'cubic-bezier(.12,.6,.15,1)', fill: 'forwards' });
+      introTimers.push(setTimeout(() => { const s = stage.querySelector(`path[data-i="${starterIdx}"]`); if (s) s.classList.add('win'); }, spin));
+    }
+    introTimers.push(setTimeout(() => {
+      pop.classList.add('reveal');
+      $('introMsg').textContent = it.starter === me ? '내가 먼저 시작해요!' : `${name(it.starter)}님이 먼저 시작해요!`;
+    }, spin));
+    introTimers.push(setTimeout(() => { pop.hidden = true; }, total));
   }
 
   // 내 차례가 시작될 때: 손패 위에 '내 차례' 띠가 올라왔다 사라진다
@@ -458,16 +565,19 @@
   }
 
   // --- 원카드: 카운트다운 → 버튼 열림(2초) → 누르면 내 기록 → 모두 눌렀거나 2초 지나면 전체 결과, 판 재개 ---
-  const RESULT_SHOW_MS = 2600;
-  let raceSeen = {}; // race.id → { openAt, closeAt, doneAt }
+  let raceSeen = {}; // race.id → { openAt, closeAt, doneAt, resumeAt }
   const counted = new Set(); // 최고 기록에 이미 반영한 경쟁
-  const myPress = {}; // race.id → { ms, place } (서버가 바로 알려 줌)
+  let myPress = {}; // race.id → { ms, place } (서버가 바로 알려 줌)
   let oneTicker = null;
   let guardUntil = 0; // 결과가 뜬 직후 실수로 카드 뽑기를 누르지 않게
   function raceInfo(race) {
     let r = raceSeen[race.id];
     if (!r) r = raceSeen[race.id] = { openAt: Date.now() + race.openIn, closeAt: Date.now() + race.closeIn, doneAt: 0 };
-    if (race.done && !r.doneAt) { r.doneAt = Date.now(); guardUntil = r.doneAt + 450; }
+    if (race.done && !r.doneAt) {
+      r.doneAt = Date.now();
+      r.resumeAt = r.doneAt + (race.resumeIn != null ? race.resumeIn : 1200); // 결과를 보여 준 뒤 다 함께 재개
+      guardUntil = r.resumeAt + 300;
+    }
     return r;
   }
   function onePhase() {
@@ -476,7 +586,7 @@
     if (!g || !race) return null;
     const info = raceInfo(race);
     const now = Date.now();
-    if (race.done) return now - info.doneAt < RESULT_SHOW_MS ? 'result' : null;
+    if (race.done) return now < info.resumeAt ? 'result' : null;
     const me = state.me;
     const eligible = race.eligible.some((e) => e.id === me);
     if (!eligible) return 'watch';
@@ -486,9 +596,8 @@
   function renderOnePop() {
     const phase = onePhase();
     const pop = $('onePop');
-    const blocking = phase && phase !== 'result';
-    pop.hidden = !blocking;
-    pop.className = 'one-pop' + (blocking ? ' ' + phase : '');
+    pop.hidden = !phase; // 결과를 보는 동안에도 판은 멈춰 있으니 뒤를 막는다
+    pop.className = 'one-pop' + (phase ? ' ' + phase : '');
     $('racePanel').hidden = phase !== 'result';
     clearInterval(oneTicker); oneTicker = null;
     if (!phase) return;
@@ -522,7 +631,11 @@
       renderRace(race, me);
     }
     // 카운트다운·남은 시간·결과 시간이 흐르는 동안 다시 그린다
-    oneTicker = setInterval(() => { const ph = onePhase(); if (ph !== phase || ph === 'count' || ph === 'open' || ph === 'mine' || ph === 'watch') renderOnePop(); }, 80);
+    oneTicker = setInterval(() => {
+      const ph = onePhase();
+      if (ph !== phase || ph === 'count' || ph === 'open' || ph === 'mine' || ph === 'watch') renderOnePop();
+      if (!ph && phase === 'result') render(); // 재개: 막아 두었던 화면을 다시 그린다
+    }, 80);
   }
 
   // 전체 결과: 누른 사람은 시간 순서, 안 누른 사람은 실패. 판은 이미 다시 움직인다 (화면을 막지 않음)
@@ -541,11 +654,13 @@
       if (!best || mine.ms < best) { record = best ? ' · 새 기록!' : ''; best = mine.ms; store.set('onecard-best-ms', mine.ms); }
     }
     const winner = race.presses.find((p) => p.first);
-    const outcome = !winner ? '아무도 누르지 않았어요 · 벌칙 없음'
-      : winner.id === race.target ? `${winner.name}님 원카드 성공!`
-      : `${winner.name}님이 잡았어요! ${race.targetName}님 1장 벌칙`;
-    el.innerHTML = `<div class="race-out"></div><ol></ol>${best ? `<div class="race-best">내 최고 ${(best / 1000).toFixed(2)}초${record}</div>` : ''}`;
-    el.querySelector('.race-out').textContent = outcome;
+    const who = (id, name) => (id === me ? '내가' : `${name}님이`);
+    const [head, cls, sub] = !winner ? ['벌칙 없음', 'none', '아무도 누르지 않았어요']
+      : winner.id === race.target ? ['원카드 성공!', 'ok', `${who(winner.id, winner.name)} 먼저 눌렀어요`]
+      : ['벌칙 1장', 'bad', `${who(winner.id, winner.name)} 먼저! ${race.target === me ? '내가' : race.targetName + '님이'} 1장 받아요`];
+    el.innerHTML = `<div class="race-stamp ${cls}"></div><div class="race-out"></div><ol></ol>${best ? `<div class="race-best">내 최고 ${(best / 1000).toFixed(2)}초${record}</div>` : ''}`;
+    el.querySelector('.race-stamp').textContent = head;
+    el.querySelector('.race-out').textContent = sub;
     const ol = el.querySelector('ol');
     rows.forEach((p, k) => {
       const li = document.createElement('li');
@@ -575,7 +690,7 @@
     tok.hidden = false;
     tok.textContent = g.turn === me ? '내 차례' : '차례';
     const x = r.left + r.width / 2;
-    const y = g.turn === me ? r.top - 4 : r.bottom + 2;
+    const y = g.turn === me ? r.top - 4 : r.bottom - 9; // 자리 아랫변에 걸쳐서 (가운데 글자를 가리지 않게)
     tok.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px) translate(-50%, ${g.turn === me ? '-100%' : '0'})`;
   }
   window.addEventListener('resize', () => { if (state && state.game) placeTurnToken(state.game, state.me); });
@@ -601,8 +716,10 @@
     for (const p of g.players) {
       const before = prev.players.find((x) => x.id === p.id);
       if (!before || p.out) continue;
-      const delta = Math.min(p.count - before.count, 6);
+      const got = p.count - before.count;
+      const delta = Math.min(got, 6);
       if (delta <= 0) continue;
+      drawMark(p.id, got, me);
       if (p.id === me) {
         const prevHand = new Set(prev.hand.map((c) => c.id));
         g.hand.filter((c) => !prevHand.has(c.id)).slice(-6).forEach((c, i) => {
@@ -722,6 +839,7 @@
   }
 
   function playCard(c, playable, g) {
+    if (!tableFree()) return;
     if (g.turn !== state.me) return toast('내 차례가 아니에요.');
     const selRank = selected.length ? (g.hand.find((x) => x.id === selected[0]) || {}).rank : null;
     // 선택 중: 같은 숫자면 넣거나 빼기
@@ -785,16 +903,16 @@
     const bar = $('turnBar');
     const g = state && state.game;
     const mine = g && !g.finished && g.turn === state.me && state.localDeadline;
-    if (!mine) { t.textContent = ''; bar.hidden = true; $('trayTab').classList.remove('low'); return; }
+    if (!mine) { t.textContent = ''; bar.hidden = false; bar.classList.add('off'); $('trayTab').classList.remove('low'); return; }
     const ms = Math.max(0, state.localDeadline - Date.now());
-    const left = Math.ceil(ms / 1000);
+    const left = Math.min(30, Math.ceil(ms / 1000)); // 멈춤(시작 화면·원카드)으로 늘어난 시간은 30초로 보여 준다
     if (t.textContent !== String(left)) {
       t.textContent = left;
       // 10초부터는 숫자가 바뀔 때마다 톡 튄다
       if (left <= 10) { t.classList.remove('tick'); void t.offsetWidth; t.classList.add('tick'); }
     }
     $('trayTab').classList.toggle('low', left <= 10);
-    bar.hidden = false;
+    bar.hidden = false; bar.classList.remove('off');
     bar.classList.toggle('low', left <= 10);
     bar.firstElementChild.style.transform = `scaleX(${Math.min(1, ms / 30000)})`;
   }
@@ -851,14 +969,15 @@
   $('quitOk').onclick = () => {
     $('quitModal').hidden = true;
     socket.emit('leave'); state = null; show('home');
-    $('onePop').hidden = true; $('resultModal').hidden = true; $('side').hidden = true;
+    $('onePop').hidden = true; $('introPop').hidden = true; $('resultModal').hidden = true; $('side').hidden = true;
     history.replaceState(null, '', location.pathname);
   };
 
-  $('btnDraw').onclick = () => { if (Date.now() >= guardUntil && $('onePop').hidden) socket.emit('draw'); };
+  const tableFree = () => Date.now() >= guardUntil && $('onePop').hidden && $('introPop').hidden;
+  $('btnDraw').onclick = () => { if (tableFree()) socket.emit('draw'); };
   $('btnMulti').onclick = () => { if (state && state.game && selected.length) submitPlay(selected.slice(), state.game); };
   $('btnMultiCancel').onclick = () => { selected = []; render(); };
-  $('deck').onclick = () => { if (state && state.game && state.game.turn === state.me && Date.now() >= guardUntil && $('onePop').hidden) socket.emit('draw'); };
+  $('deck').onclick = () => { if (state && state.game && state.game.turn === state.me && tableFree()) socket.emit('draw'); };
   $('btnOne').onclick = (e) => { e.stopPropagation(); if (!$('btnOne').disabled) socket.emit('oneCard'); };
   document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT') return;
@@ -926,7 +1045,7 @@
     const prevGame = state && state.game;
     // 새 게임이 시작되면 결과 상태 초기화
     if (s.game && !s.game.finished && (!prevGame || prevGame.finished)) {
-      shownResult = false; seenSeq = 0; $('resultModal').hidden = true; pileSeen.clear(); $('onePop').hidden = true; raceSeen = {}; gameNo++;
+      shownResult = false; seenSeq = 0; $('resultModal').hidden = true; pileSeen.clear(); $('onePop').hidden = true; raceSeen = {}; myPress = {}; gameNo++;
       chatLines.length = 0; $('log').innerHTML = ''; // 경기 기록은 판마다 새로
     }
     // 애니메이션용: 바뀌기 전 상태와 내 카드 위치

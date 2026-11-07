@@ -10,7 +10,9 @@ const MAX_PLAYERS = 6;
 const TURN_SECONDS = 30;
 const RECONNECT_GRACE_MS = 60_000;
 const ONECARD_COUNTDOWN_MS = 3000; // 원카드 버튼은 3초 카운트다운 뒤에 열린다
-const ONECARD_WINDOW_MS = 2000; // 버튼이 열린 뒤 누를 수 있는 시간. 지나면 결과를 보여 주고 바로 판 재개 // 승부가 난 뒤에도 이 시간 안에 누르면 반응 속도만 기록
+const ONECARD_WINDOW_MS = 2000; // 버튼이 열린 뒤 누를 수 있는 시간
+const ONECARD_RESULT_MS = 1200; // 전체 결과를 보여 주는 시간. 끝나면 모두 동시에 판 재개
+const INTRO_MS = 4200; // 게임 시작 때 먼저 할 사람 고르기 (둘이면 동전, 셋 이상이면 룰렛)
 const EMOJIS = ['😀', '😂', '😎', '😭', '😡', '😱', '👍', '👏', '🔥', '💀'];
 const PHRASES = ['빨리 내요!', '잘했어요', '아 안 돼!', '봐주세요', '원카드 조심!', '공격 간다!', '운이 좋네요', '한 판 더?', 'ㅋㅋㅋㅋ', '안녕하세요'];
 const BOT_NAMES = ['철수', '영희', '민수', '지수', '하늘'];
@@ -55,24 +57,37 @@ function broadcast(room) {
       game: room.game ? room.game.view(m.id) : null,
       turnLeft: room.deadline ? Math.max(0, room.deadline - Date.now()) : null, // 남은 시간 (기기 시계와 무관)
       race: raceView(room),
+      intro: introView(room),
     });
   }
 }
 
-// 원카드 창이 화면을 가리는 동안(카운트다운 + 결과) 사람의 시간은 깎지 않는다
-const RACE_COVER_MS = ONECARD_WINDOW_MS;
-function raceCoverLeft(room) {
-  const r = room.race;
-  if (!r || r.doneAt) return 0;
-  return Math.max(0, r.openAt - Date.now()) + RACE_COVER_MS;
+// 먼저 할 사람 고르기 화면
+function introView(room) {
+  const it = room.intro;
+  if (!it || Date.now() >= it.until) return null;
+  return { id: it.id, kind: it.kind, order: it.order, starter: it.starter, left: it.until - Date.now() };
+}
+function introLeft(room) {
+  return room.intro ? Math.max(0, room.intro.until - Date.now()) : 0;
 }
 
-// 원카드 경쟁 중이면 판을 멈춘다: 남은 멈춤 시간 (모르면 짧게 다시 확인)
+// 원카드 창이 화면을 가리는 동안(카운트다운 + 누르기 + 결과) 사람의 시간은 깎지 않는다
+function raceCoverLeft(room) {
+  const r = room.race;
+  if (!r) return 0;
+  if (r.doneAt) return Math.max(0, r.doneAt + ONECARD_RESULT_MS - Date.now());
+  return Math.max(0, r.openAt - Date.now()) + ONECARD_WINDOW_MS + ONECARD_RESULT_MS;
+}
+
+// 원카드 경쟁 중이거나 시작 화면이면 판을 멈춘다: 남은 멈춤 시간 (모르면 짧게 다시 확인)
 function pausedFor(room) {
+  const intro = introLeft(room);
+  if (intro > 0) return intro + 20;
   const r = room.race;
   if (!r) return 0;
   if (!r.doneAt) return Math.max(50, r.closeAt - Date.now() + 50);
-  return 0; // 결과가 나오면 바로 재개
+  return Math.max(0, r.doneAt + ONECARD_RESULT_MS - Date.now()); // 결과를 잠깐 보여 준 뒤 다 함께 재개
 }
 // 멈춤이 끝난 뒤에 fn 실행
 function whenUnpaused(room, fn, timerKey) {
@@ -114,7 +129,7 @@ function scheduleTurn(room) {
     }, 'botTimer'), (room.lastTurnId === cur.id ? 1800 : 900) + Math.random() * 900); // 같은 봇이 연달아 내면 조금 더 천천히
   } else {
     room.deadline = Date.now();
-    extendTurn(room, TURN_SECONDS * 1000 + raceCoverLeft(room));
+    extendTurn(room, TURN_SECONDS * 1000 + raceCoverLeft(room) + introLeft(room));
   }
 }
 
@@ -147,6 +162,7 @@ function raceView(room) {
     openIn: Math.max(0, r.openAt - Date.now()), // 버튼이 열리기까지 남은 시간 (기기 시계 차이 없이)
     closeIn: Math.max(0, r.closeAt - Date.now()),
     done: !!r.doneAt,
+    resumeIn: r.doneAt ? Math.max(0, r.doneAt + ONECARD_RESULT_MS - Date.now()) : null, // 판이 다시 움직이기까지
     eligible: r.eligible.map((id) => ({ id, name: name(id) })),
     presses: r.presses.map((p) => ({ ...p, name: name(p.id) })),
   };
@@ -176,6 +192,8 @@ function finishRace(room, race) {
   (room.oneCardTimers || []).forEach(clearTimeout);
   room.oneCardTimers = [];
   after(room);
+  // 결과를 보여 주는 동안 판은 멈춰 있다가, 끝나면 모두에게 동시에 재개를 알린다
+  room.oneCardTimers.push(setTimeout(() => { if (room.race === race) broadcast(room); }, ONECARD_RESULT_MS + 20));
 }
 
 // 새 원카드 상황이 생기면 경쟁을 연다. 봇은 등급별 반응 속도로 누른다
@@ -190,7 +208,8 @@ function scheduleOneCard(room) {
   const openAt = Date.now() + ONECARD_COUNTDOWN_MS;
   const eligible = g.players.filter((p) => !p.out || p.id === targetId).map((p) => p.id)
     .filter((id) => { const m = room.members.find((x) => x.id === id); return m && (m.bot || m.socketId); }); // 접속 중인 사람과 봇
-  const race = { id: (room.race ? room.race.id : 0) + 1, target: targetId, openAt, closeAt: openAt + ONECARD_WINDOW_MS, eligible, presses: [], doneAt: 0, moves: g.moves };
+  room.raceSeq = (room.raceSeq || 0) + 1; // 판이 바뀌어도 이어지는 번호 (다시 하기 뒤 예전 기록과 섞이지 않게)
+  const race = { id: room.raceSeq, target: targetId, openAt, closeAt: openAt + ONECARD_WINDOW_MS, eligible, presses: [], doneAt: 0, moves: g.moves };
   room.race = race;
   room.oneCardTimers.push(setTimeout(() => finishRace(room, race), race.closeAt - Date.now() + 30));
   const fire = (callerId) => {
@@ -326,12 +345,18 @@ io.on('connection', (socket) => {
     room.race = null;
     room.turnKey = null;
     room.game = new Game(room.members.map((m) => ({ id: m.id, name: m.name, bot: m.bot, tier: m.tier })));
+    // 먼저 할 사람 고르기: 둘이면 동전 던지기, 셋 이상이면 룰렛 (결과는 서버가 정함)
+    const g = room.game;
+    room.introSeq = (room.introSeq || 0) + 1;
+    room.intro = { id: room.introSeq, kind: g.players.length === 2 ? 'coin' : 'roulette', order: g.players.map((p) => p.id), starter: g.cur().id, until: Date.now() + INTRO_MS };
+    clearTimeout(room.introTimer);
+    room.introTimer = setTimeout(() => broadcast(room), INTRO_MS + 20);
     after(room);
   });
 
   socket.on('play', ({ cardId, cardIds, suit } = {}) => {
     if (!room || !room.game) return;
-    if (pausedFor(room) > 0) return fail('원카드 확인 중이에요. 잠깐만요!');
+    if (pausedFor(room) > 0) return fail(introLeft(room) > 0 ? '먼저 할 사람을 고르는 중이에요.' : '원카드 확인 중이에요. 잠깐만요!');
     const ids = Array.isArray(cardIds) ? cardIds.slice(0, 4) : cardId;
     const res = room.game.play(memberId, ids, suit);
     if (!res.ok) return fail(res.error);
@@ -340,7 +365,7 @@ io.on('connection', (socket) => {
 
   socket.on('draw', () => {
     if (!room || !room.game) return;
-    if (pausedFor(room) > 0) return fail('원카드 확인 중이에요. 잠깐만요!');
+    if (pausedFor(room) > 0) return fail(introLeft(room) > 0 ? '먼저 할 사람을 고르는 중이에요.' : '원카드 확인 중이에요. 잠깐만요!');
     const res = room.game.draw(memberId);
     if (!res.ok) return fail(res.error);
     after(room);
