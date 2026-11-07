@@ -946,3 +946,21 @@ body[data-bg="charcoal"] { --felt: #2b2e33; --felt-deep: #1b1d21; --tray: #14161
 .members .tier { margin-left: 2px; }
 .tu-tiers .tier { font-size: 13px; padding: 4px 11px 4px 6px; }
 .tu-tiers .tier .ti { width: 16px; height: 16px; }
+
+/* --- 내보내기 · 닫기 버튼 --- */
+.kick-btn {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 4px; flex: none;
+  padding: 5px 10px 5px 8px; border-radius: 999px; font: inherit; font-size: 12px; font-weight: 700;
+  background: transparent; color: var(--red); border: 1.5px solid rgba(179, 38, 46, .55); cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.kick-btn svg { width: 15px; height: 15px; }
+.kick-btn:hover, .kick-btn:active { background: var(--red); color: var(--cream); border-color: var(--red); }
+.icon-close {
+  width: 34px; height: 34px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center;
+  background: var(--card); color: var(--ink); border: 2px solid var(--ink); box-shadow: 0 2px 0 var(--ink); cursor: pointer; padding: 0;
+}
+.icon-close svg { width: 16px; height: 16px; }
+.icon-close:active { transform: translateY(2px); box-shadow: none; }
+.wheel .win-line { fill: none; stroke: #ffd978; stroke-width: 5; stroke-linejoin: round; filter: drop-shadow(0 0 1.5px #1f1a14); animation: winGlow .5s ease-out; }
+@keyframes winGlow { from { stroke-width: 10; opacity: 0; } }

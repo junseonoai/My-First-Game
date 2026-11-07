@@ -263,7 +263,8 @@
       if (!m.online) li.insertAdjacentHTML('beforeend', '<span class="tag off">연결 끊김</span>');
       if (lobby.host === me && m.id !== me) {
         const k = document.createElement('button');
-        k.className = 'btn small ghost kick'; k.textContent = '내보내기';
+        k.className = 'kick-btn'; k.setAttribute('aria-label', `${m.name} 내보내기`);
+        k.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="8" r="3.6"/><path d="M3.5 19.5c.8-3.4 3.4-5.3 6.5-5.3s5.7 1.9 6.5 5.3"/><path d="M16.5 10.5h5"/></svg><span>내보내기</span>';
         k.onclick = () => socket.emit('kick', m.id);
         li.appendChild(k);
       }
@@ -277,6 +278,7 @@
 
   function renderGame(g, me, lobby) {
     const myIdx = g.players.findIndex((p) => p.id === me);
+    if (deal && Date.now() > deal.until) deal = null; // 혹시 연출이 끊겨도 카드가 계속 가려지지 않게
     const myTurn = g.turn === me && !g.finished && !deal; // 나눠 주는 동안은 아직 아무 차례도 아님
 
     // 상대: 내 다음 순서부터
@@ -376,7 +378,11 @@
         },
       });
     });
+    // 지금 바닥에 보이는 카드만 기억한다: 덱을 다시 섞은 뒤 같은 카드가 또 나와도 새 카드로 알아보게
+    pileSeen.clear();
     for (const c of recent) pileSeen.add(c.id);
+    // 내가 날린 카드는 손패에서 빠졌으면 정리 (남아 있으면 나중에 그 카드를 다시 받았을 때 안 보인다)
+    for (const id of [...localFlown]) if (!g.hand.some((c) => c.id === id)) localFlown.delete(id);
     pile.style.visibility = deal && !deal.pile ? 'hidden' : '';
     $('deck').style.visibility = deal && !deal.deck ? 'hidden' : '';
     $('deckCount').style.visibility = deal && !deal.deck ? 'hidden' : '';
@@ -528,7 +534,7 @@
     if (reduceMotion || it.left < full - 800) { deal = null; return; } // 중간에 들어왔으면 건너뛴다
     const opp = {};
     for (const p of s.game.players) opp[p.id] = 0;
-    deal = { mine: 0, opp, deck: false, pile: false, total: s.game.players.length * 7, given: 0 };
+    deal = { mine: 0, opp, deck: false, pile: false, total: s.game.players.length * 7, given: 0, until: Date.now() + full + 1500 };
     playPick(it, s.game, s.me);
     later(PICK_SPIN + PICK_SHOW, () => { $('introPop').hidden = true; showDeck(); });
     later(PICK_SPIN + PICK_SHOW + DECK_IN, () => dealCards(s.me));
@@ -588,7 +594,16 @@
       const end = 360 * 5 + (360 - (starterIdx + .5) * seg) + jitter; // 고른 칸이 위쪽 바늘에 멈춘다
       stage.querySelector('.wheel').animate([{ transform: 'rotate(0deg)' }, { transform: `rotate(${end}deg)` }],
         { duration: PICK_SPIN, easing: 'cubic-bezier(.12,.6,.15,1)', fill: 'forwards' });
-      later(PICK_SPIN, () => { const s = stage.querySelector(`path[data-i="${starterIdx}"]`); if (s) s.classList.add('win'); });
+      // 걸린 칸: 이웃 칸과 테두리에 가려지지 않게 윤곽선만 따로 맨 위에 (안쪽으로 고르게)
+      later(PICK_SPIN, () => {
+        const seg0 = stage.querySelector(`path[data-i="${starterIdx}"]`);
+        const hub = stage.querySelector('.wheel > circle[r="20"]');
+        if (!seg0 || !hub) return;
+        const hl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        hl.setAttribute('d', seg0.getAttribute('d'));
+        hl.setAttribute('class', 'win-line');
+        hub.before(hl);
+      });
     }
     later(PICK_SPIN, () => {
       pop.classList.add('reveal');
