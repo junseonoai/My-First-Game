@@ -549,7 +549,7 @@
     const starterIdx = Math.max(0, it.order.indexOf(it.starter));
     if (it.kind === 'coin') {
       $('introTitle').textContent = '칩 던지기 · 누가 먼저?';
-      stage.innerHTML = `<div class="chip3d"><div class="face a"><div class="chip-in"><small>앞</small><span></span></div></div><div class="face b"><div class="chip-in"><small>뒤</small><span></span></div></div></div><div class="chip-shadow"></div>`;
+      stage.innerHTML = `<div class="chip3d">${[-4, -3, -2, -1, 0, 1, 2, 3, 4].map((z) => `<i class="rim" style="transform:translateZ(${z}px)"></i>`).join('')}<div class="face a"><div class="chip-in"><small>앞</small><span></span></div></div><div class="face b"><div class="chip-in"><small>뒤</small><span></span></div></div></div><div class="chip-shadow"></div>`;
       stage.querySelector('.face.a span').textContent = nameOf(g, it.order[0], me);
       stage.querySelector('.face.b span').textContent = nameOf(g, it.order[1], me);
       const end = 360 * 6 + (starterIdx === 1 ? 180 : 0);
