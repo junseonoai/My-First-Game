@@ -481,6 +481,7 @@
         if (line.includes('원카드!') || line.includes('벌칙')) continue; // 원카드 결과는 결과 창에서
         if (line.includes('파산')) bubble('파산');
         else if (line.includes('막기')) bubble('막기!');
+        else if (line.includes('건너뛰기') && anim.prev) showSkip(g, me, anim.prev.turn);
         else if (line.includes('한 번 더!')) bubble((line.match(/· ([^·]+? 한 번 더!)/) || [0, '한 번 더!'])[1]);
         else if (line.includes('등!') || line.includes('우승!')) bubble(line.replace(/!$/, ''));
       }
@@ -509,6 +510,40 @@
       if (!g.players[t].out) return g.players[t].id;
     }
     return null;
+  }
+
+  // J: 누가 건너뛰어졌고 이제 누구 차례인지 분명하게. 건너뛴 자리에 '건너뜀', 가운데에 '○○님 건너뜀 → △△님 차례'
+  function showSkip(g, me, actorId) {
+    const n = g.players.length;
+    let t = g.players.findIndex((p) => p.id === actorId);
+    if (t < 0) return;
+    const skipped = [];
+    for (let k = 0; k < n * 2; k++) {
+      t = (t + g.dir + n) % n;
+      const p = g.players[t];
+      if (p.out && p.id !== actorId) continue;
+      if (p.id === g.turn && skipped.length) break;
+      if (p.id !== actorId) skipped.push(p);
+      if (p.id === actorId) break;
+    }
+    if (!skipped.length) return;
+    const who = (p) => (p.id === me ? '나' : p.name + '님');
+    const nextP = g.players.find((p) => p.id === g.turn);
+    const head = skipped.length > 2 ? `${who(skipped[0])} 외 ${skipped.length - 1}명` : skipped.map(who).join(', ');
+    const tail = !nextP ? '' : nextP.id === me ? '내 차례' : `${nextP.name}님 차례`;
+    bubble(`${head} 건너뜀 → ${tail}`, 'skip');
+    for (const p of skipped) {
+      const anchor = p.id === me ? $('trayTab') : document.querySelector(`.opp[data-id="${p.id}"]`);
+      if (!anchor) continue;
+      const r = anchor.getBoundingClientRect();
+      const el = document.createElement('div');
+      el.className = 'skip-mark';
+      el.textContent = '건너뜀';
+      el.style.left = (r.left + r.width / 2) + 'px';
+      el.style.top = (p.id === me ? r.top - 6 : r.top + r.height / 2) + 'px';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 1800);
+    }
   }
 
   // 방향이 바뀌면 가운데에 큰 화살표가 돈다
