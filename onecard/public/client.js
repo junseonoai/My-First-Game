@@ -212,7 +212,9 @@
   function backEl() { const el = document.createElement('div'); el.className = 'card back'; return el; }
 
   // --- 날아가는 카드 ---
-  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const sysCalm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let reduceMotion = sysCalm || store.get('onecard-calm') === '1'; // 설정의 '애니메이션 줄이기'
+  let vibrateOn = store.get('onecard-vibrate') !== '0';
   // from/to: 화면 위 사각형. 카드는 to 크기로 그려서 from 크기에서 시작해 날아간다.
   function fly(make, from, to, { delay = 0, dur = 420, rotFrom = 0, rotTo = 0, endScale = 1, fade = false, onDone } = {}) {
     if (reduceMotion || !from || !to || !to.width) { if (onDone) onDone(); return; }
@@ -358,7 +360,7 @@
     // 내 차례가 막 시작되면 크게 알려 준다 (휴대폰은 짧게 진동)
     if (myTurn && !wasMyTurn && seenSeq) {
       turnCue();
-      try { if (navigator.vibrate) navigator.vibrate(40); } catch {}
+      try { if (vibrateOn && navigator.vibrate) navigator.vibrate(40); } catch {}
     }
     wasMyTurn = myTurn;
     if (!myTurn && !$('suitModal').hidden) { $('suitModal').hidden = true; pendingSeven = null; } // 시간이 지나 차례가 넘어갔으면 무늬 고르기 창을 닫는다
@@ -905,7 +907,7 @@
     const byRank = (a, b) => RANK_ORDER.indexOf(a.rank) - RANK_ORDER.indexOf(b.rank);
     return hand.slice().sort(sortMode === 'rank' ? (a, b) => byRank(a, b) || bySuit(a, b) : (a, b) => bySuit(a, b) || byRank(a, b));
   }
-  function updateSortBtn() { $('btnSort').textContent = sortMode === 'rank' ? '숫자순' : '모양순'; }
+  function updateSortBtn() { $('sortLabel').textContent = sortMode === 'rank' ? '숫자순' : '모양순'; }
   updateSortBtn();
   $('btnSort').onclick = () => {
     sortMode = sortMode === 'rank' ? 'suit' : 'rank';
@@ -1072,7 +1074,7 @@
   setBg(store.get('onecard-bg'));
   document.querySelectorAll('#bgModal [data-bg]').forEach((b) => { b.onclick = () => setBg(b.dataset.bg); });
   const openBg = () => { $('bgModal').hidden = false; };
-  $('btnBg').onclick = openBg;
+  $('btnBg').onclick = () => { closeMenu(); openBg(); };
   $('btnBgHome').onclick = openBg;
   $('bgClose').onclick = () => { $('bgModal').hidden = true; };
 
@@ -1113,7 +1115,7 @@
   $('quitOk').onclick = () => {
     $('quitModal').hidden = true;
     socket.emit('leave'); state = null; show('home');
-    $('onePop').hidden = true; $('introPop').hidden = true; deal = null; introTimers.forEach(clearTimeout); $('resultModal').hidden = true; $('side').hidden = true;
+    $('onePop').hidden = true; $('introPop').hidden = true; deal = null; introTimers.forEach(clearTimeout); $('resultModal').hidden = true; $('side').hidden = true; $('settingsModal').hidden = true; $('menuPanel').hidden = true;
     history.replaceState(null, '', location.pathname);
   };
 
@@ -1177,7 +1179,26 @@
     setTimeout(() => el.remove(), 2300);
   }
 
-  $('btnLog').onclick = () => { $('side').hidden = false; $('btnLog').classList.remove('dot'); };
+  $('btnLog').onclick = () => { closeMenu(); $('side').hidden = false; $('btnMenu').classList.remove('dot'); $('btnLog').classList.remove('dot'); };
+
+  // --- 오른쪽 위 메뉴: 테마 변경 · 기록·채팅 · 설정 ---
+  function closeMenu() { $('menuPanel').hidden = true; $('btnMenu').setAttribute('aria-expanded', 'false'); }
+  $('btnMenu').onclick = (e) => {
+    e.stopPropagation();
+    const open = $('menuPanel').hidden;
+    $('menuPanel').hidden = !open;
+    $('btnMenu').setAttribute('aria-expanded', String(open));
+  };
+  document.addEventListener('click', (e) => { if (!$('menuPanel').hidden && !$('menuPanel').contains(e.target)) closeMenu(); });
+  // 설정
+  $('optVibrate').checked = vibrateOn;
+  $('optCalm').checked = reduceMotion;
+  $('optVibrate').onchange = () => { vibrateOn = $('optVibrate').checked; store.set('onecard-vibrate', vibrateOn ? '1' : '0'); };
+  $('optCalm').onchange = () => { reduceMotion = sysCalm || $('optCalm').checked; store.set('onecard-calm', $('optCalm').checked ? '1' : '0'); document.body.classList.toggle('calm', reduceMotion); };
+  document.body.classList.toggle('calm', reduceMotion);
+  $('btnSettings').onclick = () => { closeMenu(); $('settingsModal').hidden = false; };
+  $('setClose').onclick = () => { $('settingsModal').hidden = true; };
+  $('setTutorial').onclick = () => { $('settingsModal').hidden = true; $('btnTutorial').click(); };
   $('btnCloseSide').onclick = () => { $('side').hidden = true; };
   $('chatForm').onsubmit = (e) => {
     e.preventDefault();
@@ -1216,7 +1237,7 @@
   });
   socket.on('chat', (c) => {
     chatLines.push(c);
-    if ($('side').hidden) { $('btnLog').classList.add('dot'); toast(`${c.name}: ${c.text}`); }
+    if ($('side').hidden) { $('btnMenu').classList.add('dot'); $('btnLog').classList.add('dot'); toast(`${c.name}: ${c.text}`); }
     if (state && state.game) renderLog(state.game.log);
   });
   socket.on('emote', (m) => {

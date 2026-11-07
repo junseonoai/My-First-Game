@@ -972,3 +972,67 @@ body[data-bg="charcoal"] { --felt: #2b2e33; --felt-deep: #1b1d21; --tray: #14161
   background: var(--red); color: var(--cream); border: 2px solid var(--ink); border-radius: 999px; box-shadow: 0 3px 0 var(--ink);
   padding: 6px 14px; font-size: 13px; font-weight: 700; white-space: nowrap; animation: rise .2s ease-out;
 }
+
+/* --- 오른쪽 위 메뉴 --- */
+.topbar-right { position: relative; }
+.menu-panel {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 40; min-width: 168px;
+  display: flex; flex-direction: column; gap: 6px; padding: 8px;
+  background: var(--paper); border: 2px solid var(--ink); border-radius: 10px; box-shadow: 4px 5px 0 rgba(0, 0, 0, .4);
+  animation: menuIn .16s ease-out; transform-origin: top right;
+}
+.menu-panel[hidden] { display: none; }
+@keyframes menuIn { from { transform: scale(.85); opacity: 0; } }
+.menu-panel button {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; position: relative;
+  font: inherit; font-size: 14px; font-weight: 700; color: var(--ink); text-align: left; cursor: pointer;
+  background: var(--card); border: 2px solid var(--ink); border-radius: 8px; box-shadow: 0 2px 0 var(--ink);
+}
+.menu-panel button:active { transform: translateY(2px); box-shadow: none; }
+.menu-panel button svg { width: 20px; height: 20px; flex: none; }
+.menu-panel button.dot::after { content: ""; position: absolute; right: 10px; top: 50%; margin-top: -5px; width: 10px; height: 10px; border-radius: 50%; background: var(--red); }
+
+/* --- 설정 --- */
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px dashed rgba(31, 26, 20, .3); cursor: pointer; }
+.set-row span { display: flex; flex-direction: column; gap: 2px; }
+.set-row small { font-size: 12px; color: var(--ink-soft); }
+.switch {
+  appearance: none; -webkit-appearance: none; flex: none; width: 48px; height: 28px; margin: 0; border-radius: 999px; position: relative; cursor: pointer;
+  background: rgba(31, 26, 20, .25); border: 2px solid var(--ink); transition: background .15s;
+}
+.switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--card); border: 2px solid var(--ink); transition: transform .15s; }
+.switch:checked { background: #2f7a4f; }
+.switch:checked::after { transform: translateX(20px); }
+#settingsModal .tu-top { margin-bottom: 4px; }
+#settingsModal h2 { margin: 0; }
+#settingsModal .btn { margin-top: 12px; width: 100%; }
+.tu-top .icon-close { margin-left: auto; }
+
+/* --- 내 카드 상자: 남은 시간은 윗변을 따라, 위 양쪽에 동그란 버튼 --- */
+.tray .me-bar { padding-top: 8px; }
+.tray .turn-bar.edge {
+  position: absolute; left: 10px; right: 10px; top: -5px; width: auto; height: 8px; margin: 0; z-index: 1;
+  border-radius: 4px; background: rgba(0, 0, 0, .35); border: 1.5px solid var(--ink); overflow: hidden;
+}
+.tray .turn-bar.edge.off { visibility: hidden; }
+.my-turn .tray .turn-bar.edge { background: rgba(255, 255, 255, .55); }
+.my-turn .tray .turn-bar.edge i { background: var(--ink); }
+.my-turn .tray .turn-bar.edge.low i { background: var(--red); }
+.tray-tab { z-index: 2; }
+.tray-fab {
+  position: absolute; top: -66px; z-index: 3; width: 52px; height: 52px; border-radius: 50%; padding: 0; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  background: var(--paper); color: var(--ink); border: 2px solid var(--ink); box-shadow: 0 3px 0 var(--ink);
+}
+.tray-fab:active { transform: translateY(3px); box-shadow: none; }
+.tray-fab svg { width: 24px; height: 24px; }
+.sort-fab { left: 6px; }
+.sort-fab svg { width: 19px; height: 19px; }
+.sort-fab small { font-size: 10px; font-weight: 700; line-height: 1; letter-spacing: -.3px; }
+.emote-fab { right: 6px; }
+.emote-fab svg { width: 26px; height: 26px; }
+.tray .emote-panel { position: absolute; right: 6px; bottom: calc(100% + 70px); top: auto; z-index: 4; width: min(250px, calc(100vw - 32px)); }
+/* 윗변 시간 막대: 두껍게, 빗금 무늬 */
+.tray .turn-bar.edge { height: 14px; top: -8px; left: 8px; right: 8px; border: 2px solid var(--ink); border-radius: 7px; background: #f3ead6; }
+.tray .turn-bar.edge i, .my-turn .tray .turn-bar.edge i { background: repeating-linear-gradient(-45deg, #2c6f8f 0 6px, #59a9c9 6px 12px); }
+.tray .turn-bar.edge.low i, .my-turn .tray .turn-bar.edge.low i { background: repeating-linear-gradient(-45deg, #b3262e 0 6px, #e0656b 6px 12px); }
