@@ -1065,3 +1065,9 @@ body[data-bg="charcoal"] { --felt: #2b2e33; --felt-deep: #1b1d21; --tray: #14161
 .tray-tab { top: 10px; }
 /* 스위치 동그라미: 테두리를 크기 안에 포함해야 세로 가운데에 온다 */
 .set-row .switch::after { box-sizing: border-box; }
+/* 손패가 한 줄이면 상자 가운데에 (바닥에 붙어 보이지 않게) */
+.tray .hand { justify-content: center; padding-top: 10px; padding-bottom: 10px; }
+.tray .hand.two { padding-top: 14px; }
+/* 상대 남은 시간: 10초부터 빨갛게 */
+.turn-token { font-variant-numeric: tabular-nums; }
+.turn-token.low { background: var(--red); color: var(--cream); }

@@ -820,7 +820,7 @@
     if (!target) { tok.hidden = true; return; }
     const r = target.getBoundingClientRect();
     tok.hidden = false;
-    tok.textContent = g.turn === me ? '내 차례' : '차례';
+    tok.textContent = tokenText();
     const x = r.left + r.width / 2;
     const y = g.turn === me ? r.top - 4 : r.bottom - 9; // 자리 아랫변에 걸쳐서 (가운데 글자를 가리지 않게)
     tok.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px) translate(-50%, ${g.turn === me ? '-100%' : '0'})`;
@@ -1043,7 +1043,22 @@
   }
 
   // --- 타이머 표시: 내 차례면 이름 줄의 초와 손패 위 시간 막대 ---
+  // 상대 차례: 사람이면 남은 초를 차례 표시에 함께 (봇은 금방 내므로 표시하지 않음)
+  function tokenText() {
+    const g = state && state.game;
+    if (!g || g.finished || deal || g.turn === state.me || !state.localDeadline) return '차례';
+    const left = Math.min(30, Math.ceil(Math.max(0, state.localDeadline - Date.now()) / 1000));
+    return `차례 ${left}초`;
+  }
   function updateTimer() {
+    const tok = $('turnToken');
+    if (!tok.hidden) {
+      const txt = tokenText();
+      if (tok.textContent !== txt) tok.textContent = txt;
+      const g = state && state.game;
+      const left = g && g.turn !== state.me && state.localDeadline ? (state.localDeadline - Date.now()) / 1000 : 99;
+      tok.classList.toggle('low', left <= 10);
+    }
     const t = $('tabTime');
     const bar = $('turnBar');
     const g = state && state.game;
