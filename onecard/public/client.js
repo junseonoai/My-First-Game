@@ -1191,9 +1191,20 @@
   };
   document.addEventListener('click', (e) => { if (!$('menuPanel').hidden && !$('menuPanel').contains(e.target)) closeMenu(); });
   // 설정
+  // 아이폰(사파리)은 웹사이트 진동을 지원하지 않는다: 켤 수 없게 하고 이유를 보여 준다
+  const canVibrate = typeof navigator.vibrate === 'function';
+  if (!canVibrate) {
+    vibrateOn = false;
+    $('optVibrate').disabled = true;
+    $('rowVibrate').classList.add('off');
+    $('vibNote').textContent = '이 기기(아이폰 등)의 브라우저는 진동을 지원하지 않아요';
+  }
   $('optVibrate').checked = vibrateOn;
   $('optCalm').checked = reduceMotion;
-  $('optVibrate').onchange = () => { vibrateOn = $('optVibrate').checked; store.set('onecard-vibrate', vibrateOn ? '1' : '0'); };
+  $('optVibrate').onchange = () => {
+    vibrateOn = $('optVibrate').checked; store.set('onecard-vibrate', vibrateOn ? '1' : '0');
+    if (vibrateOn) try { navigator.vibrate(60); } catch {} // 켜면 바로 한 번 떨려서 되는지 알 수 있게
+  };
   $('optCalm').onchange = () => { reduceMotion = sysCalm || $('optCalm').checked; store.set('onecard-calm', $('optCalm').checked ? '1' : '0'); document.body.classList.toggle('calm', reduceMotion); };
   document.body.classList.toggle('calm', reduceMotion);
   $('btnSettings').onclick = () => { closeMenu(); $('settingsModal').hidden = false; };

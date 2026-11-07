@@ -1036,3 +1036,30 @@ body[data-bg="charcoal"] { --felt: #2b2e33; --felt-deep: #1b1d21; --tray: #14161
 .tray .turn-bar.edge { height: 14px; top: -8px; left: 8px; right: 8px; border: 2px solid var(--ink); border-radius: 7px; background: #f3ead6; }
 .tray .turn-bar.edge i, .my-turn .tray .turn-bar.edge i { background: repeating-linear-gradient(-45deg, #2c6f8f 0 6px, #59a9c9 6px 12px); }
 .tray .turn-bar.edge.low i, .my-turn .tray .turn-bar.edge.low i { background: repeating-linear-gradient(-45deg, #b3262e 0 6px, #e0656b 6px 12px); }
+
+/* 스위치: 숨긴 체크박스 + 그린 스위치 (동그라미는 세로 가운데) */
+.sw-in { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.set-row { position: relative; }
+.set-row .switch {
+  flex: none; position: relative; width: 50px; height: 30px; border-radius: 999px;
+  background: rgba(31, 26, 20, .22); border: 2px solid var(--ink); transition: background .15s;
+}
+.set-row .switch::after {
+  content: ""; position: absolute; left: 3px; top: 50%; width: 20px; height: 20px; margin-top: -10px; border-radius: 50%;
+  background: var(--card); border: 2px solid var(--ink); transition: transform .15s;
+}
+.sw-in:checked + .switch { background: #2f7a4f; }
+.sw-in:checked + .switch::after { transform: translateX(20px); }
+.sw-in:focus-visible + .switch { outline: 3px solid var(--brass); outline-offset: 2px; }
+.set-row.off { cursor: default; opacity: .55; }
+
+/* 남은 시간 막대: 상자 윗부분 자체가 막대가 되게 (떠 있지 않고 상자와 하나로) */
+.tray { padding-top: 26px; overflow: visible; }
+.tray .turn-bar.edge {
+  top: 0; left: 0; right: 0; height: 20px; border: none; border-bottom: 2px solid var(--ink);
+  border-radius: 8px 8px 0 0; background: rgba(31, 26, 20, .14);
+}
+.tray .turn-bar.edge i, .my-turn .tray .turn-bar.edge i { background: repeating-linear-gradient(-45deg, #1f1a14 0 7px, #4a3f31 7px 14px); }
+.tray .turn-bar.edge.low i, .my-turn .tray .turn-bar.edge.low i { background: repeating-linear-gradient(-45deg, #b3262e 0 7px, #d4545b 7px 14px); }
+.my-turn .tray .turn-bar.edge { background: rgba(255, 246, 220, .5); }
+.tray-tab { top: 10px; }
