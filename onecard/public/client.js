@@ -1,4 +1,6 @@
 (() => {
+  // 아이폰 사파리는 터치 이벤트를 듣는 곳이 있어야 버튼을 누르는 동안 :active 모양을 보여 준다
+  document.addEventListener('touchstart', () => {}, { passive: true });
   const $ = (id) => document.getElementById(id);
   const socket = io();
 
