@@ -18,8 +18,8 @@
   --counter: var(--hint-counter);
   --block: var(--hint-block);
   --felt-line: rgba(240, 234, 216, .14);
-  --ui: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-  --serif: "Libre Baskerville", Georgia, "Times New Roman", serif;
+  --ui: var(--font-sans);        /* 본문: Noto Sans KR */
+  --serif: var(--font-display);  /* 옛 세리프 숫자 자리: 이제 메이플스토리 Bold (장수·타이머·카드 숫자 등) */
   --shadow-hard: 0 4px 10px rgba(10, 20, 14, .3);
   color-scheme: dark;
 }
@@ -113,7 +113,7 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
 .rules .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 2px; }
 
 .room-code {
-  font-family: var(--serif); font-weight: 700; font-size: 52px; text-align: center; letter-spacing: 10px;
+  font-family: var(--font-mono); font-weight: 600; font-size: 52px; text-align: center; letter-spacing: .18em;
   padding: 6px 0 2px 10px; border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink);
 }
 .members { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
@@ -1156,3 +1156,9 @@ input { border-radius: var(--radius-md); }
 .set-row .switch::after { border: none; box-shadow: var(--shadow-card); }
 .results .pl { border: 1.5px solid var(--line-strong); }
 .kick-btn { border-radius: var(--radius-pill); }
+
+/* =====================================================================
+   한장 5단계: 글꼴 (제목·큰 숫자 메이플스토리, 본문 Noto Sans KR, 방 코드 IBM Plex Mono)
+   ===================================================================== */
+h1, h2, .modal h2, .tu-panel h2 { font-family: var(--font-display); font-weight: 700; letter-spacing: 0; }
+.members .seat { font-family: var(--font-mono); }
