@@ -1071,3 +1071,6 @@ body[data-bg="charcoal"] { --felt: #2b2e33; --felt-deep: #1b1d21; --tray: #14161
 /* 상대 남은 시간: 10초부터 빨갛게 */
 .turn-token { font-variant-numeric: tabular-nums; }
 .turn-token.low { background: var(--red); color: var(--cream); }
+/* 상대 남은 시간: '차례' 뒤 배경이 막대처럼 줄어든다 */
+.turn-token.timed { min-width: 64px; text-align: center; background: linear-gradient(90deg, var(--brass) var(--p, 100%), #6e5a2c var(--p, 100%)); }
+.turn-token.timed.low { background: linear-gradient(90deg, var(--red) var(--p, 100%), #5a1418 var(--p, 100%)); color: var(--cream); }

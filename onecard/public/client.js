@@ -1047,8 +1047,7 @@
   function tokenText() {
     const g = state && state.game;
     if (!g || g.finished || deal || g.turn === state.me || !state.localDeadline) return '차례';
-    const left = Math.min(30, Math.ceil(Math.max(0, state.localDeadline - Date.now()) / 1000));
-    return `차례 ${left}초`;
+    return '차례';
   }
   function updateTimer() {
     const tok = $('turnToken');
@@ -1056,8 +1055,12 @@
       const txt = tokenText();
       if (tok.textContent !== txt) tok.textContent = txt;
       const g = state && state.game;
-      const left = g && g.turn !== state.me && state.localDeadline ? (state.localDeadline - Date.now()) / 1000 : 99;
+      // 상대(사람) 차례면 '차례' 뒤 배경이 남은 시간만큼 줄어드는 막대가 된다
+      const timed = g && !g.finished && !deal && g.turn !== state.me && state.localDeadline;
+      const left = timed ? Math.max(0, state.localDeadline - Date.now()) / 1000 : 99;
+      tok.classList.toggle('timed', !!timed);
       tok.classList.toggle('low', left <= 10);
+      if (timed) tok.style.setProperty('--p', `${Math.min(100, left / 30 * 100).toFixed(1)}%`);
     }
     const t = $('tabTime');
     const bar = $('turnBar');
