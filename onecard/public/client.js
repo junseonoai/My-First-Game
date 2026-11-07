@@ -1138,6 +1138,8 @@
   const openBg = () => { $('bgModal').hidden = false; };
   $('btnBg').onclick = () => { closeMenu(); openBg(); };
   $('btnBgHome').onclick = openBg;
+  $('btnRules').onclick = () => { $('rulesModal').hidden = false; };
+  $('rulesClose').onclick = () => { $('rulesModal').hidden = true; };
   $('bgClose').onclick = () => { $('bgModal').hidden = true; };
 
   // --- 봇 실력 안내 ---
@@ -1254,19 +1256,32 @@
   });
 
   function floatEmote({ id, text, kind }) {
-    // 보낸 사람 자리 위에 띄움 (나는 손패 위)
-    let anchor = state && id === state.me ? $('trayTab') : document.querySelector(`.opp[data-id="${id}"]`);
-    if (!anchor || $('game').hidden) return;
+    // 상대가 보낸 건 그 사람 자리 아래, 내가 보낸 건 이모티콘 버튼 위 (가운데 '카드 뽑기' 버튼을 가리지 않게)
+    if (!state || $('game').hidden) return;
+    const mine = id === state.me;
+    const anchor = mine ? $('btnEmote') : document.querySelector(`.opp[data-id="${id}"]`);
+    if (!anchor) return;
     const r = anchor.getBoundingClientRect();
     const el = document.createElement('div');
-    el.className = 'emote-float ' + kind;
+    el.className = 'emote-float ' + kind + (mine ? ' from-me' : ' from-opp');
     el.textContent = text;
-    const isOpp = id !== state.me;
-    el.classList.add(isOpp ? 'from-opp' : 'from-me');
-    el.style.left = Math.min(Math.max(r.left + r.width / 2, 70), window.innerWidth - 70) + 'px';
-    el.style.top = (isOpp ? r.bottom + 8 : r.top - 8) + 'px';
+    el.style.visibility = 'hidden';
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), 2300);
+    const w = el.offsetWidth, h = el.offsetHeight;
+    const cx = r.left + r.width / 2;
+    let left = Math.min(Math.max(cx - w / 2, 8), window.innerWidth - w - 8);
+    let top;
+    if (mine) {
+      // 이모티콘 버튼 바로 위. 카드 뽑기 버튼과 가로로 겹치면 그 버튼보다 위로 올린다
+      top = r.top - 12 - h;
+      const draw = [$('btnDraw'), $('btnMulti'), $('btnMultiCancel')].filter((b) => b && !b.hidden).map((b) => b.getBoundingClientRect());
+      for (const d of draw) if (left < d.right + 6 && left + w > d.left - 6 && top + h > d.top - 6) top = d.top - 10 - h;
+    } else top = r.bottom + 10;
+    el.style.left = left + 'px';
+    el.style.top = top + 'px';
+    el.style.setProperty('--tail', `${Math.min(Math.max(cx - left, 14), w - 14)}px`); // 꼬리는 보낸 사람 쪽을 가리킨다
+    el.style.visibility = '';
+    setTimeout(() => el.remove(), 2400);
   }
 
   $('btnLog').onclick = () => { closeMenu(); $('side').hidden = false; $('btnMenu').classList.remove('dot'); $('btnLog').classList.remove('dot'); };
