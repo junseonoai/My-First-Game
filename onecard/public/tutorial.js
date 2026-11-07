@@ -47,9 +47,9 @@
     const stage = document.createElement('button');
     stage.className = 'tu-stage';
     stage.textContent = '여기를 눌러 시작';
-    const out = note('봇 반응: 실버 3~5.5초 · 골드 1.8~3.5초 · 플래티넘 1.2~2.4초 · 마스터 0.8~1.6초 · 그랜드마스터 0.5~1초');
+    const out = note('봇이 남의 원카드를 잡는 속도: 실버 0.8~1.6초 · 골드 0.6~1.3초 · 플래티넘 0.45~1초 · 마스터 0.32~0.62초 · 그랜드마스터 0.2~0.42초');
     let phase = 'idle', shownAt = 0, timer = null;
-    const tierFor = (ms) => ms <= 1000 ? '그랜드마스터급' : ms <= 1600 ? '마스터급' : ms <= 2400 ? '플래티넘급' : ms <= 3500 ? '골드급' : '실버급';
+    const tierFor = (ms) => ms <= 420 ? '그랜드마스터급' : ms <= 620 ? '마스터급' : ms <= 1000 ? '플래티넘급' : ms <= 1300 ? '골드급' : '실버급';
     stage.onclick = () => {
       if (phase === 'idle' || phase === 'done') {
         phase = 'wait';

@@ -132,8 +132,13 @@ function scheduleTurn(room) {
   if (member && member.bot) {
     room.botTimer = setTimeout(() => whenUnpaused(room, () => {
       if (room.game === g && !g.finished && g.cur().id === cur.id) {
+        const before = { penalty: g.penalty, count: cur.hand.length, rank: cur.rank };
         g.botMove(cur.id, member.tier);
         after(room);
+        // 봇 반응: 크게 먹으면 아쉬워하고, 큰 공격을 넣으면 신나 하고, 이기면 뽐낸다
+        if (cur.rank === 1 && !before.rank) botEmote(room, member, 'win');
+        else if (cur.hand.length > before.count && before.penalty >= 5) botEmote(room, member, 'hurt');
+        else if (g.penalty >= 7 && g.penalty > before.penalty) botEmote(room, member, 'attack');
       }
     }, 'botTimer'), (room.lastTurnId === cur.id ? 1800 : 900) + Math.random() * 900); // 같은 봇이 연달아 내면 조금 더 천천히
   } else {
@@ -156,6 +161,28 @@ function extendTurn(room, ms) {
       after(room);
     }
   }, 'turnTimer'), room.deadline - Date.now());
+}
+
+// --- 봇 이모티콘: 등급마다 성격이 조금 다르고, 너무 자주 하지 않는다 ---
+const BOT_MOOD = {
+  silver: { rate: 0.55, hurt: ['😭', '😱', '아 안 돼!'], attack: ['🔥', '공격 간다!'], caught: ['ㅋㅋㅋㅋ', '😂'], win: ['😀', '운이 좋네요'] },
+  gold: { rate: 0.4, hurt: ['😭', '아 안 돼!'], attack: ['🔥', '공격 간다!'], caught: ['😂', '👍'], win: ['😎', '운이 좋네요'] },
+  platinum: { rate: 0.3, hurt: ['😱', '봐주세요'], attack: ['🔥'], caught: ['👍', '원카드 조심!'], win: ['😎', '잘했어요'] },
+  master: { rate: 0.22, hurt: ['😡'], attack: ['😎'], caught: ['👏', '원카드 조심!'], win: ['😎', '한 판 더?'] },
+  grandmaster: { rate: 0.15, hurt: ['💀'], attack: ['😎'], caught: ['👍'], win: ['😎', '한 판 더?'] },
+};
+function botEmote(room, m, kind) {
+  const mood = BOT_MOOD[m.tier] || BOT_MOOD.gold;
+  const now = Date.now();
+  if (kind !== 'win' && Math.random() > mood.rate) return;
+  if (now - (m.lastEmote || 0) < 9000 || now - (room.lastBotEmote || 0) < 3000) return; // 너무 자주 하지 않게
+  m.lastEmote = now; room.lastBotEmote = now;
+  const list = mood[kind];
+  const text = list[Math.floor(Math.random() * list.length)];
+  setTimeout(() => {
+    if (!rooms.has(room.code)) return;
+    io.to(room.code).emit('emote', { id: m.id, name: m.name, text, kind: EMOJIS.includes(text) ? 'emoji' : 'phrase' });
+  }, 500 + Math.random() * 700);
 }
 
 // --- 원카드 버튼 경쟁 ---
@@ -188,7 +215,13 @@ function pressOneCard(room, id) {
   if (now < r.openAt || now > r.closeAt) return null; // 카운트다운 중이거나 시간이 지났다
   if (!r.eligible.includes(id) || r.presses.some((p) => p.id === id)) return null;
   const first = r.presses.length === 0;
-  if (first && g.oneCard && g.oneCard.playerId === r.target) g.callOneCard(id); // 승부는 가장 먼저 누른 사람이
+  if (first && g.oneCard && g.oneCard.playerId === r.target) {
+    g.callOneCard(id); // 승부는 가장 먼저 누른 사람이
+    const m = room.members.find((x) => x.id === id);
+    const t = room.members.find((x) => x.id === r.target);
+    if (m && m.bot && id !== r.target) botEmote(room, m, 'caught'); // 남의 원카드를 잡았다
+    else if (t && t.bot && id !== r.target) botEmote(room, t, 'hurt'); // 봇이 잡혔다
+  }
   r.presses.push({ id, ms: now - r.openAt, first });
   // 모두 눌렀으면 바로 결과
   if (r.presses.length >= r.eligible.length) finishRace(room, r);
