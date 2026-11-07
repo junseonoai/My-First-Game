@@ -1162,3 +1162,26 @@ input { border-radius: var(--radius-md); }
    ===================================================================== */
 h1, h2, .modal h2, .tu-panel h2 { font-family: var(--font-display); font-weight: 700; letter-spacing: 0; }
 .members .seat { font-family: var(--font-mono); }
+
+/* =====================================================================
+   한장 6단계: 카드 무늬 아이콘, 카드 뒷면 ㅎ 스페이드, 낼 수 있는 카드 테두리 정리
+   ===================================================================== */
+.suit-ico { width: 1em; height: 1em; display: block; fill: currentColor; }
+.card .idx s { display: block; line-height: 0; }
+.card .idx s .suit-ico { width: .95em; height: .95em; }
+.card .pip .suit-ico { width: 1em; height: 1em; }
+.suit-badge .suit-ico { width: .9em; height: .9em; }
+.suits button .suit-ico { width: 34px; height: 34px; margin: 0 auto; }
+@media (max-width: 520px) { .suits button .suit-ico { width: 30px; height: 30px; } }
+/* 카드 뒷면: 남색 무늬 가운데 ㅎ 스페이드(보조 심볼)를 종이색으로 작게 */
+.card.back::before {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 46%; aspect-ratio: 1; transform: translate(-50%, -50%);
+  background: var(--ground); opacity: .9; pointer-events: none;
+  -webkit-mask: url("submark.svg") center / contain no-repeat; mask: url("submark.svg") center / contain no-repeat;
+}
+/* 낼 수 있는 카드 테두리: 일반 크림 · 받아치기 빨강 · 막기 노랑 · 조커 무지개, 고른 카드 초록.
+   내 차례(머스터드 상자) 위에서는 노랑 막기가 상자 색에 묻히지 않게 모든 테두리에 얇은 잉크 바깥선 */
+.my-turn .hand .card.ok.k-counter { box-shadow: 0 0 0 3px var(--counter), 0 0 0 5px var(--ink), 0 4px 10px rgba(10, 20, 14, .3); }
+.my-turn .hand .card.ok.k-block { box-shadow: 0 0 0 3px var(--block), 0 0 0 5px var(--ink), 0 4px 10px rgba(10, 20, 14, .3); }
+.my-turn .hand .card.sel { box-shadow: 0 0 0 3px var(--pick), 0 0 0 5px var(--ink), 0 8px 18px rgba(10, 20, 14, .35); }
+.my-turn .hand .card.pick { box-shadow: 0 0 0 2px var(--pick), 0 0 0 4px var(--ink), 0 4px 10px rgba(10, 20, 14, .3); }

@@ -24,6 +24,13 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<!-- 카드 무늬 아이콘 (한장 assets/Icons). 카드와 무늬 표시에서 <use>로 한 번만 정의해 가볍게 쓴다 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="suit-S" viewBox="0 0 24 24"><path d="M12 2.5S4 7.6 4 13.2A4 4 0 0 0 11 15.8L9.5 21h5L13 15.8a4 4 0 0 0 7-2.6C20 7.6 12 2.5 12 2.5z"/></symbol>
+  <symbol id="suit-H" viewBox="0 0 24 24"><path d="M12 20.5s-8-4.6-8-10.4A4.4 4.4 0 0 1 12 7.6a4.4 4.4 0 0 1 8 2.5c0 5.8-8 10.4-8 10.4z"/></symbol>
+  <symbol id="suit-D" viewBox="0 0 24 24"><path d="M12 2.5l7 9.5-7 9.5-7-9.5z"/></symbol>
+  <symbol id="suit-C" viewBox="0 0 24 24"><circle cx="12" cy="7.2" r="4"/><circle cx="7" cy="13.4" r="4"/><circle cx="17" cy="13.4" r="4"/><path d="M11 12h2l1.5 9h-5z"/></symbol>
+</svg>
 
 <!-- 시작 화면 -->
 <section id="home" class="screen">
@@ -236,10 +243,10 @@
   <div class="panel">
     <p>바꿀 무늬를 고르세요</p>
     <div class="suits">
-      <button data-suit="S">♠</button>
-      <button data-suit="H" class="red">♥</button>
-      <button data-suit="D" class="red">♦</button>
-      <button data-suit="C">♣</button>
+      <button data-suit="S" aria-label="스페이드"><svg class="suit-ico" aria-hidden="true"><use href="#suit-S"/></svg></button>
+      <button data-suit="H" class="red" aria-label="하트"><svg class="suit-ico" aria-hidden="true"><use href="#suit-H"/></svg></button>
+      <button data-suit="D" class="red" aria-label="다이아"><svg class="suit-ico" aria-hidden="true"><use href="#suit-D"/></svg></button>
+      <button data-suit="C" aria-label="클로버"><svg class="suit-ico" aria-hidden="true"><use href="#suit-C"/></svg></button>
     </div>
     <button id="suitCancel" class="btn ghost small">취소</button>
   </div>

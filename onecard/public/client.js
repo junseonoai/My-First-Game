@@ -199,16 +199,18 @@
     } else {
       if (RED[c.suit]) el.classList.add('red');
       const s = SYM[c.suit];
-      const idx = `<b>${c.rank}</b><s>${s}</s>`;
+      const ico = suitIcon(c.suit); // 텍스트 기호 대신 무늬 아이콘 (기기마다 모양이 달라지지 않게)
+      const idx = `<b>${c.rank}</b><s>${ico}</s>`;
       const mid = ['J', 'Q', 'K'].includes(c.rank)
         ? `<div class="court">${courtSVG(c.rank, c.suit)}</div>`
-        : `<div class="pip">${s}</div>`;
+        : `<div class="pip">${ico}</div>`;
       el.innerHTML = `<div class="idx tl">${idx}</div>${mid}<div class="idx br">${idx}</div>`;
       el.setAttribute('aria-label', s + c.rank);
     }
     return el;
   }
   window.oneCardUI = { tierTag: (t) => tierTag(t), cardEl: (c) => cardEl(c), reaction: () => ({ best: +store.get('onecard-best-ms') || 0 }) };
+  function suitIcon(suit) { return `<svg class="suit-ico" aria-hidden="true"><use href="#suit-${suit}"/></svg>`; }
   function backEl() { const el = document.createElement('div'); el.className = 'card back'; return el; }
 
   // --- 날아가는 카드 ---
@@ -404,7 +406,13 @@
 
     const badge = $('suitBadge');
     const showSuit = g.activeSuit && (g.top.rank === 'JOKER' || g.activeSuit !== g.top.suit);
-    badge.textContent = showSuit ? SYM[g.activeSuit] : (g.top.rank === 'JOKER' && !g.activeSuit && g.penalty === 0 ? '★' : '');
+    const freeAfterJoker = g.top.rank === 'JOKER' && !g.activeSuit && g.penalty === 0;
+    const badgeKey = showSuit ? g.activeSuit : freeAfterJoker ? '★' : '';
+    if (badge.dataset.k !== badgeKey) {
+      badge.dataset.k = badgeKey;
+      badge.innerHTML = showSuit ? suitIcon(g.activeSuit) : freeAfterJoker ? '★' : '';
+      badge.setAttribute('aria-label', showSuit ? `지금 무늬 ${SYM[g.activeSuit]}` : freeAfterJoker ? '아무 카드나' : '');
+    }
     badge.className = 'suit-badge' + (showSuit && RED[g.activeSuit] ? ' red' : '');
     $('deckCount').textContent = `남은 카드 ${deal ? deckLeft() : g.deckCount}`;
     if (deal && !deal.pile) badge.textContent = '';
