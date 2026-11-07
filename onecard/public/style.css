@@ -899,16 +899,13 @@ body[data-bg="charcoal"] { --felt: #2b2e33; --felt-deep: #1b1d21; --tray: #14161
 /* 시작 알림 */
 .bubble.start { color: var(--ink); border-color: var(--ink); background: #ffd978; }
 /* 칩: 뒷면은 앞면 색을 뒤집은 것 (크림 바탕 + 빨간 글씨), 두께가 보이게 옆면을 겹쳐 쌓는다 */
-.chip3d .face.a { transform: translateZ(5px); }
-.chip3d .face.b { transform: rotateX(180deg) translateZ(5px); background: repeating-conic-gradient(from 15deg, var(--red) 0 30deg, var(--cream) 30deg 60deg); }
+.chip3d .face.a { transform: translateZ(10px); }
+.chip3d .face.b { transform: rotateX(180deg) translateZ(10px); background: repeating-conic-gradient(from 15deg, var(--red) 0 30deg, var(--cream) 30deg 60deg); }
 .face.b .chip-in { background: var(--cream); color: var(--red); outline-color: rgba(179, 38, 46, .7); }
 .chip3d .rim {
   position: absolute; inset: 0; border-radius: 50%; border: 4px solid var(--ink);
   background: repeating-conic-gradient(from 15deg, #c9bfa8 0 30deg, #7e1a20 30deg 60deg);
 }
-/* 윗면에 빛이 비치는 느낌 */
-.chip3d .face::after {
-  content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(circle at 32% 26%, rgba(255, 255, 255, .38), rgba(255, 255, 255, 0) 45%, rgba(0, 0, 0, .18) 100%);
-}
 .chip3d .face { box-shadow: none; }
+.chip3d .rim { border: none; }
+.chip3d .rim:first-child, .chip3d .rim:nth-child(19) { border: 2px solid var(--ink); }
