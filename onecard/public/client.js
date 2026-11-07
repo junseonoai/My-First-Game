@@ -223,6 +223,11 @@
   // 바닥에 놓인 카드의 기울기 (카드마다 고정)
   const tilt = (id) => ((id * 47) % 21) - 10;
   const nudge = (id) => ((id * 13) % 9) - 4;
+  // 바닥에서 그 카드가 실제로 놓이는 자리 (날아간 카드가 도착 뒤 움찔하지 않게)
+  function pileSpot(id) {
+    const r = $('pile').getBoundingClientRect();
+    return { left: r.left + nudge(id), top: r.top + nudge(id * 3), width: r.width, height: r.height };
+  }
 
   // --- 화면 그리기 ---  // --- 화면 그리기 ---
   function render() {
@@ -271,7 +276,7 @@
 
   function renderGame(g, me, lobby) {
     const myIdx = g.players.findIndex((p) => p.id === me);
-    const myTurn = g.turn === me && !g.finished;
+    const myTurn = g.turn === me && !g.finished && !deal; // 나눠 주는 동안은 아직 아무 차례도 아님
 
     // 상대: 내 다음 순서부터
     const opp = $('opponents');
@@ -288,7 +293,8 @@
       const p = g.players[(myIdx + i) % n];
       const online = (lobby.members.find((m) => m.id === p.id) || {}).online;
       const d = document.createElement('div');
-      d.className = 'opp' + (p.id === g.turn && !g.finished ? ' turn' : '') + (p.id === nextId ? ' next' : '') + (p.out ? ' out' : '') + (p.count === 1 ? ' warn' : '');
+      const pc = deal ? deal.opp[p.id] || 0 : p.count; // 나눠 주는 중이면 받은 만큼만
+      d.className = 'opp' + (p.id === g.turn && !g.finished && !deal ? ' turn' : '') + (p.id === nextId ? ' next' : '') + (p.out ? ' out' : '') + (pc === 1 && !deal ? ' warn' : '');
       let badge = '<div class="badge"></div>'; // 줄 높이를 늘 같게 (자리가 들썩이지 않게)
       if (p.rank) badge = `<div class="badge">${rankLabel(p.rank, n)}</div>`;
       else if (p.bankrupt) badge = '<div class="badge bad">파산</div>';
@@ -296,13 +302,13 @@
       else if (!online && !p.bot) badge = '<div class="badge bad">연결 끊김</div>';
       else if (g.oneCard === p.id) badge = '<div class="badge bad">원카드?</div>';
       d.dataset.id = p.id;
-      const shown = p.out ? 0 : Math.min(p.count, nOpp >= 4 ? 4 : 7);
+      const shown = p.out ? 0 : Math.min(pc, nOpp >= 4 ? 4 : 7);
       let fan = '';
       for (let k = 0; k < shown; k++) {
         const a = (k - (shown - 1) / 2) * 7;
         fan += `<i style="left:calc(50% - 9px + ${(k - (shown - 1) / 2) * 6}px);transform:rotate(${a}deg)"></i>`;
       }
-      d.innerHTML = `${p.id === nextId ? '<span class="next-tag">다음</span>' : ''}<div class="nm">${p.bot ? `<span class="bot t-${p.tier || 'gold'}">${TIER_SHORT[p.tier || 'gold']}</span>` : ''}<span></span></div><div class="fan">${fan}</div><div class="cnt">${p.out ? '–' : p.count + '장'}</div>${badge}`;
+      d.innerHTML = `${p.id === nextId ? '<span class="next-tag">다음</span>' : ''}<div class="nm">${p.bot ? `<span class="bot t-${p.tier || 'gold'}">${TIER_SHORT[p.tier || 'gold']}</span>` : ''}<span></span></div><div class="fan">${fan}</div><div class="cnt">${p.out ? '–' : pc + '장'}</div>${badge}`;
       d.querySelector('.nm span:last-child').textContent = p.name;
       // 테이블을 둘러앉은 것처럼 가운데 자리는 위로, 바깥 자리는 아래로
       const off = Math.abs((i - 1) - (nOpp - 1) / 2);
@@ -315,13 +321,14 @@
     let st = '';
     const selectingNow = myTurn && selected.length > 0;
     if (g.finished) st = '게임 종료';
+    else if (deal) st = '카드를 나눠 주는 중…';
     else if (selectingNow) st = '같은 숫자를 더 골라 함께 내요';
     else if (myTurn) st = g.penalty > 0 ? '받아치거나 막거나, 먹으세요' : '낼 카드를 고르세요'; // 내 차례 표시는 아래 상자 탭에
     else st = `${cur ? escapeHtml(cur.name) : ''}님 차례`;
     $('status').innerHTML = st;
     // 셋 이상: 도는 방향을 가운데에 크게 (바뀌면 한 바퀴 돈다)
     const dirEl = $('dirChip');
-    dirEl.hidden = n <= 2 || g.finished;
+    dirEl.hidden = n <= 2 || g.finished || !!deal;
     dirEl.className = 'dir-chip' + (g.dir === 1 ? '' : ' ccw');
     dirEl.innerHTML = `<i>${g.dir === 1 ? '↻' : '↺'}</i>${g.dir === 1 ? '시계 방향' : '반시계 방향'}`;
     if (anim.prev && anim.prev.dir !== g.dir && n > 2) { dirEl.classList.add('flip'); dirFlash(g.dir); }
@@ -331,7 +338,7 @@
     $('game').classList.toggle('my-turn', myTurn);
     // 상자 탭: 내 차례면 크게, 아니면 누구 차례인지
     const tabName = cur ? cur.name : '';
-    $('tabLabel').textContent = g.finished ? '게임 종료' : myTurn ? '내 차례' : `${tabName}님 차례` + (nextId === me ? ' · 다음은 나' : '');
+    $('tabLabel').textContent = g.finished ? '게임 종료' : deal ? '준비 중' : myTurn ? '내 차례' : `${tabName}님 차례` + (nextId === me ? ' · 다음은 나' : '');
     updateTimer();
     // 내 차례가 막 시작되면 크게 알려 준다 (휴대폰은 짧게 진동)
     if (myTurn && !wasMyTurn && seenSeq) {
@@ -352,7 +359,6 @@
       if (landing.has(c.id) || (fresh.includes(c) && !localFlown.has(c.id))) el.style.visibility = 'hidden';
       pile.appendChild(el);
     }
-    const pileRect = pile.getBoundingClientRect();
     const actor = anim.prev ? anim.prev.turn : null;
     fresh.forEach((c, i) => {
       if (localFlown.has(c.id)) { localFlown.delete(c.id); return; } // 이미 날아가는 중이거나 도착함
@@ -360,7 +366,7 @@
       let from = null;
       if (actor === me) from = anim.handRects[c.id] || $('hand').getBoundingClientRect();
       else { const seat = document.querySelector(`.opp[data-id="${actor}"] .fan`); from = seat && seat.getBoundingClientRect(); }
-      fly(() => cardEl(c), from, pileRect, {
+      fly(() => cardEl(c), from, pileSpot(c.id), {
         delay: i * 110, rotFrom: actor === me ? 0 : -20, rotTo: tilt(c.id),
         onDone: () => {
           landing.delete(c.id);
@@ -370,12 +376,16 @@
       });
     });
     for (const c of recent) pileSeen.add(c.id);
+    pile.style.visibility = deal && !deal.pile ? 'hidden' : '';
+    $('deck').style.visibility = deal && !deal.deck ? 'hidden' : '';
+    $('deckCount').style.visibility = deal && !deal.deck ? 'hidden' : '';
 
     const badge = $('suitBadge');
     const showSuit = g.activeSuit && (g.top.rank === 'JOKER' || g.activeSuit !== g.top.suit);
     badge.textContent = showSuit ? SYM[g.activeSuit] : (g.top.rank === 'JOKER' && !g.activeSuit && g.penalty === 0 ? '★' : '');
     badge.className = 'suit-badge' + (showSuit && RED[g.activeSuit] ? ' red' : '');
-    $('deckCount').textContent = `남은 카드 ${g.deckCount}`;
+    $('deckCount').textContent = `남은 카드 ${deal ? deckLeft() : g.deckCount}`;
+    if (deal && !deal.pile) badge.textContent = '';
     $('deck').classList.toggle('can', myTurn);
 
     // 쌓인 공격 장수: 많을수록 더 크게, 더 격하게
@@ -391,7 +401,7 @@
     renderOnePop();
 
     // 내 이름/타이머
-    $('myName').textContent = (meP ? meP.name : '') + ` · ${g.hand.length}장` + (meP && meP.rank ? ` · ${rankLabel(meP.rank, n)}` : '') + (meP && meP.bankrupt ? ' · 파산' : '');
+    $('myName').textContent = (meP ? meP.name : '') + ` · ${deal ? deal.mine : g.hand.length}장` + (meP && meP.rank ? ` · ${rankLabel(meP.rank, n)}` : '') + (meP && meP.bankrupt ? ' · 파산' : '');
     document.querySelector('.me-bar').classList.toggle('turn', myTurn);
 
     // 손패
@@ -422,7 +432,7 @@
         el.classList.add('dim');
       } else if (myTurn) el.classList.add(...(ok.has(c.id) ? ['ok', 'k-' + (kinds[c.id] || 'normal')] : ['dim']));
       el.onclick = () => playCard(c, ok.has(c.id), g);
-      if (newHandIds.has(c.id) || localFlown.has(c.id)) el.style.visibility = 'hidden';
+      if (newHandIds.has(c.id) || localFlown.has(c.id) || (deal && idx >= deal.mine)) el.style.visibility = 'hidden';
       rows[idx < rows.per ? 0 : 1].appendChild(el);
     });
     animateDraws(g, me);
@@ -449,8 +459,6 @@
     renderLog(g.log);
     anim = { prev: null, handRects: {} }; // 같은 변화로 애니메이션이 다시 나오지 않게
     placeTurnToken(g, me);
-
-    renderIntro();
 
     // 결과
     if (g.finished && !shownResult) {
@@ -494,68 +502,157 @@
     el.style.top = (id === me ? r.top - 10 : r.top + r.height * .45) + 'px';
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 1600);
-    if (id === me) { const t = $('tray'); t.classList.remove('got'); void t.offsetWidth; t.classList.add('got'); }
   }
 
-  // --- 먼저 할 사람 고르기: 둘이면 동전 던지기, 셋 이상이면 룰렛 ---
+  // --- 게임 시작 연출 ---
+  // 단색 배경에서 먼저 할 사람 고르기(둘이면 칩 던지기, 셋 이상이면 룰렛) → 덱이 나타남
+  // → 덱에서 한 장씩 나눠 줌 → 시작 카드 한 장을 바닥에 → 누가 먼저인지 알림
+  // 서버(INTRO_MS = 7600)는 이 시간 동안 판을 멈춰 둔다.
+  const PICK_SPIN = 2500, PICK_SHOW = 900, DECK_IN = 450, DEAL_MS = 2100, START_CARD = 650;
   const introDone = new Set();
   let introTimers = [];
-  function renderIntro() {
-    const it = state && state.intro;
-    if (!it || !state.game) return;
-    const key = state.lobby.code + ':' + it.id;
+  let deal = null; // 나눠 주는 중: { mine, opp: {id: n}, deck, pile, total, given }
+  const later = (ms, fn) => introTimers.push(setTimeout(fn, ms));
+  const nameOf = (g, id, me) => { const p = g.players.find((x) => x.id === id); return p ? (id === me ? '나' : p.name) : '?'; };
+
+  // 새 게임 상태가 들어올 때 (화면을 그리기 전에) 연출을 준비한다
+  function maybeStartIntro(s) {
+    const it = s.intro;
+    if (!it || !s.game) return;
+    const key = s.lobby.code + ':' + it.id;
     if (introDone.has(key)) return;
     introDone.add(key);
-    if (it.left < 1200 || reduceMotion) return; // 거의 끝났으면 건너뛴다
-    playIntro(it, state.game, state.me);
-  }
-  function playIntro(it, g, me) {
-    const pop = $('introPop'), stage = $('introStage');
     introTimers.forEach(clearTimeout); introTimers = [];
-    const name = (id) => { const p = g.players.find((x) => x.id === id); return p ? (id === me ? '나' : p.name) : '?'; };
-    const total = it.left, reveal = 1100, spin = Math.max(900, total - reveal - 150);
+    const full = PICK_SPIN + PICK_SHOW + DECK_IN + DEAL_MS + START_CARD;
+    if (reduceMotion || it.left < full - 800) { deal = null; return; } // 중간에 들어왔으면 건너뛴다
+    const opp = {};
+    for (const p of s.game.players) opp[p.id] = 0;
+    deal = { mine: 0, opp, deck: false, pile: false, total: s.game.players.length * 7, given: 0 };
+    playPick(it, s.game, s.me);
+    later(PICK_SPIN + PICK_SHOW, () => { $('introPop').hidden = true; showDeck(); });
+    later(PICK_SPIN + PICK_SHOW + DECK_IN, () => dealCards(s.me));
+    later(PICK_SPIN + PICK_SHOW + DECK_IN + DEAL_MS, () => placeStartCard());
+    later(full, () => {
+      const g = state && state.game;
+      deal = null;
+      render();
+      if (g) bubble(g.turn === state.me ? '내가 먼저 시작!' : `${nameOf(g, g.turn, state.me)}님부터 시작!`, 'start');
+    });
+  }
+
+  // 1) 먼저 할 사람 고르기 (단색 배경)
+  function playPick(it, g, me) {
+    const pop = $('introPop'), stage = $('introStage');
     pop.hidden = false;
     pop.className = 'intro-pop k-' + it.kind;
     $('introMsg').textContent = '';
-    stage.innerHTML = '';
     const starterIdx = Math.max(0, it.order.indexOf(it.starter));
     if (it.kind === 'coin') {
-      $('introTitle').textContent = '동전 던지기 · 누가 먼저?';
-      stage.innerHTML = `<div class="coin"><div class="face a"><small>앞</small><span></span></div><div class="face b"><small>뒤</small><span></span></div></div><div class="coin-shadow"></div>`;
-      stage.querySelector('.face.a span').textContent = name(it.order[0]);
-      stage.querySelector('.face.b span').textContent = name(it.order[1]);
+      $('introTitle').textContent = '칩 던지기 · 누가 먼저?';
+      stage.innerHTML = `<div class="chip3d"><div class="face a"><div class="chip-in"><small>앞</small><span></span></div></div><div class="face b"><div class="chip-in"><small>뒤</small><span></span></div></div></div><div class="chip-shadow"></div>`;
+      stage.querySelector('.face.a span').textContent = nameOf(g, it.order[0], me);
+      stage.querySelector('.face.b span').textContent = nameOf(g, it.order[1], me);
       const end = 360 * 6 + (starterIdx === 1 ? 180 : 0);
-      stage.querySelector('.coin').animate([
-        { transform: 'translateY(0) rotateY(0deg) scale(1)' },
-        { transform: `translateY(-120px) rotateY(${end * .55}deg) scale(1.15)`, offset: .45 },
-        { transform: `translateY(0) rotateY(${end - 25}deg) scale(1)`, offset: .85 },
-        { transform: `translateY(0) rotateY(${end}deg) scale(1)` },
-      ], { duration: spin, easing: 'cubic-bezier(.3,.6,.4,1)', fill: 'forwards' });
-      stage.querySelector('.coin-shadow').animate([{ transform: 'scale(1)', opacity: .5 }, { transform: 'scale(.5)', opacity: .2, offset: .45 }, { transform: 'scale(1)', opacity: .5 }], { duration: spin * .85, fill: 'forwards' });
+      stage.querySelector('.chip3d').animate([
+        { transform: 'translateY(0) rotateX(0deg) scale(1)' },
+        { transform: `translateY(-120px) rotateX(${end * .55}deg) scale(1.15)`, offset: .45 },
+        { transform: `translateY(0) rotateX(${end - 20}deg) scale(1)`, offset: .85 },
+        { transform: `translateY(0) rotateX(${end}deg) scale(1)` },
+      ], { duration: PICK_SPIN, easing: 'cubic-bezier(.3,.6,.4,1)', fill: 'forwards' });
+      stage.querySelector('.chip-shadow').animate([{ transform: 'scale(1)', opacity: .5 }, { transform: 'scale(.5)', opacity: .2, offset: .45 }, { transform: 'scale(1)', opacity: .5 }], { duration: PICK_SPIN * .85, fill: 'forwards' });
     } else {
       $('introTitle').textContent = '룰렛 · 누가 먼저?';
-      const n = it.order.length, seg = 360 / n, R = 110;
-      const COLORS = ['#b3262e', '#d9ab3c', '#2f8f8a', '#23458f', '#7b4bb0', '#3f7a3a'];
+      const n = it.order.length, seg = 360 / n, R = 100;
+      // 칩과 같은 색: 빨강 · 먹색 · 크림을 번갈아 (마지막 칸이 첫 칸과 같은 색이면 금색)
+      const FILL = ['#b3262e', '#1f1a14', '#f3ead6'];
+      const fillOf = (i) => (i === n - 1 && n % 3 === 1 ? '#d9ab3c' : FILL[i % 3]);
       const pt = (a, r) => [120 + r * Math.sin(a * Math.PI / 180), 120 - r * Math.cos(a * Math.PI / 180)];
       let svg = '';
       it.order.forEach((id, i) => {
         const [x1, y1] = pt(i * seg, R), [x2, y2] = pt((i + 1) * seg, R);
-        const mid = (i + .5) * seg, [tx, ty] = pt(mid, R * .62);
-        svg += `<path d="M120 120 L${x1} ${y1} A${R} ${R} 0 ${seg > 180 ? 1 : 0} 1 ${x2} ${y2} Z" fill="${COLORS[i % COLORS.length]}" stroke="#1f1a14" stroke-width="2" data-i="${i}"/>`;
-        svg += `<text x="${tx}" y="${ty}" transform="rotate(${mid} ${tx} ${ty})" text-anchor="middle" dominant-baseline="middle" font-size="${n >= 5 ? 13 : 15}" font-weight="700" fill="#fff" stroke="#1f1a14" stroke-width="3" paint-order="stroke">${escapeHtml(name(id).slice(0, 6))}</text>`;
+        const mid = (i + .5) * seg, [tx, ty] = pt(mid, R * .6);
+        const f = fillOf(i), light = f === '#f3ead6' || f === '#d9ab3c';
+        svg += `<path d="M120 120 L${x1} ${y1} A${R} ${R} 0 ${seg > 180 ? 1 : 0} 1 ${x2} ${y2} Z" fill="${f}" stroke="#1f1a14" stroke-width="2.5" data-i="${i}"/>`;
+        svg += `<text x="${tx}" y="${ty}" transform="rotate(${mid} ${tx} ${ty})" text-anchor="middle" dominant-baseline="middle" font-size="${n >= 5 ? 13 : 15}" font-weight="700" fill="${light ? '#1f1a14' : '#f3ead6'}">${escapeHtml(nameOf(g, id, me).slice(0, 6))}</text>`;
       });
-      stage.innerHTML = `<div class="wheel-pin"></div><svg class="wheel" viewBox="0 0 240 240">${svg}<circle cx="120" cy="120" r="16" fill="#f3ead6" stroke="#1f1a14" stroke-width="3"/></svg>`;
+      // 바깥 테두리는 칩 가장자리처럼 줄무늬
+      stage.innerHTML = `<div class="wheel-pin"></div><svg class="wheel" viewBox="0 0 240 240">
+        <circle cx="120" cy="120" r="116" fill="#b3262e" stroke="#1f1a14" stroke-width="3"/>
+        <circle cx="120" cy="120" r="108" fill="none" stroke="#f3ead6" stroke-width="10" stroke-dasharray="14 14"/>
+        <g class="wheel-in">${svg}</g>
+        <circle cx="120" cy="120" r="101" fill="none" stroke="#1f1a14" stroke-width="3"/>
+        <circle cx="120" cy="120" r="20" fill="#d9ab3c" stroke="#1f1a14" stroke-width="3"/>
+        <circle cx="120" cy="120" r="12" fill="none" stroke="#1f1a14" stroke-width="1.5" stroke-dasharray="3 3"/></svg>`;
       const jitter = (Math.random() - .5) * seg * .6;
       const end = 360 * 5 + (360 - (starterIdx + .5) * seg) + jitter; // 고른 칸이 위쪽 바늘에 멈춘다
       stage.querySelector('.wheel').animate([{ transform: 'rotate(0deg)' }, { transform: `rotate(${end}deg)` }],
-        { duration: spin, easing: 'cubic-bezier(.12,.6,.15,1)', fill: 'forwards' });
-      introTimers.push(setTimeout(() => { const s = stage.querySelector(`path[data-i="${starterIdx}"]`); if (s) s.classList.add('win'); }, spin));
+        { duration: PICK_SPIN, easing: 'cubic-bezier(.12,.6,.15,1)', fill: 'forwards' });
+      later(PICK_SPIN, () => { const s = stage.querySelector(`path[data-i="${starterIdx}"]`); if (s) s.classList.add('win'); });
     }
-    introTimers.push(setTimeout(() => {
+    later(PICK_SPIN, () => {
       pop.classList.add('reveal');
-      $('introMsg').textContent = it.starter === me ? '내가 먼저 시작해요!' : `${name(it.starter)}님이 먼저 시작해요!`;
-    }, spin));
-    introTimers.push(setTimeout(() => { pop.hidden = true; }, total));
+      $('introMsg').textContent = it.starter === me ? '내가 먼저!' : `${nameOf(g, it.starter, me)}님이 먼저!`;
+    });
+  }
+
+  // 2) 덱이 먼저 나타난다
+  function showDeck() {
+    if (!deal) return;
+    deal.deck = true;
+    render();
+    $('deck').animate([{ transform: 'translateY(-30px) scale(.6)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 380, easing: 'cubic-bezier(.3,1.4,.5,1)' });
+  }
+
+  // 3) 덱에서 한 사람씩 돌아가며 7장씩 나눠 준다
+  function dealCards(me) {
+    const g = state && state.game;
+    if (!deal || !g) return;
+    const myIdx = g.players.findIndex((p) => p.id === me);
+    const order = g.players.map((_, k) => g.players[(myIdx + 1 + k) % g.players.length].id); // 내 다음 사람부터, 나는 마지막
+    const gap = (DEAL_MS - 380) / deal.total;
+    let k = 0;
+    for (let round = 0; round < 7; round++) {
+      for (const id of order) {
+        const at = k++ * gap;
+        later(at, () => dealOne(id, me));
+      }
+    }
+  }
+  function dealOne(id, me) {
+    if (!deal) return;
+    const deck = $('deck').getBoundingClientRect();
+    deal.given++;
+    $('deckCount').textContent = `남은 카드 ${deckLeft()}`;
+    const land = () => { if (!deal) return; if (id === me) deal.mine++; else deal.opp[id]++; render(); };
+    if (id === me) {
+      const el = document.querySelectorAll('#hand .card')[deal.mine];
+      if (!el) return land();
+      fly(backEl, deck, el.getBoundingClientRect(), { dur: 360, rotFrom: -8, onDone: land });
+    } else {
+      const seat = document.querySelector(`.opp[data-id="${id}"] .fan`);
+      if (!seat) return land();
+      const r = seat.getBoundingClientRect();
+      const to = { left: r.left + r.width / 2 - deck.width / 2, top: r.top + r.height / 2 - deck.height / 2, width: deck.width, height: deck.height };
+      fly(backEl, deck, to, { dur: 360, rotTo: 12, endScale: .3, onDone: land });
+    }
+  }
+  const deckLeft = () => (state && state.game ? state.game.deckCount : 0) + (deal ? deal.total - deal.given + (deal.pile ? 0 : 1) : 0);
+
+  // 4) 덱에서 시작 카드 한 장을 뒤집어 바닥에
+  function placeStartCard() {
+    const g = state && state.game;
+    if (!deal || !g) return;
+    const c = g.top;
+    fly(backEl, $('deck').getBoundingClientRect(), pileSpot(c.id), {
+      dur: 420, rotTo: tilt(c.id),
+      onDone: () => {
+        if (!deal) return;
+        deal.pile = true;
+        render();
+        const el = $('pile').querySelector(`.card[data-id="${c.id}"]`);
+        if (el) el.animate([{ transform: el.style.transform + ' rotateY(90deg)' }, { transform: el.style.transform }], { duration: 220, easing: 'ease-out' });
+      },
+    });
   }
 
   // 내 차례가 시작될 때: 손패 위에 '내 차례' 띠가 올라왔다 사라진다
@@ -682,7 +779,7 @@
   // --- 차례 말: 지금 차례인 자리로 미끄러져 간다 ---
   function placeTurnToken(g, me) {
     const tok = $('turnToken');
-    if (g.finished || $('game').hidden) { tok.hidden = true; return; }
+    if (g.finished || $('game').hidden || deal) { tok.hidden = true; return; }
     // 내 차례는 가운데 표시·내 이름 줄·손패 테두리로 알리므로 말은 상대 차례에만
     const target = g.turn === me ? null : document.querySelector(`.opp[data-id="${g.turn}"]`);
     if (!target) { tok.hidden = true; return; }
@@ -862,16 +959,19 @@
   const localFlown = new Set();
   function launchLocal(ids) {
     if (reduceMotion) return;
-    const pileRect = $('pile').getBoundingClientRect();
+    // 남은 카드는 바로 빈자리를 메운다 (서버 응답 뒤에 따로 움직이지 않게)
+    const before = {};
+    document.querySelectorAll('#hand .card').forEach((el) => { before[el.dataset.id] = el.getBoundingClientRect(); });
+    const gone = [];
     ids.forEach((id, i) => {
       const el = document.querySelector(`#hand .card[data-id="${id}"]`);
       const c = state && state.game && state.game.hand.find((x) => x.id === id);
       if (!el || !c) return;
       const from = el.getBoundingClientRect();
-      el.style.visibility = 'hidden';
+      gone.push(el);
       localFlown.add(id);
       landing.add(id);
-      fly(() => cardEl(c), from, pileRect, {
+      fly(() => cardEl(c), from, pileSpot(id), {
         delay: i * 110, rotTo: tilt(id),
         onDone: () => {
           landing.delete(id);
@@ -880,6 +980,8 @@
         },
       });
     });
+    gone.forEach((el) => el.remove());
+    slideHand(before);
   }
   function emitPlay(ids, suit) {
     launchLocal(ids);
@@ -902,7 +1004,7 @@
     const t = $('tabTime');
     const bar = $('turnBar');
     const g = state && state.game;
-    const mine = g && !g.finished && g.turn === state.me && state.localDeadline;
+    const mine = g && !g.finished && !deal && g.turn === state.me && state.localDeadline;
     if (!mine) { t.textContent = ''; bar.hidden = false; bar.classList.add('off'); $('trayTab').classList.remove('low'); return; }
     const ms = Math.max(0, state.localDeadline - Date.now());
     const left = Math.min(30, Math.ceil(ms / 1000)); // 멈춤(시작 화면·원카드)으로 늘어난 시간은 30초로 보여 준다
@@ -969,11 +1071,11 @@
   $('quitOk').onclick = () => {
     $('quitModal').hidden = true;
     socket.emit('leave'); state = null; show('home');
-    $('onePop').hidden = true; $('introPop').hidden = true; $('resultModal').hidden = true; $('side').hidden = true;
+    $('onePop').hidden = true; $('introPop').hidden = true; deal = null; introTimers.forEach(clearTimeout); $('resultModal').hidden = true; $('side').hidden = true;
     history.replaceState(null, '', location.pathname);
   };
 
-  const tableFree = () => Date.now() >= guardUntil && $('onePop').hidden && $('introPop').hidden;
+  const tableFree = () => Date.now() >= guardUntil && $('onePop').hidden && $('introPop').hidden && !deal;
   $('btnDraw').onclick = () => { if (tableFree()) socket.emit('draw'); };
   $('btnMulti').onclick = () => { if (state && state.game && selected.length) submitPlay(selected.slice(), state.game); };
   $('btnMultiCancel').onclick = () => { selected = []; render(); };
@@ -1054,6 +1156,7 @@
     const sameGame = prevGame && s.game && !(s.game && !s.game.finished && prevGame.finished);
     anim = { prev: sameGame ? prevGame : null, handRects };
     state = s;
+    maybeStartIntro(s);
     state.localDeadline = s.turnLeft != null ? Date.now() + s.turnLeft : null;
     history.replaceState(null, '', `${location.pathname}?room=${s.lobby.code}`);
     render();

@@ -866,3 +866,35 @@ body[data-bg="charcoal"] { --felt: #2b2e33; --felt-deep: #1b1d21; --tray: #14161
 .deck-wrap { width: 84px; }
 .deck-count { white-space: nowrap; }
 @media (max-width: 520px) { .deck-wrap { width: 62px; } }
+
+/* --- 시작 연출: 단색 배경 + 카지노 칩 / 칩과 같은 색의 룰렛 --- */
+.intro-pop { background: var(--felt-deep); animation: fadeIn .25s ease-out; }
+.intro-stage { perspective: 800px; }
+.chip3d { position: relative; width: 160px; height: 160px; transform-style: preserve-3d; }
+.chip3d .face {
+  position: absolute; inset: 0; border-radius: 50%; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  border: 4px solid var(--ink); box-shadow: 0 6px 0 rgba(0, 0, 0, .35);
+  /* 칩 가장자리: 굵은 줄무늬 6개 */
+  background: repeating-conic-gradient(from 15deg, var(--cream) 0 30deg, var(--red) 30deg 60deg);
+  display: flex; align-items: center; justify-content: center;
+}
+.chip3d .face.b { transform: rotateX(180deg); background: repeating-conic-gradient(from 15deg, #d9ab3c 0 30deg, var(--ink) 30deg 60deg); }
+.chip-in {
+  width: 112px; height: 112px; border-radius: 50%; background: var(--red); color: var(--cream);
+  border: 3px solid var(--ink); outline: 2px dashed rgba(243, 234, 214, .75); outline-offset: -9px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 0 14px;
+}
+.face.b .chip-in { background: var(--ink); color: #ffd978; outline-color: rgba(217, 171, 60, .8); }
+.chip-in small { font-size: 11px; font-weight: 700; opacity: .8; letter-spacing: 1px; }
+.chip-in span { font-size: 22px; font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip-shadow { position: absolute; bottom: 22px; width: 130px; height: 18px; border-radius: 50%; background: rgba(0, 0, 0, .45); filter: blur(3px); }
+.wheel { width: 256px; height: 256px; filter: drop-shadow(0 6px 0 rgba(0, 0, 0, .35)); }
+.wheel path.win { stroke: #ffd978; stroke-width: 6; }
+.wheel-pin {
+  top: -10px; margin-left: -15px; border-left-width: 15px; border-right-width: 15px; border-top: 28px solid var(--paper);
+  filter: drop-shadow(0 3px 0 var(--ink)) drop-shadow(0 -2px 0 var(--ink)) drop-shadow(2px 0 0 var(--ink)) drop-shadow(-2px 0 0 var(--ink));
+}
+.intro-msg { color: var(--paper); font-size: 26px; }
+.intro-pop.reveal .intro-msg { padding: 4px 18px; background: var(--paper); color: var(--ink); border: 3px solid var(--ink); border-radius: 6px; box-shadow: 0 4px 0 var(--ink); text-shadow: none; transform: rotate(-2deg); }
+/* 시작 알림 */
+.bubble.start { color: var(--ink); border-color: var(--ink); background: #ffd978; }
