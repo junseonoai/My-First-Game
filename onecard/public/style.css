@@ -1256,3 +1256,18 @@ h1, h2, .modal h2, .tu-panel h2 { font-family: var(--font-display); font-weight:
 .rules-panel { max-height: calc(100dvh - 32px); overflow-y: auto; }
 .rules-panel h2 { margin: 0; }
 .rules-panel .rules ul { padding-left: 18px; margin: 0; }
+
+/* --- 말풍선 꼬리도 몸통과 같은 크림색 --- */
+.emote-float.from-opp.emoji::before, .emote-float.from-opp.phrase::before,
+.emote-float.from-me.emoji::after, .emote-float.from-me.phrase::after { background: var(--ground); border: none; }
+
+/* --- 모든 닫기(X) 버튼: 그림자 없는 크림색 둥근 네모 --- */
+.icon-close, .tu-top .icon-close {
+  width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--ground); color: var(--ink);
+  border: 1.5px solid var(--line-strong); box-shadow: none;
+}
+.icon-close:active { transform: translateY(1px); box-shadow: none; }
+
+/* --- 봇 등급 배지·등급 고르기 버튼: 외곽선 --- */
+.tier, .tier-btn { border: 1.5px solid var(--tr); }
+.tier.t-grandmaster, .tier-btn.t-grandmaster { border-color: var(--brand-strong); }
