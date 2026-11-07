@@ -1063,3 +1063,5 @@ body[data-bg="charcoal"] { --felt: #2b2e33; --felt-deep: #1b1d21; --tray: #14161
 .tray .turn-bar.edge.low i, .my-turn .tray .turn-bar.edge.low i { background: repeating-linear-gradient(-45deg, #b3262e 0 7px, #d4545b 7px 14px); }
 .my-turn .tray .turn-bar.edge { background: rgba(255, 246, 220, .5); }
 .tray-tab { top: 10px; }
+/* 스위치 동그라미: 테두리를 크기 안에 포함해야 세로 가운데에 온다 */
+.set-row .switch::after { box-sizing: border-box; }
