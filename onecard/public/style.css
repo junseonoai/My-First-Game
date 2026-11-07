@@ -1282,10 +1282,17 @@ h1, h2, .modal h2, .tu-panel h2 { font-family: var(--font-display); font-weight:
 .tier-btn:active { box-shadow: inset 0 2px 0 rgba(30, 26, 21, .2); }
 .opp .nm .bot .tier { border-width: 1.5px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6), inset 0 -1.5px 0 rgba(30, 26, 21, .22); }
 
-/* --- 누른 게 보이게: 시작 화면 버튼과 모든 닫기(X) 버튼은 누르는 동안 바탕색·글자색이 뒤바뀐다 --- */
-#home .btn:active:not(:disabled), .icon-close:active {
-  background: var(--ink); color: var(--ground); border-color: var(--ink);
+/* --- 누른 게 보이게: 시작 화면·대기실·나가기 확인 창의 버튼과 모든 닫기(X) 버튼은
+       누르는 동안 바탕색·글자색이 뒤바뀐다.
+       깜빡임 방지: 누를 때는 빠르게(70ms) 바뀌고, 뗄 때는 천천히(260ms) 원래 색으로 돌아온다 --- */
+#home .btn, #lobby .btn, #quitModal .btn, .icon-close {
+  transition: transform .06s, background-color .26s ease-out, color .26s ease-out, border-color .26s ease-out;
 }
-#home .btn.primary:active:not(:disabled) {
+#home .btn:active:not(:disabled), #lobby .btn:active:not(:disabled), #quitModal .btn:active:not(:disabled), .icon-close:active {
+  background: var(--ink); color: var(--ground); border-color: var(--ink);
+  transition-duration: .06s, .07s, .07s, .07s;
+}
+#home .btn.primary:active:not(:disabled), #lobby .btn.primary:active:not(:disabled), #quitModal .btn.primary:active:not(:disabled) {
   background: var(--ground); color: var(--brand); border-color: var(--brand);
 }
+#lobby .btn.ghost:active:not(:disabled) { text-decoration-color: transparent; }
