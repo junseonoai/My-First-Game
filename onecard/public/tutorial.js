@@ -137,7 +137,7 @@
       demo: () => {
         const d = document.createElement('div');
         d.className = 'tu-tiers';
-        for (const [t, n] of [['silver', '실버'], ['gold', '골드'], ['platinum', '플래티넘'], ['master', '마스터'], ['grandmaster', '그랜드마스터']]) d.insertAdjacentHTML('beforeend', `<span class="tier t-${t}">${n}</span>`);
+        for (const [t] of [['silver', '실버'], ['gold', '골드'], ['platinum', '플래티넘'], ['master', '마스터'], ['grandmaster', '그랜드마스터']]) d.insertAdjacentHTML('beforeend', window.oneCardUI.tierTag(t));
         return d;
       },
     },

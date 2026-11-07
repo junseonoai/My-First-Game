@@ -38,7 +38,16 @@
   const TIER_SHORT = { silver: '실버', gold: '골드', platinum: '플래', master: '마스터', grandmaster: '그마' };
   // 둘이 할 때는 1등·2등 대신 우승·패배
   const rankLabel = (rank, n) => n === 2 ? (rank === 1 ? '우승' : '패배') : `${rank}등`;
-  const tierTag = (t, short) => `<span class="tier t-${t || 'gold'}">${(short ? TIER_SHORT : TIER_NAME)[t || 'gold']}</span>`;
+  // 등급 문장(紋章): 실버 방패 → 골드 방패 → 플래티넘 보석 → 마스터 큰 보석 → 그랜드마스터 왕관
+  const TIER_ICON = {
+    silver: '<path d="M8 1.5 14 4v4.2C14 11.6 11.4 14 8 15 4.6 14 2 11.6 2 8.2V4z"/><path d="M5 8.2h6" class="ln"/>',
+    gold: '<path d="M8 1.5 14 4v4.2C14 11.6 11.4 14 8 15 4.6 14 2 11.6 2 8.2V4z"/><path d="M5 6.8h6M5 9.6h6" class="ln"/>',
+    platinum: '<path d="M8 1.2 14 5v6L8 14.8 2 11V5z"/><path d="M8 1.2v13.6M2 5l6 3.6L14 5" class="ln"/>',
+    master: '<path d="M4.5 2h7L15 6.2 8 15 1 6.2z"/><path d="M1 6.2h14M6 2 5 6.2 8 15l3-8.8L10 2" class="ln"/>',
+    grandmaster: '<path d="M1.5 5.5 5 8.5 8 2.5l3 6 3.5-3-1.4 8H2.9z"/><circle cx="8" cy="2.2" r="1.3"/><circle cx="1.5" cy="5.2" r="1.1"/><circle cx="14.5" cy="5.2" r="1.1"/><path d="M3 12.4h10" class="ln"/>',
+  };
+  const tierIcon = (t) => `<svg class="ti" viewBox="0 0 16 16" aria-hidden="true">${TIER_ICON[t] || TIER_ICON.gold}</svg>`;
+  const tierTag = (t, short) => `<span class="tier t-${t || 'gold'}">${tierIcon(t || 'gold')}<span>${(short ? TIER_SHORT : TIER_NAME)[t || 'gold']}</span></span>`;
   const RED = { H: 1, D: 1 };
 
   function show(screen) {
@@ -199,7 +208,7 @@
     }
     return el;
   }
-  window.oneCardUI = { cardEl: (c) => cardEl(c), reaction: () => ({ best: +store.get('onecard-best-ms') || 0 }) };
+  window.oneCardUI = { tierTag: (t) => tierTag(t), cardEl: (c) => cardEl(c), reaction: () => ({ best: +store.get('onecard-best-ms') || 0 }) };
   function backEl() { const el = document.createElement('div'); el.className = 'card back'; return el; }
 
   // --- 날아가는 카드 ---
@@ -249,15 +258,7 @@
       li.querySelector('.n').textContent = m.name + (m.id === me ? ' (나)' : '');
       if (m.id === lobby.host) li.insertAdjacentHTML('beforeend', '<span class="tag host">방장</span>');
       if (m.bot) {
-        if (lobby.host === me && !lobby.playing) {
-          // 방장은 봇 등급을 바꿀 수 있다
-          const sel = document.createElement('select');
-          sel.className = `tier-select t-${m.tier || 'gold'}`;
-          sel.setAttribute('aria-label', `${m.name} 봇 등급`);
-          for (const t of Object.keys(TIER_NAME)) sel.insertAdjacentHTML('beforeend', `<option value="${t}"${t === (m.tier || 'gold') ? ' selected' : ''}>${TIER_NAME[t]}</option>`);
-          sel.onchange = () => socket.emit('setBotTier', { id: m.id, tier: sel.value });
-          li.appendChild(sel);
-        } else li.insertAdjacentHTML('beforeend', tierTag(m.tier));
+        li.insertAdjacentHTML('beforeend', tierTag(m.tier)); // 등급은 추가할 때 고른다
       }
       if (!m.online) li.insertAdjacentHTML('beforeend', '<span class="tag off">연결 끊김</span>');
       if (lobby.host === me && m.id !== me) {
@@ -308,8 +309,8 @@
         const a = (k - (shown - 1) / 2) * 7;
         fan += `<i style="left:calc(50% - 9px + ${(k - (shown - 1) / 2) * 6}px);transform:rotate(${a}deg)"></i>`;
       }
-      d.innerHTML = `${p.id === nextId ? '<span class="next-tag">다음</span>' : ''}<div class="nm">${p.bot ? `<span class="bot t-${p.tier || 'gold'}">${TIER_SHORT[p.tier || 'gold']}</span>` : ''}<span></span></div><div class="fan">${fan}</div><div class="cnt">${p.out ? '–' : pc + '장'}</div>${badge}`;
-      d.querySelector('.nm span:last-child').textContent = p.name;
+      d.innerHTML = `${p.id === nextId ? '<span class="next-tag">다음</span>' : ''}<div class="nm">${p.bot ? `<span class="bot">${tierTag(p.tier, true)}</span>` : ''}<span class="pn"></span></div><div class="fan">${fan}</div><div class="cnt">${p.out ? '–' : pc + '장'}</div>${badge}`;
+      d.querySelector('.nm .pn').textContent = p.name;
       // 테이블을 둘러앉은 것처럼 가운데 자리는 위로, 바깥 자리는 아래로
       const off = Math.abs((i - 1) - (nOpp - 1) / 2);
       if (nOpp >= 3) d.style.marginTop = `${Math.round(off * off * 7)}px`;
@@ -1053,6 +1054,7 @@
   };
   $('btnBot').onclick = () => { $('tierPick').hidden = !$('tierPick').hidden; };
   document.querySelectorAll('#tierPick [data-tier]').forEach((b) => {
+    b.innerHTML = tierIcon(b.dataset.tier) + `<span>${TIER_NAME[b.dataset.tier]}</span>`;
     b.onclick = () => { socket.emit('addBot', b.dataset.tier); };
   });
   $('btnStart').onclick = () => socket.emit('start');

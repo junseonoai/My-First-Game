@@ -909,3 +909,40 @@ body[data-bg="charcoal"] { --felt: #2b2e33; --felt-deep: #1b1d21; --tray: #14161
 .chip3d .face { box-shadow: none; }
 .chip3d .rim { border: none; }
 .chip3d .rim:first-child, .chip3d .rim:nth-child(19) { border: 2px solid var(--ink); }
+
+/* --- 봇 등급 배지: 문장 아이콘 + 금속 느낌 그라데이션 --- */
+.t-silver { --t1: #e6ebef; --t2: #9aa6b1; --tx: #1f1a14; --tr: #5d6873; }
+.t-gold { --t1: #ffe28a; --t2: #c99a2e; --tx: #1f1a14; --tr: #7d5c12; }
+.t-platinum { --t1: #a6ece4; --t2: #2f8f8a; --tx: #0f2422; --tr: #1b5552; }
+.t-master { --t1: #d2b3f2; --t2: #7b4bb0; --tx: #fff; --tr: #45276a; }
+.t-grandmaster { --t1: #ff9f8a; --t2: #b3262e; --tx: #fff; --tr: #ffd978; }
+.tier {
+  display: inline-flex; align-items: center; gap: 3px; vertical-align: middle;
+  font-size: 11px; font-weight: 700; line-height: 1; padding: 3px 7px 3px 4px; border-radius: 999px;
+  background: linear-gradient(160deg, var(--t1), var(--t2) 70%); color: var(--tx);
+  border: 1.5px solid var(--tr); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 1px 0 rgba(0, 0, 0, .3);
+  text-shadow: none; letter-spacing: 0;
+}
+.t-master .tier, .tier.t-master, .tier.t-grandmaster { text-shadow: 0 1px 0 rgba(0, 0, 0, .35); }
+.tier .ti { width: 13px; height: 13px; flex: none; }
+.tier .ti path, .tier .ti circle { fill: var(--tx); fill-opacity: .9; }
+.tier .ti .ln { fill: none; stroke: var(--t2); stroke-width: 1.2; stroke-linejoin: round; }
+.tier.t-master .ti .ln, .tier.t-grandmaster .ti .ln { stroke: var(--t2); }
+.tier.t-grandmaster { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), 0 0 0 1.5px var(--ink), 0 1px 0 rgba(0, 0, 0, .3); }
+/* 상대 자리 오른쪽 위 작은 배지 */
+.opp .nm .bot { background: none !important; border: none !important; padding: 0; top: -9px; right: -7px; letter-spacing: 0; }
+.opp .nm .bot .tier { font-size: 9px; padding: 2px 5px 2px 3px; gap: 2px; }
+.opp .nm .bot .tier .ti { width: 10px; height: 10px; }
+/* 봇 추가 버튼: 같은 배지 모양을 크게 */
+.tier-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px; border-radius: 999px;
+  background: linear-gradient(160deg, var(--t1), var(--t2) 70%); color: var(--tx); border: 2px solid var(--ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 2px 0 var(--ink);
+}
+.tier-btn.t-master, .tier-btn.t-grandmaster { text-shadow: 0 1px 0 rgba(0, 0, 0, .35); }
+.tier-btn .ti { width: 16px; height: 16px; flex: none; }
+.tier-btn .ti path, .tier-btn .ti circle { fill: var(--tx); fill-opacity: .9; }
+.tier-btn .ti .ln { fill: none; stroke: var(--t2); stroke-width: 1.2; stroke-linejoin: round; }
+.members .tier { margin-left: 2px; }
+.tu-tiers .tier { font-size: 13px; padding: 4px 11px 4px 6px; }
+.tu-tiers .tier .ti { width: 16px; height: 16px; }

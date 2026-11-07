@@ -319,15 +319,6 @@ io.on('connection', (socket) => {
     broadcast(room);
   });
 
-  socket.on('setBotTier', ({ id, tier } = {}) => {
-    if (!room || room.host !== memberId || !TIERS.includes(tier)) return;
-    if (room.game && !room.game.finished) return;
-    const m = room.members.find((x) => x.id === id && x.bot);
-    if (!m) return;
-    m.tier = tier;
-    broadcast(room);
-  });
-
   socket.on('kick', (id) => {
     if (!room || room.host !== memberId || id === memberId) return;
     if (room.game && !room.game.finished) return;
