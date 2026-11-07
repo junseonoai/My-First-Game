@@ -9,6 +9,8 @@ const PORT = process.env.PORT || 3000;
 const MAX_PLAYERS = 6;
 const TURN_SECONDS = 30;
 const RECONNECT_GRACE_MS = 60_000;
+const OFFLINE_TURN_MS = 4000; // 연결이 끊긴 사람 차례는 이만큼 뒤에 자동으로 넘어간다
+const STUCK_MS = 15_000; // 판이 이 시간 넘게 이유 없이 멈춰 있으면 감시가 다시 움직인다
 const ONECARD_COUNTDOWN_MS = 3000; // 원카드 버튼은 3초 카운트다운 뒤에 열린다
 const ONECARD_WINDOW_MS = 2000; // 버튼이 열린 뒤 누를 수 있는 시간
 const ONECARD_RESULT_MS = 1200; // 전체 결과를 보여 주는 시간. 끝나면 모두 동시에 판 재개
@@ -20,7 +22,8 @@ const BOT_NAMES = ['철수', '영희', '민수', '지수', '하늘'];
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 const server = http.createServer(app);
-const io = new Server(server);
+// 연결 확인을 자주 해서 휴대폰 신호가 끊긴 사람을 빨리 알아챈다 (기본값은 최대 45초)
+const io = new Server(server, { pingInterval: 10000, pingTimeout: 8000 });
 
 // code -> room
 const rooms = new Map();
@@ -34,8 +37,14 @@ function makeCode() {
   return code;
 }
 
+// 플레이어 ID: 브라우저가 만든 짧은 글자만 받는다
+function validUid(uid) {
+  return typeof uid === 'string' && uid.length > 0 && uid.length <= 64;
+}
+
 function cleanName(n) {
-  return String(n || '').trim().slice(0, 12) || '익명';
+  if (typeof n !== 'string') return '익명';
+  return n.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 12) || '익명';
 }
 
 function lobbyState(room) {
@@ -129,7 +138,9 @@ function scheduleTurn(room) {
     }, 'botTimer'), (room.lastTurnId === cur.id ? 1800 : 900) + Math.random() * 900); // 같은 봇이 연달아 내면 조금 더 천천히
   } else {
     room.deadline = Date.now();
-    extendTurn(room, TURN_SECONDS * 1000 + raceCoverLeft(room) + introLeft(room));
+    // 연결이 끊긴 사람은 모두를 30초씩 기다리게 하지 않는다 (몇 초 뒤 자동으로 뽑기)
+    const away = member && !member.socketId;
+    extendTurn(room, (away ? OFFLINE_TURN_MS : TURN_SECONDS * 1000) + raceCoverLeft(room) + introLeft(room));
   }
 }
 
@@ -227,6 +238,7 @@ function scheduleOneCard(room) {
 }
 
 function after(room) {
+  room.lastAt = Date.now();
   scheduleTurn(room);
   broadcast(room);
   if (process.env.ONECARD_CHECK) checkInvariants(room);
@@ -260,6 +272,7 @@ function leaveRoom(room, memberId) {
     clearTimeout(room.turnTimer);
     clearTimeout(room.botTimer);
     (room.oneCardTimers || []).forEach(clearTimeout);
+    clearTimeout(room.introTimer);
     rooms.delete(room.code);
     return;
   }
@@ -271,11 +284,22 @@ function leaveRoom(room, memberId) {
 io.on('connection', (socket) => {
   let room = null;
   let memberId = null;
+  // 안전장치: 이벤트 하나에서 오류가 나도 서버 전체가 멈추지 않게, 지나치게 잦은 요청은 무시
+  const hits = [];
+  const rawOn = socket.on.bind(socket);
+  socket.on = (ev, fn) => rawOn(ev, (...args) => {
+    const now = Date.now();
+    while (hits.length && now - hits[0] > 1000) hits.shift();
+    if (ev !== 'disconnect' && hits.length >= 25) return; // 1초에 25번 넘게 보내면 잠깐 무시 (연결 끊김은 항상 처리)
+    hits.push(now);
+    try { fn(...args); } catch (e) { console.error('handler error', ev, e && e.stack); if (room && room.game) { try { room.turnKey = null; after(room); } catch {} } }
+  });
 
   const fail = (msg) => socket.emit('toast', msg);
 
-  socket.on('create', ({ name, uid }) => {
-    if (room) return;
+  socket.on('create', (data) => {
+    const { name, uid } = data || {};
+    if (room || !validUid(uid)) return;
     const code = makeCode();
     room = { code, host: uid, members: [], game: null };
     rooms.set(code, room);
@@ -285,10 +309,11 @@ io.on('connection', (socket) => {
     broadcast(room);
   });
 
-  socket.on('join', ({ name, uid, code }) => {
-    if (room) return;
+  socket.on('join', (data) => {
+    const { name, uid, code } = data || {};
+    if (room || !validUid(uid)) return;
     const r = rooms.get(String(code || '').toUpperCase().trim());
-    if (!r) return fail('방을 찾을 수 없어요. 코드를 확인하거나 방을 새로 만들어 주세요.');
+    if (!r) { socket.emit('noRoom'); return fail('방을 찾을 수 없어요. 코드를 확인하거나 방을 새로 만들어 주세요.'); }
     const existing = r.members.find((m) => m.id === uid);
     if (existing && existing.socketId && existing.socketId !== socket.id && io.sockets.sockets.has(existing.socketId)) {
       // 같은 ID가 다른 탭에서 아직 접속 중 → 새 ID로 다시 참가하게 함
@@ -298,6 +323,7 @@ io.on('connection', (socket) => {
       // 재접속
       clearTimeout(existing.graceTimer);
       existing.socketId = socket.id;
+      if (r.game && !r.game.finished && r.game.cur().id === uid) r.turnKey = null; // 돌아오면 내 차례 시간을 새로
     } else {
       if (r.game && !r.game.finished) return fail('이미 게임이 진행 중이에요.');
       if (r.members.length >= MAX_PLAYERS) return fail('방이 가득 찼어요. (최대 6명)');
@@ -306,7 +332,7 @@ io.on('connection', (socket) => {
     room = r;
     memberId = uid;
     socket.join(r.code);
-    broadcast(r);
+    if (r.game && !r.game.finished) after(r); else broadcast(r);
   });
 
   socket.on('addBot', (tier) => {
@@ -345,7 +371,8 @@ io.on('connection', (socket) => {
     after(room);
   });
 
-  socket.on('play', ({ cardId, cardIds, suit } = {}) => {
+  socket.on('play', (data) => {
+    const { cardId, cardIds, suit } = data || {};
     if (!room || !room.game) return;
     if (pausedFor(room) > 0) return fail(introLeft(room) > 0 ? '먼저 할 사람을 고르는 중이에요.' : '원카드 확인 중이에요. 잠깐만요!');
     const ids = Array.isArray(cardIds) ? cardIds.slice(0, 4) : cardId;
@@ -370,8 +397,13 @@ io.on('connection', (socket) => {
     if (!room.race.doneAt) broadcast(room);
   });
 
+  let chatTimes = [];
   socket.on('chat', (text) => {
     if (!room) return;
+    const now = Date.now();
+    chatTimes = chatTimes.filter((t) => now - t < 5000);
+    if (chatTimes.length >= 5) return fail('채팅이 너무 빨라요. 잠깐 뒤에 보내 주세요.');
+    chatTimes.push(now);
     const m = room.members.find((x) => x.id === memberId);
     const t = String(text || '').trim().slice(0, 100);
     if (!m || !t) return;
@@ -406,14 +438,40 @@ io.on('connection', (socket) => {
     if (!m || m.socketId !== socket.id) return;
     m.socketId = null;
     if (r.game && !r.game.finished) {
-      // 게임 중에는 잠시 기다렸다가 내보냄
+      // 게임 중에는 잠시 기다렸다가 내보냄. 그 사람 차례였다면 금방 넘어가게
       m.graceTimer = setTimeout(() => leaveRoom(r, m.id), RECONNECT_GRACE_MS);
-      broadcast(r);
+      if (r.game.cur().id === m.id) r.turnKey = null;
+      after(r);
     } else {
       leaveRoom(r, m.id);
     }
   });
 });
+
+// --- 감시: 판이 이유 없이 멈추면 다시 움직이게 한다 ---
+setInterval(() => {
+  const now = Date.now();
+  for (const room of rooms.values()) {
+    try {
+      const g = room.game;
+      if (!g || g.finished) continue;
+      const r = room.race;
+      // 원카드 경쟁이 끝날 시간이 한참 지났는데 안 끝났으면 끝낸다
+      if (r && !r.doneAt && now > r.closeAt + 2000) { console.error('watchdog: race', room.code); finishRace(room, r); continue; }
+      if (pausedFor(room) > 0) continue;
+      const limit = (room.deadline ? Math.max(0, room.deadline - (room.lastAt || now)) : 4000) + STUCK_MS;
+      if (now - (room.lastAt || now) > limit) {
+        console.error('watchdog: restart turn', room.code);
+        room.turnKey = null;
+        after(room);
+      }
+    } catch (e) { console.error('watchdog error', room.code, e && e.stack); }
+  }
+}, 5000).unref();
+
+// 예상하지 못한 오류로 서버가 꺼지지 않게 (기록만 남김)
+process.on('uncaughtException', (e) => console.error('uncaught', e && e.stack));
+process.on('unhandledRejection', (e) => console.error('unhandled', e && e.stack));
 
 server.listen(PORT, () => {
   console.log(`원카드 서버 실행 중: http://localhost:${PORT}`);

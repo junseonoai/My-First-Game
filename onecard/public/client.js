@@ -227,7 +227,11 @@
       { transform: `translate(${(x0 + to.left) / 2}px, ${Math.min(y0, to.top) - 30}px) rotate(${(rotFrom + rotTo) / 2}deg) scale(${(s0 + endScale) / 2 + .06})`, offset: .55, opacity: 1 },
       { transform: `translate(${to.left}px, ${to.top}px) rotate(${rotTo}deg) scale(${endScale})`, opacity: fade ? 0 : 1 },
     ], { duration: dur, delay, easing: 'cubic-bezier(.25,.8,.3,1)', fill: 'both' });
-    anim.onfinish = () => { el.remove(); if (onDone) onDone(); };
+    // 안전장치: 화면이 가려져 애니메이션이 멈춰도 카드가 계속 숨겨져 있지 않게 정해진 시간 뒤 마무리
+    let ended = false;
+    const finish = () => { if (ended) return; ended = true; el.remove(); if (onDone) onDone(); };
+    anim.onfinish = finish;
+    setTimeout(finish, delay + dur + 900);
   }
   // 바닥에 놓인 카드의 기울기 (카드마다 고정)
   const tilt = (id) => ((id * 47) % 21) - 10;
@@ -239,7 +243,15 @@
   }
 
   // --- 화면 그리기 ---  // --- 화면 그리기 ---
+  // 안전장치: 그리다가 오류가 나면 애니메이션 상태를 비우고 한 번 더 그린다
   function render() {
+    try { renderRaw(); } catch (e) {
+      console.error('render error', e);
+      anim = { prev: null, handRects: {} }; landing.clear(); localFlown.clear(); deal = null; selected = [];
+      try { renderRaw(); } catch (e2) { console.error('render error again', e2); }
+    }
+  }
+  function renderRaw() {
     if (!state) return;
     const { lobby, game, me } = state;
     renderLobby(lobby, me);
@@ -349,6 +361,7 @@
       try { if (navigator.vibrate) navigator.vibrate(40); } catch {}
     }
     wasMyTurn = myTurn;
+    if (!myTurn && !$('suitModal').hidden) { $('suitModal').hidden = true; pendingSeven = null; } // 시간이 지나 차례가 넘어갔으면 무늬 고르기 창을 닫는다
 
     // 바닥: 최근 카드 몇 장이 살짝 비뚤게 쌓임. 새로 낸 카드는 낸 사람 자리에서 날아온다.
     const pile = $('pile');
@@ -466,6 +479,9 @@
     renderLog(g.log);
     anim = { prev: null, handRects: {} }; // 같은 변화로 애니메이션이 다시 나오지 않게
     placeTurnToken(g, me);
+
+    // 방장이 나가서 바뀌면 결과 창의 '다시 하기'도 새 방장에게
+    if (!$('resultModal').hidden) $('btnAgain').hidden = lobby.host !== me;
 
     // 결과
     if (g.finished && !shownResult) {
@@ -700,6 +716,7 @@
     const info = raceInfo(race);
     const now = Date.now();
     if (race.done) return now < info.resumeAt ? 'result' : null;
+    if (now > info.closeAt + 4000) return null; // 안전장치: 결과가 오지 않아도 화면을 계속 막지 않는다
     const me = state.me;
     const eligible = race.eligible.some((e) => e.id === me);
     if (!eligible) return 'watch';
@@ -953,6 +970,7 @@
 
   function playCard(c, playable, g) {
     if (!tableFree()) return;
+    if (localFlown.size || Date.now() < actBusyUntil) return; // 방금 낸 카드의 답을 기다리는 중 (두 번 눌림 방지)
     if (g.turn !== state.me) return toast('내 차례가 아니에요.');
     const selRank = selected.length ? (g.hand.find((x) => x.id === selected[0]) || {}).rank : null;
     // 선택 중: 같은 숫자면 넣거나 빼기
@@ -1000,7 +1018,14 @@
     slideHand(before);
   }
   function emitPlay(ids, suit) {
+    actBusyUntil = Date.now() + 1500;
     launchLocal(ids);
+    // 안전장치: 3초가 지나도 서버가 받지 않았으면(연결 문제) 카드를 손으로 돌려놓는다
+    setTimeout(() => {
+      const hand = state && state.game ? state.game.hand : [];
+      const stuck = ids.filter((id) => localFlown.has(id) && hand.some((c) => c.id === id));
+      if (stuck.length) { stuck.forEach((id) => { localFlown.delete(id); landing.delete(id); }); render(); }
+    }, 3000);
     socket.emit('play', suit ? { cardIds: ids, suit } : { cardIds: ids });
   }
 
@@ -1092,11 +1117,13 @@
     history.replaceState(null, '', location.pathname);
   };
 
+  let actBusyUntil = 0; // 뽑기·내기를 보낸 뒤 답이 올 때까지 (최대 1.5초) 다시 보내지 않는다
+  const emitDraw = () => { if (Date.now() < actBusyUntil) return; actBusyUntil = Date.now() + 1500; socket.emit('draw'); };
   const tableFree = () => Date.now() >= guardUntil && $('onePop').hidden && $('introPop').hidden && !deal;
-  $('btnDraw').onclick = () => { if (tableFree()) socket.emit('draw'); };
+  $('btnDraw').onclick = () => { if (tableFree()) emitDraw(); };
   $('btnMulti').onclick = () => { if (state && state.game && selected.length) submitPlay(selected.slice(), state.game); };
   $('btnMultiCancel').onclick = () => { selected = []; render(); };
-  $('deck').onclick = () => { if (state && state.game && state.game.turn === state.me && tableFree()) socket.emit('draw'); };
+  $('deck').onclick = () => { if (state && state.game && state.game.turn === state.me && tableFree()) emitDraw(); };
   $('btnOne').onclick = (e) => { e.stopPropagation(); if (!$('btnOne').disabled) socket.emit('oneCard'); };
   document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT') return;
@@ -1173,12 +1200,13 @@
     const sameGame = prevGame && s.game && !(s.game && !s.game.finished && prevGame.finished);
     anim = { prev: sameGame ? prevGame : null, handRects };
     state = s;
+    actBusyUntil = 0;
     maybeStartIntro(s);
     state.localDeadline = s.turnLeft != null ? Date.now() + s.turnLeft : null;
     history.replaceState(null, '', `${location.pathname}?room=${s.lobby.code}`);
     render();
   });
-  socket.on('toast', (m) => { toast(m); localFlown.clear(); render(); });
+  socket.on('toast', (m) => { toast(m); localFlown.clear(); actBusyUntil = 0; render(); });
   socket.on('pressed', ({ raceId, ms, place }) => { myPress[raceId] = { ms, place }; renderOnePop(); });
   // 같은 ID가 이미 다른 탭에서 접속 중이면 새 ID로 다시 참가
   socket.on('uidTaken', ({ code }) => {
@@ -1198,9 +1226,22 @@
       if (state && state.game) renderLog(state.game.log);
     }
   });
+  // 다시 연결했는데 방이 없으면 (서버가 다시 시작된 경우 등) 처음 화면으로
+  socket.on('noRoom', () => {
+    if (!state) return;
+    state = null; deal = null; introTimers.forEach(clearTimeout);
+    for (const id of ['onePop', 'introPop', 'racePanel', 'resultModal', 'suitModal', 'quitModal', 'side']) $(id).hidden = true;
+    show('home');
+    history.replaceState(null, '', location.pathname);
+    setTimeout(() => toast('서버가 다시 시작돼서 방이 없어졌어요. 방을 새로 만들어 주세요.'), 50);
+  });
   socket.on('kicked', () => { state = null; show('home'); toast('방에서 내보내졌어요.'); history.replaceState(null, '', location.pathname); });
 
   // 재접속: 방 코드가 주소에 있고 이전에 닉네임이 있었다면 자동 참가 시도
+  // 연결이 끊기면 위에 알림 (다시 연결되면 자동으로 방에 돌아간다)
+  socket.on('disconnect', () => { $('netBanner').hidden = false; });
+  socket.io.on('reconnect_attempt', () => { $('netBanner').hidden = false; });
+  socket.on('connect', () => { $('netBanner').hidden = true; localFlown.clear(); actBusyUntil = 0; });
   socket.on('connect', () => {
     const code = (state && state.lobby && state.lobby.code) || params.get('room');
     const name = store.get('onecard-name');

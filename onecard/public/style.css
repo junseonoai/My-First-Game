@@ -966,3 +966,9 @@ body[data-bg="charcoal"] { --felt: #2b2e33; --felt-deep: #1b1d21; --tray: #14161
 @keyframes winGlow { from { stroke-width: 10; opacity: 0; } }
 /* '다음' 표시는 '차례'처럼 자리 아랫변에 걸치게 */
 .next-tag { top: auto; bottom: -9px; font-size: 11px; line-height: 16px; padding: 0 8px; border-radius: 999px; border-width: 2px; }
+/* 연결 끊김 알림 */
+.net-banner {
+  position: fixed; left: 50%; top: calc(8px + env(safe-area-inset-top)); transform: translateX(-50%); z-index: 45;
+  background: var(--red); color: var(--cream); border: 2px solid var(--ink); border-radius: 999px; box-shadow: 0 3px 0 var(--ink);
+  padding: 6px 14px; font-size: 13px; font-weight: 700; white-space: nowrap; animation: rise .2s ease-out;
+}
