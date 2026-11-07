@@ -1185,3 +1185,6 @@ h1, h2, .modal h2, .tu-panel h2 { font-family: var(--font-display); font-weight:
 .my-turn .hand .card.ok.k-block { box-shadow: 0 0 0 3px var(--block), 0 0 0 5px var(--ink), 0 4px 10px rgba(10, 20, 14, .3); }
 .my-turn .hand .card.sel { box-shadow: 0 0 0 3px var(--pick), 0 0 0 5px var(--ink), 0 8px 18px rgba(10, 20, 14, .35); }
 .my-turn .hand .card.pick { box-shadow: 0 0 0 2px var(--pick), 0 0 0 4px var(--ink), 0 4px 10px rgba(10, 20, 14, .3); }
+/* 키보드로 옮겨 다닐 때만 보이는 파란 포커스 링 */
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.hand .card:focus-visible { outline-offset: 3px; }
