@@ -1,0 +1,12 @@
+<!-- @dsCard group="Game" height=190 -->
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><title>PlayingCard — preview</title></head>
+<body>
+<div id="root" class="hj-row hj-felt" style="padding:36px 20px 20px;gap:16px"></div>
+<script>
+  var E = window.Hanjang, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null, h(E.PlayingCard,{rank:'A',suit:'spade'}), h(E.PlayingCard,{rank:'2',suit:'heart',hint:'counter',state:'playable',onClick:function(){}}), h(E.PlayingCard,{rank:'3',suit:'heart',hint:'block',state:'playable',onClick:function(){}}), h(E.PlayingCard,{rank:'color',suit:'joker',hint:'joker',state:'playable',onClick:function(){}}), h(E.PlayingCard,{rank:'K',suit:'diamond',state:'selected',onClick:function(){}}), h(E.PlayingCard,{rank:'2',suit:'club',attack:true}), h(E.PlayingCard,{rank:'Q',suit:'heart',state:'disabled',onClick:function(){}}), h(E.PlayingCard,{faceDown:true}), h(E.PlayingCard,{faceDown:true,size:'sm'})));
+</script>
+</body>
+</html>

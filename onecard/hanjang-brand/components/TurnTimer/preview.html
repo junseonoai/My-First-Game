@@ -1,0 +1,12 @@
+<!-- @dsCard group="Game" height=190 -->
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><title>TurnTimer — preview</title></head>
+<body>
+<div id="root" class="hj-felt" style="display:grid;gap:14px;padding:20px;justify-items:center"></div>
+<script>
+  var E = window.Hanjang, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null, h(E.TurnTimer,{seconds:19,total:30}), h(E.TurnTimer,{seconds:4,total:30}), h(E.TurnTimer,{seconds:0,label:'지수님 차례',waiting:true})));
+</script>
+</body>
+</html>

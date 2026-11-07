@@ -1,0 +1,12 @@
+<!-- @dsCard group="Actions" height=88 -->
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><title>Button — preview</title></head>
+<body>
+<div id="root" class="hj-row"></div>
+<script>
+  var E = window.Hanjang, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null, h(E.Button,{variant:'primary',size:'lg'},'방 만들기'), h(E.Button,null,'코드로 참가'), h(E.Button,{variant:'ghost'},'규칙 보기'), h(E.Button,{variant:'call'},'원카드!'), h(E.Button,{variant:'primary',disabled:true},'참가 중…')));
+</script>
+</body>
+</html>

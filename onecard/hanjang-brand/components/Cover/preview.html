@@ -1,0 +1,71 @@
+<!-- @dsCard height=288 -->
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>한장</title>
+<style>
+  html, body { margin:0; height:100%; }
+  body { background:var(--ground); color:var(--ink); font-family:var(--font-sans); overflow:hidden; }
+  .cover { position:relative; height:288px; overflow:hidden; }
+  .art { position:absolute; top:0; left:480px; width:480px; height:288px; overflow:hidden; }
+  .art svg { display:block; width:480px; height:288px; }
+  .felt { fill:var(--felt); }
+  .tile { fill:var(--felt-deep); }
+  .ink { fill:var(--card-back); }
+  .brand { fill:var(--brand); }
+  .call { fill:var(--call); }
+  .words { position:absolute; left:var(--space-8); bottom:var(--space-8); max-width:440px; }
+  .name { margin:0; font-family:var(--font-display); font-weight:700; font-size:120px; line-height:.92; letter-spacing:-.02em; color:var(--ink); }
+  .tag { margin:var(--space-3) 0 0 4px; font-size:14px; line-height:20px; color:var(--ink-muted); }
+</style>
+</head>
+<body>
+<div class="cover">
+<div class="art" aria-hidden="true">
+<svg viewBox="0 0 480 288" width="480" height="288">
+<!--
+  blocks      felt 304x264 slab bled off top and right (table, the largest) · navy card-back card 112x160 (the deck) · brand speech-bubble card 112x160 tilted -8deg with its tail (the logo silhouette, the "last one" shouting) · call disc r24 once (the shout) · about 40% of 960x288
+  arrangement two cards laid on the edge of the table: ink standing on the ground line, brand dropped across it onto the felt, one yellow pip above, bottoms on y=264 (space-6 above the edge)
+  pattern     "a literal motif (card)": 24 deck tiles 16x24 cut by radius-sm-ish 4px corners in felt-deep, staggered at a space-8 pitch and thinning toward the cards, like a dealt deck on the felt
+  scales      card sides 112 = space-4 x7, 160 = space-8 x5; slab corner radius-lg 20; card corners radius-md 12; tile pitch space-8, row step 40 (space-8 + space-2)
+-->
+<rect class="felt" x="176" y="-24" width="328" height="264" rx="20"/>
+<rect class="tile" x="200" y="24" width="16" height="24" rx="4"/>
+<rect class="tile" x="232" y="24" width="16" height="24" rx="4"/>
+<rect class="tile" x="264" y="24" width="16" height="24" rx="4"/>
+<rect class="tile" x="296" y="24" width="16" height="24" rx="4"/>
+<rect class="tile" x="328" y="24" width="16" height="24" rx="4"/>
+<rect class="tile" x="360" y="24" width="16" height="24" rx="4"/>
+<rect class="tile" x="392" y="24" width="16" height="24" rx="4"/>
+<rect class="tile" x="424" y="24" width="16" height="24" rx="4"/>
+
+
+<rect class="tile" x="312" y="64" width="16" height="24" rx="4"/>
+<rect class="tile" x="344" y="64" width="16" height="24" rx="4"/>
+<rect class="tile" x="376" y="64" width="16" height="24" rx="4"/>
+<rect class="tile" x="408" y="64" width="16" height="24" rx="4"/>
+<rect class="tile" x="440" y="64" width="16" height="24" rx="4"/>
+<rect class="tile" x="296" y="104" width="16" height="24" rx="4"/>
+<rect class="tile" x="328" y="104" width="16" height="24" rx="4"/>
+<rect class="tile" x="360" y="104" width="16" height="24" rx="4"/>
+<rect class="tile" x="392" y="104" width="16" height="24" rx="4"/>
+<rect class="tile" x="424" y="104" width="16" height="24" rx="4"/>
+<rect class="tile" x="344" y="144" width="16" height="24" rx="4"/>
+<rect class="tile" x="376" y="144" width="16" height="24" rx="4"/>
+<rect class="tile" x="408" y="144" width="16" height="24" rx="4"/>
+<rect class="tile" x="440" y="144" width="16" height="24" rx="4"/>
+<rect class="tile" x="392" y="184" width="16" height="24" rx="4"/>
+<rect class="tile" x="424" y="184" width="16" height="24" rx="4"/>
+<rect class="ink" x="24" y="104" width="112" height="160" rx="12"/>
+<g transform="rotate(-8 196 176)"><path class="brand" d="M152 80H240A12 12 0 0 1 252 92V228A12 12 0 0 1 240 240H190Q172 256 142 264Q158 252 160 240H152A12 12 0 0 1 140 228V92A12 12 0 0 1 152 80Z"/></g>
+<circle class="call" cx="268" cy="72" r="24"/>
+</svg>
+</div>
+<div class="words">
+<h1 class="name">한장</h1>
+<p class="tag">마지막 한 장까지. 링크 하나로 친구들과 바로 원카드.</p>
+</div>
+</div>
+</body>
+</html>

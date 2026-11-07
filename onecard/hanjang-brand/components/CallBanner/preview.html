@@ -1,0 +1,12 @@
+<!-- @dsCard group="Game" height=150 -->
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><title>CallBanner — preview</title></head>
+<body>
+<div id="root" class="hj-row"></div>
+<script>
+  var E = window.Hanjang, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null, h(E.CallBanner,{kind:'onecard',detail:'도윤님이 한 장 남았어요'}), h(E.CallBanner,{kind:'attack',amount:5,detail:'막거나, 5장 받기'}), h(E.CallBanner,{kind:'win',detail:'준서님이 이겼어요'})));
+</script>
+</body>
+</html>

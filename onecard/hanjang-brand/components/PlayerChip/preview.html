@@ -1,0 +1,12 @@
+<!-- @dsCard group="Game" height=170 -->
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><title>PlayerChip — preview</title></head>
+<body>
+<div id="root" class="hj-row hj-felt" style="padding:24px 20px 28px;gap:16px"></div>
+<script>
+  var E = window.Hanjang, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null, h(E.PlayerChip,{name:'철수',cards:5,tier:'silver'}), h(E.PlayerChip,{name:'영희',cards:6,tier:'gold'}), h(E.PlayerChip,{name:'민수',cards:9,tier:'platinum',next:true}), h(E.PlayerChip,{name:'지수',cards:6,tier:'master',active:true}), h(E.PlayerChip,{name:'하늘',cards:1,tier:'grandmaster',oneCard:true}), h(E.PlayerChip,{name:'서연',cards:4,offline:true})));
+</script>
+</body>
+</html>

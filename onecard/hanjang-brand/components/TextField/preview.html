@@ -1,0 +1,12 @@
+<!-- @dsCard group="Lobby" height=120 -->
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><title>TextField — preview</title></head>
+<body>
+<div id="root" class="hj-row"></div>
+<script>
+  var E = window.Hanjang, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null, h(E.TextField,{label:'닉네임',placeholder:'친구들이 볼 이름',hint:'최대 8자'}), h(E.TextField,{label:'방 코드',placeholder:'K7Q2',code:true,error:'그런 방이 없어요. 코드를 다시 확인해 주세요'})));
+</script>
+</body>
+</html>

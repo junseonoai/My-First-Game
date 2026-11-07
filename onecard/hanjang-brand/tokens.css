@@ -1,0 +1,81 @@
+/* 한장 — tokens.json에서 생성. 색·간격은 여기 변수만 쓴다. */
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600&family=Noto+Sans+KR:wght@400;500;700&display=swap");
+@font-face { font-family: "Maplestory"; src: url("./fonts/MaplestoryBold.woff") format("woff"); font-weight: 700; font-display: swap; }
+
+:root, [data-theme="light"] {
+  --ground: #f0ead8;
+  --raised: #fdfaf1;
+  --sunken: #e6dfca;
+  --ink: #1e1a15;
+  --ink-muted: #585146;
+  --line: #d8d0bb;
+  --line-strong: #8a8172;
+  --brand: #933231;
+  --on-brand: #ffffff;
+  --brand-soft: #f1d9d3;
+  --brand-strong: #7a2726;
+  --felt: #2a4434;
+  --felt-deep: #1c3023;
+  --on-felt: #f0ead8;
+  --call: #ccac52;
+  --call-soft: #f3da87;
+  --on-call: #1e1a15;
+  --card-face: #faf8f2;
+  --card-back: #2b355c;
+  --card-back-pattern: #464f71;
+  --suit-red: #9c3130;
+  --suit-black: #1e1a15;
+  --hint-counter: var(--brand);
+  --hint-block: var(--call);
+  --table-green: #2a4434;
+  --table-navy: #2b3a59;
+  --table-wine: #532430;
+  --table-wood: #654c31;
+  --table-charcoal: #2c2e32;
+  --tier-silver: #b9bcc3;
+  --tier-gold: #d9b54f;
+  --tier-platinum: #7fb5ae;
+  --tier-master: #b79be0;
+  --tier-grandmaster: #d26a62;
+  --focus: #2a5bd7;
+  --shadow-card: 0 1px 0 rgba(30,26,21,0.10), 0 4px 10px rgba(10,20,14,0.30);
+  --shadow-lift: 0 12px 26px rgba(10,20,14,0.40);
+}
+[data-theme="dark"] {
+  --ground: #171511;
+  --raised: #221f1a;
+  --sunken: #100e0b;
+  --ink: #f0ead8;
+  --ink-muted: #aaa190;
+  --line: #34302a;
+  --line-strong: #6e675c;
+  --brand: #e0706a;
+  --on-brand: #1a0d0c;
+  --brand-soft: #3d1d1c;
+  --brand-strong: #f0a39c;
+  --hint-counter: #c0443f;
+  --hint-block: #ccac52;
+  --focus: #7aa2ff;
+  --shadow-card: 0 1px 0 rgba(0,0,0,0.4), 0 6px 14px rgba(0,0,0,0.5);
+  --shadow-lift: 0 12px 28px rgba(0,0,0,0.6);
+}
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+  --font-display: "Maplestory", "Noto Sans KR", system-ui, sans-serif;
+  --font-sans: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+[data-table="navy"] { --felt: var(--table-navy); }
+[data-table="wine"] { --felt: var(--table-wine); }
+[data-table="wood"] { --felt: var(--table-wood); }
+[data-table="charcoal"] { --felt: var(--table-charcoal); }

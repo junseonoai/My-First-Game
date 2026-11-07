@@ -1,0 +1,12 @@
+<!-- @dsCard group="Status" height=56 -->
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><title>Badge — preview</title></head>
+<body>
+<div id="root" class="hj-row"></div>
+<script>
+  var E = window.Hanjang, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null, h(E.Badge,null,'방장'), h(E.Badge,{tone:'brand'},'공격 받음'), h(E.Badge,{tone:'felt'},'대기 중'), h(E.Badge,{tone:'call'},'내 차례'), h(E.Badge,{tone:'silver'},'실버'), h(E.Badge,{tone:'gold'},'골드'), h(E.Badge,{tone:'platinum'},'플래티넘'), h(E.Badge,{tone:'master'},'마스터'), h(E.Badge,{tone:'grandmaster'},'그랜드마스터')));
+</script>
+</body>
+</html>
