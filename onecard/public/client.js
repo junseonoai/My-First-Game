@@ -1096,6 +1096,34 @@
   $('btnBgHome').onclick = openBg;
   $('bgClose').onclick = () => { $('bgModal').hidden = true; };
 
+  // --- 봇 실력 안내 ---
+  const BOT_INFO = [
+    { t: 'silver', who: '처음 배우는 사람', win: 11, play: ['낼 수 있는 카드 중 아무거나 내요', '같은 숫자를 자주 몰아서 내요', '가끔 받아칠 수 있는데 그냥 먹어요 (15%)', '가끔 낼 수 있는데 뽑아요 (5%)'], self: '85% · 0.6~1.4초', catchS: '70% · 0.8~1.6초' },
+    { t: 'gold', who: '보통 실력', win: 27, play: ['공격 카드(2, A)부터 내요', '같은 숫자는 항상 몰아서 내요'], self: '92% · 0.5~1.1초', catchS: '82% · 0.6~1.3초' },
+    { t: 'platinum', who: '잘하는 사람', win: 43, play: ['공격 카드와 조커를 아꼈다가 공격받을 때 받아쳐요', '받아칠 때 싼 카드부터, 3은 막기용으로 남겨요', '가끔 덜 좋은 수를 둬요 (5%)'], self: '96% · 0.4~0.85초', catchS: '90% · 0.45~1초' },
+    { t: 'master', who: '고수', win: 58, play: ['플래티넘의 요령 + 나온 카드를 기억해요', '한 장 남은 사람을 아껴 둔 공격으로 끊어요', '7로 바꿀 무늬는 다음 사람에게 없을 무늬로 골라요', '아주 가끔 실수해요 (2%)'], self: '98% · 0.28~0.55초', catchS: '96% · 0.32~0.62초' },
+    { t: 'grandmaster', who: '최고수', win: 63, play: ['마스터의 판단 + 실수가 없어요', '같은 숫자를 남겨 두었다가 한 번에 끝내요 (원카드 상황을 건너뜀)', '다음 사람에게 없는 무늬로 몰아가요', 'Q로 방향을 돌려 거의 끝난 사람을 늦춰요', '둘이서 할 때 J·Q를 연달아 내요'], self: '100% · 0.18~0.38초', catchS: '99% · 0.2~0.42초' },
+  ];
+  function renderBotInfo() {
+    const list = $('biList');
+    list.innerHTML = '';
+    for (const b of BOT_INFO) {
+      const card = document.createElement('section');
+      card.className = `bi-card t-${b.t}`;
+      card.innerHTML = `<header>${tierTag(b.t)}<span class="bi-who"></span><span class="bi-win"><b>${b.win}%</b> 승률</span></header>
+        <div class="bi-meter" aria-hidden="true"><i style="width:${Math.min(100, b.win / 65 * 100)}%"></i></div>
+        <ul class="bi-play"></ul>
+        <dl class="bi-react"><div><dt>내 원카드 외치기</dt><dd></dd></div><div><dt>남의 원카드 잡기</dt><dd></dd></div></dl>`;
+      card.querySelector('.bi-who').textContent = b.who;
+      for (const line of b.play) { const li = document.createElement('li'); li.textContent = line; card.querySelector('.bi-play').appendChild(li); }
+      const dd = card.querySelectorAll('dd');
+      dd[0].textContent = b.self; dd[1].textContent = b.catchS;
+      list.appendChild(card);
+    }
+  }
+  $('btnBotInfo').onclick = () => { renderBotInfo(); $('botInfoModal').hidden = false; };
+  $('biClose').onclick = () => { $('botInfoModal').hidden = true; };
+
   // --- 이벤트 ---
   $('btnCreate').onclick = () => { const n = myName(); if (n) socket.emit('create', { name: n, uid }); };
   $('btnJoin').onclick = () => {

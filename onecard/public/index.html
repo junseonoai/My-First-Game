@@ -25,7 +25,10 @@
       <input id="code" maxlength="4" placeholder="방 코드" autocomplete="off">
       <button id="btnJoin" class="btn">참가</button>
     </div>
-    <button id="btnTutorial" class="btn tutorial-btn">튜토리얼 <span id="tutorialHint" class="new-tag" hidden>처음이라면</span></button>
+    <div class="home-pair">
+      <button id="btnTutorial" class="btn tutorial-btn">튜토리얼 <span id="tutorialHint" class="new-tag" hidden>처음이라면</span></button>
+      <button id="btnBotInfo" class="btn">봇 실력</button>
+    </div>
     <button id="btnBgHome" class="btn ghost bg-link">테이블 색 바꾸기</button>
     <details class="rules">
       <summary>게임 규칙</summary>
@@ -147,6 +150,16 @@
     <label class="set-row" id="rowVibrate"><span><b>진동</b><small id="vibNote">내 차례가 되면 휴대폰이 짧게 떨려요</small></span><input type="checkbox" id="optVibrate" class="sw-in"><i class="switch" aria-hidden="true"></i></label>
     <label class="set-row"><span><b>애니메이션 줄이기</b><small>카드가 날아가는 움직임을 끄고 바로 보여 줘요</small></span><input type="checkbox" id="optCalm" class="sw-in"><i class="switch" aria-hidden="true"></i></label>
     <button id="setTutorial" class="btn">튜토리얼 다시 보기</button>
+  </div>
+</div>
+
+<!-- 봇 실력 안내 -->
+<div id="botInfoModal" class="modal" hidden role="dialog" aria-labelledby="biTitle">
+  <div class="panel bi-panel">
+    <div class="tu-top"><h2 id="biTitle">봇 실력</h2><button id="biClose" class="icon-close" aria-label="닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <p class="bi-lead">봇은 다른 사람 손패를 보지 않아요. 바닥에 나온 카드, 손패 장수, 누가 못 내고 뽑았는지만 보고 판단해요.</p>
+    <div id="biList" class="bi-list"></div>
+    <p class="bi-foot">승률은 봇 1명이 골드 봇 3명과 1000판씩 했을 때 1등 한 비율이에요. 같은 실력이면 25%.</p>
   </div>
 </div>
 

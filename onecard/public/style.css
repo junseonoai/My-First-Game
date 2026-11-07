@@ -1074,3 +1074,29 @@ body[data-bg="charcoal"] { --felt: #2b2e33; --felt-deep: #1b1d21; --tray: #14161
 /* 상대 남은 시간: '차례' 뒤 배경이 막대처럼 줄어든다 */
 .turn-token.timed { min-width: 64px; text-align: center; background: linear-gradient(90deg, var(--brass) var(--p, 100%), #6e5a2c var(--p, 100%)); }
 .turn-token.timed.low { background: linear-gradient(90deg, var(--red) var(--p, 100%), #5a1418 var(--p, 100%)); color: var(--cream); }
+
+/* --- 시작 화면: 튜토리얼 · 봇 실력 나란히 --- */
+.home-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.home-pair .btn { padding-left: 6px; padding-right: 6px; }
+
+/* --- 봇 실력 안내 --- */
+.bi-panel { max-height: calc(100dvh - 32px); overflow-y: auto; }
+.bi-panel h2 { margin: 0; }
+.bi-lead, .bi-foot { margin: 0; font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+.bi-list { display: flex; flex-direction: column; gap: 10px; }
+.bi-card { border: 2px solid var(--ink); border-left: 8px solid var(--t2); border-radius: 8px; padding: 10px 12px; background: var(--card); }
+.bi-card header { display: flex; align-items: center; gap: 8px; }
+.bi-card .tier { font-size: 13px; padding: 4px 10px 4px 6px; }
+.bi-card .tier .ti { width: 15px; height: 15px; }
+.bi-who { font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+.bi-win { margin-left: auto; font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
+.bi-win b { font-family: var(--serif); font-size: 18px; color: var(--ink); }
+.bi-meter { height: 6px; border-radius: 3px; background: rgba(31, 26, 20, .12); margin: 8px 0 6px; overflow: hidden; }
+.bi-meter i { display: block; height: 100%; background: linear-gradient(90deg, var(--t1), var(--t2)); }
+.bi-play { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.55; }
+.bi-react { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 8px 0 0; }
+.bi-react div { background: rgba(31, 26, 20, .06); border-radius: 6px; padding: 5px 8px; }
+.bi-react dt { font-size: 11px; color: var(--ink-soft); }
+.bi-react dd { margin: 1px 0 0; font-size: 13px; font-weight: 700; }
+.bi-react dd { white-space: nowrap; font-size: 12.5px; letter-spacing: -.2px; }
+.bi-react div { padding: 5px 7px; min-width: 0; }
