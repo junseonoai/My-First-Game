@@ -1100,3 +1100,6 @@ body[data-bg="charcoal"] { --felt: #2b2e33; --felt-deep: #1b1d21; --tray: #14161
 .bi-react dd { margin: 1px 0 0; font-size: 13px; font-weight: 700; }
 .bi-react dd { white-space: nowrap; font-size: 12.5px; letter-spacing: -.2px; }
 .bi-react div { padding: 5px 7px; min-width: 0; }
+
+/* --- 한장 로고 (시작 화면) --- */
+.logo img { display: block; height: 40px; width: auto; }
