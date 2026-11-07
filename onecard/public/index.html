@@ -56,7 +56,7 @@
         <li><b>J</b> 건너뛰기 · <b>Q</b> 방향 바꾸기 · <b>K</b> 한 번 더 · <b>7</b> 무늬 바꾸기. 둘이 할 때는 J·Q를 몇 장 내든 다시 내 차례예요.</li>
         <li><b>같은 숫자</b>는 여러 장을 한 번에 낼 수 있어요. 첫 장만 낼 수 있으면 되고 효과는 합쳐져요. (2 두 장 → 4장 공격, J 두 장 → 두 명 건너뛰기) 고른 순서대로 나가고 마지막 카드가 바닥 맨 위에 와요.</li>
         <li><b>원카드</b>: 누군가 한 장 남으면 판이 멈추고 3초 뒤 모두의 화면에 버튼이 열려요. 2초 안에 가장 먼저 누른 사람이 이겨요. 본인이 먼저면 안전, 남이 먼저면 1장 벌칙, 아무도 안 누르면 벌칙 없음.</li>
-        <li>낼 수 있는 카드 테두리: <i class="sw" style="background:#d6403a"></i><b>빨강</b> 받아치기 · <i class="sw" style="background:#e3b23c"></i><b>노랑</b> 막기 · <i class="sw" style="background:linear-gradient(90deg,#d6403a,#e3b23c,#3f9b6b,#2f63b5)"></i><b>무지개</b> 조커</li>
+        <li>낼 수 있는 카드 테두리: <i class="sw" style="background:var(--hint-counter)"></i><b>빨강</b> 받아치기 · <i class="sw" style="background:var(--hint-block)"></i><b>노랑</b> 막기 · <i class="sw" style="background:var(--rainbow)"></i><b>무지개</b> 조커</li>
         <li>손패가 <b>30장</b> 이상이 되면 <b>파산</b>(탈락)이에요. 판이 너무 길어지면(500턴) 손패가 적은 순서로 순위를 정해요.</li>
         <li>게임 중 연결이 끊기면 1분 동안 자리가 남아 있어요. 그동안 내 차례는 몇 초 뒤 자동으로 넘어가요.</li>
       </ul>
@@ -213,11 +213,11 @@
   <div class="panel">
     <h2 id="bgTitle">테이블 색</h2>
     <div class="swatches">
-      <button data-bg="green"><i style="background:#1d4a37"></i>초록</button>
-      <button data-bg="navy"><i style="background:#1f3a5c"></i>남색</button>
-      <button data-bg="burgundy"><i style="background:#5e2030"></i>와인</button>
-      <button data-bg="wood"><i style="background:#6e4b2c"></i>나무</button>
-      <button data-bg="charcoal"><i style="background:#2b2e33"></i>차콜</button>
+      <button data-bg="green"><i style="background:var(--table-green)"></i>초록</button>
+      <button data-bg="navy"><i style="background:var(--table-navy)"></i>남색</button>
+      <button data-bg="burgundy"><i style="background:var(--table-wine)"></i>와인</button>
+      <button data-bg="wood"><i style="background:var(--table-wood)"></i>나무</button>
+      <button data-bg="charcoal"><i style="background:var(--table-charcoal)"></i>차콜</button>
     </div>
     <button id="bgClose" class="btn primary">닫기</button>
   </div>

@@ -164,9 +164,9 @@
     }
     return `<svg class="art" viewBox="0 0 44 104" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
       ${diamonds.join('')}
-      <path d="M-2 50 L22 53 Q12 54 8 64 L6 100 L6 106 L-2 106 Z" fill="#fbf8f1"/>
-      <path d="M46 50 L22 53 Q32 54 36 64 L38 100 L38 106 L46 106 Z" fill="#fbf8f1"/>
-      <rect x="-2" y="100" width="48" height="6" fill="#fbf8f1"/>
+      <path d="M-2 50 L22 53 Q12 54 8 64 L6 100 L6 106 L-2 106 Z" style="fill:var(--card-face)"/>
+      <path d="M46 50 L22 53 Q32 54 36 64 L38 100 L38 106 L46 106 Z" style="fill:var(--card-face)"/>
+      <rect x="-2" y="100" width="48" height="6" style="fill:var(--card-face)"/>
       <path d="M6 100 L8 64 Q12 54 22 53 Q32 54 36 64 L38 100 Z" fill="none" stroke="${stroke}" stroke-width=".8"/>
       <path d="M8 58 L11 54 L14 58 L17 54 L20 58 L22 54 L24 58 L27 54 L30 58 L33 54 L36 58 Q22 64 8 58 Z" fill="#fff" stroke="${stroke}" stroke-width=".6"/>
       <ellipse cx="22" cy="44" rx="7.6" ry="9" fill="${color ? SKIN : '#fff'}" stroke="${stroke}" stroke-width=".7"/>
@@ -589,25 +589,26 @@
       $('introTitle').textContent = '룰렛 · 누가 먼저?';
       const n = it.order.length, seg = 360 / n, R = 100;
       // 칩과 같은 색: 빨강 · 먹색 · 크림을 번갈아 (마지막 칸이 첫 칸과 같은 색이면 금색)
-      const FILL = ['#b3262e', '#1f1a14', '#f3ead6'];
-      const fillOf = (i) => (i === n - 1 && n % 3 === 1 ? '#d9ab3c' : FILL[i % 3]);
+      // 칩과 같은 색: 와인 · 잉크 · 종이를 번갈아 (마지막 칸이 첫 칸과 같은 색이면 머스터드). 색은 토큰으로
+      const FILL = ['--brand', '--ink', '--ground'];
+      const fillOf = (i) => (i === n - 1 && n % 3 === 1 ? '--call' : FILL[i % 3]);
       const pt = (a, r) => [120 + r * Math.sin(a * Math.PI / 180), 120 - r * Math.cos(a * Math.PI / 180)];
       let svg = '';
       it.order.forEach((id, i) => {
         const [x1, y1] = pt(i * seg, R), [x2, y2] = pt((i + 1) * seg, R);
         const mid = (i + .5) * seg, [tx, ty] = pt(mid, R * .6);
-        const f = fillOf(i), light = f === '#f3ead6' || f === '#d9ab3c';
-        svg += `<path d="M120 120 L${x1} ${y1} A${R} ${R} 0 ${seg > 180 ? 1 : 0} 1 ${x2} ${y2} Z" fill="${f}" stroke="#1f1a14" stroke-width="2.5" data-i="${i}"/>`;
-        svg += `<text x="${tx}" y="${ty}" transform="rotate(${mid} ${tx} ${ty})" text-anchor="middle" dominant-baseline="middle" font-size="${n >= 5 ? 13 : 15}" font-weight="700" fill="${light ? '#1f1a14' : '#f3ead6'}">${escapeHtml(nameOf(g, id, me).slice(0, 6))}</text>`;
+        const f = fillOf(i), light = f === '--ground' || f === '--call';
+        svg += `<path d="M120 120 L${x1} ${y1} A${R} ${R} 0 ${seg > 180 ? 1 : 0} 1 ${x2} ${y2} Z" style="fill:var(${f});stroke:var(--ink)" stroke-width="2.5" data-i="${i}"/>`;
+        svg += `<text x="${tx}" y="${ty}" transform="rotate(${mid} ${tx} ${ty})" text-anchor="middle" dominant-baseline="middle" font-size="${n >= 5 ? 13 : 15}" font-weight="700" style="fill:var(${light ? '--ink' : '--ground'})">${escapeHtml(nameOf(g, id, me).slice(0, 6))}</text>`;
       });
       // 바깥 테두리는 칩 가장자리처럼 줄무늬
       stage.innerHTML = `<div class="wheel-pin"></div><svg class="wheel" viewBox="0 0 240 240">
-        <circle cx="120" cy="120" r="116" fill="#b3262e" stroke="#1f1a14" stroke-width="3"/>
-        <circle cx="120" cy="120" r="108" fill="none" stroke="#f3ead6" stroke-width="10" stroke-dasharray="14 14"/>
+        <circle cx="120" cy="120" r="116" style="fill:var(--brand);stroke:var(--ink)" stroke-width="3"/>
+        <circle cx="120" cy="120" r="108" fill="none" style="stroke:var(--ground)" stroke-width="10" stroke-dasharray="14 14"/>
         <g class="wheel-in">${svg}</g>
-        <circle cx="120" cy="120" r="101" fill="none" stroke="#1f1a14" stroke-width="3"/>
-        <circle cx="120" cy="120" r="20" fill="#d9ab3c" stroke="#1f1a14" stroke-width="3"/>
-        <circle cx="120" cy="120" r="12" fill="none" stroke="#1f1a14" stroke-width="1.5" stroke-dasharray="3 3"/></svg>`;
+        <circle cx="120" cy="120" r="101" fill="none" style="stroke:var(--ink)" stroke-width="3"/>
+        <circle cx="120" cy="120" r="20" style="fill:var(--call);stroke:var(--ink)" stroke-width="3"/>
+        <circle cx="120" cy="120" r="12" fill="none" style="stroke:var(--ink)" stroke-width="1.5" stroke-dasharray="3 3"/></svg>`;
       const jitter = (Math.random() - .5) * seg * .6;
       const end = 360 * 5 + (360 - (starterIdx + .5) * seg) + jitter; // 고른 칸이 위쪽 바늘에 멈춘다
       stage.querySelector('.wheel').animate([{ transform: 'rotate(0deg)' }, { transform: `rotate(${end}deg)` }],
