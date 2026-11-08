@@ -632,58 +632,32 @@
       ], { duration: PICK_SPIN, easing: 'cubic-bezier(.3,.6,.4,1)', fill: 'forwards' });
       stage.querySelector('.chip-shadow').animate([{ transform: 'scale(1)', opacity: .5 }, { transform: 'scale(.5)', opacity: .2, offset: .45 }, { transform: 'scale(1)', opacity: .5 }], { duration: PICK_SPIN * .85, fill: 'forwards' });
     } else {
-      // 주령구 굴리기: 두께가 있는 나무 주사위(엽전처럼 옆면을 겹쳐 쌓음)가 떠올랐다 떨어지며 몇 바퀴 구른다.
-      // 윗면·아랫면에 이름이 있고, 옆으로 서는 순간(안 보일 때) 다음에 보일 면의 이름을 바꾼다. 마지막 면이 먼저 할 사람
-      $('introTitle').textContent = '주령구 굴리기 · 누가 먼저?';
+      // 제비뽑기: 대나무 제비 통을 흔들면 제비가 덜그럭거리다가, 먼저 할 사람의 제비가 쑥 올라온다
+      $('introTitle').textContent = '제비뽑기 · 누가 먼저?';
       const n = it.order.length;
-      const names = it.order.map((id) => nameOf(g, id, me).slice(0, 6));
-      const F = {
-        c: '78,78 162,78 162,162 78,162',
-        t: '78,78 162,78 174,22 66,22', r: '162,78 162,162 218,174 218,66', b: '162,162 78,162 66,218 174,218', l: '78,162 78,78 22,66 22,174',
-        tr: '162,78 174,22 218,66', br: '162,162 218,174 174,218', bl: '78,162 66,218 22,174', tl: '78,78 22,66 66,22',
-      };
-      const shade = { c: '--wood-1', t: '--wood-1', l: '--wood-2', r: '--wood-2', b: '--wood-3', tl: '--wood-2', tr: '--wood-2', bl: '--wood-3', br: '--wood-3' };
-      const side = [[120, 50, 0], [190, 120, 90], [120, 190, 180], [50, 120, -90]];
-      const fs = (t, big) => Math.max(big ? 14 : 10, (big ? 32 : 18) - t.length * (big ? 3 : 1.8));
-      const faceSvg = (cls) => {
-        let f = '';
-        for (const [k, pts] of Object.entries(F)) f += `<polygon points="${pts}" style="fill:var(${shade[k]});stroke:var(--ink)" stroke-width="3" stroke-linejoin="round"${k === 'c' ? ' class="jface"' : ''}/>`;
-        return `<svg class="jury-face ${cls}" viewBox="0 0 240 240">${f}<g style="stroke:var(--wood-3)" stroke-width="1.2" fill="none" opacity=".55"><path d="M86 96q34-7 68 0M86 144q34 7 68 0"/></g>
-          <text class="jmain" x="120" y="121" text-anchor="middle" dominant-baseline="middle" font-weight="700" style="fill:var(--ink)"></text>
-          ${side.map(([x, y, rot]) => `<text class="jside" x="${x}" y="${y}" transform="rotate(${rot} ${x} ${y})" text-anchor="middle" dominant-baseline="middle" font-weight="700" style="fill:var(--ink)"></text>`).join('')}</svg>`;
-      };
-      const LAYERS = 15; // 옆면 두께
-      stage.innerHTML = `<div class="jury3d">${Array.from({ length: LAYERS }, (_, k) => `<i class="jrim" style="transform:translateZ(${k - (LAYERS - 1) / 2}px)"></i>`).join('')}${faceSvg('a')}${faceSvg('b')}</div><div class="chip-shadow"></div>`;
-      const setFace = (cls, i) => {
-        const f = stage.querySelector(`.jury-face.${cls}`); if (!f) return;
-        const m = f.querySelector('.jmain'); m.textContent = names[i]; m.setAttribute('font-size', fs(names[i], true));
-        [...f.querySelectorAll('.jside')].forEach((el, k) => { const t = names[(i + 1 + (k % (n - 1))) % n]; el.textContent = t; el.setAttribute('font-size', fs(t, false)); });
-      };
-      // 세 바퀴(1080도) 구르면 옆으로 서는 순간이 6번: 90, 270, …, 990도. 마지막에 보이는 면은 a
-      const TURN = 1080, flips = 6;
-      const first = ((starterIdx - flips) % n + n) % n;
-      setFace('a', first); setFace('b', (first + 1) % n);
-      const die = stage.querySelector('.jury3d'), shadow = stage.querySelector('.chip-shadow');
-      const ease = (t) => 1 - Math.pow(1 - t, 2.6); // 처음엔 빠르게, 끝으로 갈수록 천천히
-      const t0 = performance.now(), D = PICK_SPIN * .92;
-      let crossed = 0;
-      const tick = (now) => {
-        if (!die.isConnected) return;
-        const p = Math.min(1, (now - t0) / D), e = ease(p);
-        const ang = TURN * e;
-        const hop = Math.sin(Math.min(1, p / .7) * Math.PI) * 120 * (p < .7 ? 1 : 0) + (p >= .7 ? Math.sin((p - .7) / .3 * Math.PI) * 16 : 0);
-        const tilt = 24 * (1 - e); // 굴러가는 동안 비스듬히 기울어 두께가 보임
-        die.style.transform = `translateY(${-hop}px) rotateY(${tilt}deg) rotateX(${ang}deg) rotateZ(${-12 * (1 - e)}deg)`;
-        shadow.style.transform = `scale(${1 - hop / 260})`; shadow.style.opacity = String(.5 - hop / 400);
-        while (crossed < flips && ang >= 90 + 180 * crossed) {
-          crossed++;
-          setFace(crossed % 2 ? 'b' : 'a', (first + crossed) % n); // 이제 보이기 시작하는 면
-          if (crossed < flips) setFace(crossed % 2 ? 'a' : 'b', (first + crossed + 1) % n); // 그다음 면도 미리
-        }
-        if (p < 1) requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
-      later(PICK_SPIN, () => { const f = stage.querySelector('.jury-face.a .jface'); if (f) f.classList.add('win'); });
+      const SW = 24, GAP = 4, span = n * SW + (n - 1) * GAP;
+      const sticks = it.order.map((id, i) => `<div class="jstick${i === starterIdx ? ' pick' : ''}" style="left:${i * (SW + GAP) - span / 2}px;--tip:${(i * 37) % 11}px"><span></span></div>`).join('');
+      stage.innerHTML = `<div class="jebi" style="--span:${span}px"><div class="jebi-sticks">${sticks}</div><div class="jebi-tube"><i></i><i></i><b></b></div></div><div class="chip-shadow"></div>`;
+      [...stage.querySelectorAll('.jstick span')].forEach((el, i) => { el.textContent = nameOf(g, it.order[i], me).slice(0, 5); });
+      const jebi = stage.querySelector('.jebi');
+      // 1) 통 흔들기 (점점 잦아든다)
+      const SHAKE = PICK_SPIN * .62;
+      jebi.animate([
+        { transform: 'rotate(0deg)' }, { transform: 'rotate(-14deg)', offset: .1 }, { transform: 'rotate(12deg)', offset: .22 },
+        { transform: 'rotate(-12deg)', offset: .34 }, { transform: 'rotate(10deg)', offset: .46 }, { transform: 'rotate(-8deg)', offset: .58 },
+        { transform: 'rotate(6deg)', offset: .7 }, { transform: 'rotate(-4deg)', offset: .82 }, { transform: 'rotate(2deg)', offset: .92 }, { transform: 'rotate(0deg)' },
+      ], { duration: SHAKE, easing: 'ease-in-out', fill: 'forwards' });
+      // 흔드는 동안 제비들이 덜그럭거린다
+      stage.querySelectorAll('.jstick').forEach((el, i) => el.animate(
+        [{ transform: 'translateY(0)' }, { transform: `translateY(${-10 - (i % 3) * 5}px)`, offset: .25 }, { transform: 'translateY(0)', offset: .5 }, { transform: `translateY(${-6 - (i % 2) * 6}px)`, offset: .75 }, { transform: 'translateY(0)' }],
+        { duration: SHAKE / 3, iterations: 3, delay: i * 40, easing: 'ease-in-out' }));
+      // 2) 고른 제비가 쑥 올라온다
+      later(SHAKE + 80, () => {
+        const p = stage.querySelector('.jstick.pick'); if (!p) return;
+        p.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-108px)', offset: .7 }, { transform: 'translateY(-98px)' }],
+          { duration: PICK_SPIN - SHAKE - 120, easing: 'cubic-bezier(.2,.9,.3,1.2)', fill: 'forwards' });
+      });
+      later(PICK_SPIN, () => { const p = stage.querySelector('.jstick.pick'); if (p) p.classList.add('win'); });
     }
     later(PICK_SPIN, () => {
       pop.classList.add('reveal');
