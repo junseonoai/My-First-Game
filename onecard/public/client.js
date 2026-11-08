@@ -744,6 +744,7 @@
   // --- 원카드: 카운트다운 → 버튼 열림(2초) → 누르면 내 기록 → 모두 눌렀거나 2초 지나면 전체 결과, 판 재개 ---
   let raceSeen = {}; // race.id → { openAt, closeAt, doneAt, resumeAt }
   const counted = new Set(); // 최고 기록에 이미 반영한 경쟁
+  let panelsClosedFor = null; // 이 경쟁이 시작될 때 열린 창을 이미 닫았는지
   let myPress = {}; // race.id → { ms, place } (서버가 바로 알려 줌)
   let oneTicker = null;
   let guardUntil = 0; // 결과가 뜬 직후 실수로 카드 뽑기를 누르지 않게
@@ -781,6 +782,8 @@
     if (!phase) return;
     const race = state.race, me = state.me;
     const info = raceInfo(race);
+    // 열어 둔 창은 맨 앞에 있으니, 원카드 경쟁이 시작되면 닫아서 버튼을 놓치지 않게 한다
+    if ((phase === 'count' || phase === 'open') && panelsClosedFor !== race.id) { panelsClosedFor = race.id; closePanels(); }
     pop.classList.toggle('mine-target', race.target === me);
     const btn = $('btnOne');
     const bar = $('oneBar');
@@ -1289,6 +1292,10 @@
   $('btnLog').onclick = () => { closeMenu(); $('side').hidden = false; $('btnMenu').classList.remove('dot'); $('btnLog').classList.remove('dot'); };
 
   // --- 오른쪽 위 메뉴: 테마 변경 · 기록·채팅 · 설정 ---
+  function closePanels() {
+    closeMenu();
+    for (const id of ['emotePanel', 'side', 'settingsModal', 'bgModal', 'rulesModal', 'botInfoModal', 'quitModal']) $(id).hidden = true;
+  }
   function closeMenu() { $('menuPanel').hidden = true; $('btnMenu').setAttribute('aria-expanded', 'false'); }
   $('btnMenu').onclick = (e) => {
     e.stopPropagation();
