@@ -1239,7 +1239,7 @@
   // 한장 캐릭터 이모지 (그림 파일). 주고받는 값은 그대로 이모지 글자다
   const EMOJI_CHAR = { '😀': 'smile', '😂': 'laugh', '😎': 'cool', '😭': 'cry', '😡': 'angry', '😱': 'shock', '👍': 'thumb', '👏': 'clap', '🔥': 'fire', '💀': 'skull' };
   function emojiIcon(e) {
-    return EMOJI_CHAR[e] ? `<img class="emo char" src="emoji/${EMOJI_CHAR[e]}.png" alt="" draggable="false" loading="lazy" decoding="async">` : '';
+    return EMOJI_CHAR[e] ? `<img class="emo char" src="emoji/${EMOJI_CHAR[e]}.png" alt="" draggable="false">` : '';
   }
 
   const PHRASES = ['빨리 내요!', '잘했어요', '아 안 돼!', '봐주세요', '원카드 조심!', '공격 간다!', '운이 좋네요', '한 판 더?', 'ㅋㅋㅋㅋ', '안녕하세요'];
