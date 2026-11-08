@@ -20,7 +20,7 @@
   --felt-line: rgba(240, 234, 216, .14);
   --ui: var(--font-sans);        /* 본문: Noto Sans KR */
   --serif: var(--font-display);  /* 옛 세리프 숫자 자리: 이제 메이플스토리 Bold (장수·타이머·카드 숫자 등) */
-  --shadow-hard: 0 4px 10px rgba(10, 20, 14, .3);
+  --shadow-hard: 0 4px 10px rgba(12, 12, 14, .3);
   color-scheme: dark;
 }
 
@@ -156,7 +156,7 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
 .opponents { display: flex; gap: 6px; justify-content: center; align-items: flex-start; flex-wrap: nowrap; width: 100%; padding: 0 12px; position: relative; z-index: 1; }
 .opp {
   flex: 0 1 104px; min-width: 0; padding: 8px 8px 8px; border-radius: var(--radius-md); text-align: center;
-  background: rgba(10, 30, 20, .55); border: 1.5px solid rgba(243, 234, 214, .18); position: relative;
+  background: rgba(0, 0, 0, .28); border: 1.5px solid rgba(243, 234, 214, .18); position: relative;
   transition: border-color .2s, background .2s;
 }
 .opp.turn { background: var(--paper); color: var(--ink); border-color: var(--ink); box-shadow: var(--shadow-card); }
@@ -211,7 +211,7 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
 /* --- 카드 --- */
 .card {
   width: 84px; height: 120px; border-radius: var(--radius-md); background: var(--card); color: var(--card-ink);
-  border: 1px solid rgba(0, 0, 0, .18); box-shadow: 0 4px 10px rgba(10, 20, 14, .3), 0 4px 10px rgba(0, 0, 0, .25);
+  border: 1px solid rgba(0, 0, 0, .18); box-shadow: 0 4px 10px rgba(12, 12, 14, .3), 0 4px 10px rgba(0, 0, 0, .25);
   position: relative; padding: 0; user-select: none; flex: none; font-family: var(--serif);
 }
 .card.red { color: var(--card-red); }
@@ -270,13 +270,13 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
 .hand-row .card { margin-left: var(--ov, -32px); transition: transform .14s ease-out; cursor: default; }
 .hand-row .card:first-child { margin-left: 0; }
 .hand.two .hand-row + .hand-row { margin-top: -50px; } /* 두 번째 줄이 첫 줄 아래쪽을 덮어 숫자는 보이게 */
-.hand .card.dim::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; background: rgba(10, 20, 14, .38); pointer-events: none; }
+.hand .card.dim::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; background: rgba(12, 12, 14, .38); pointer-events: none; }
 .hand .card.ok { cursor: pointer; transform: translateY(-12px); }
 .hand .card.ok:hover { transform: translateY(-20px); }
 /* 낼 수 있는 카드 테두리: 일반 크림 · 받아치기 빨강 · 막기 노랑 · 조커 무지개 */
-.hand .card.ok.k-normal { box-shadow: 0 0 0 3px var(--ok), 0 4px 10px rgba(10, 20, 14, .3); }
-.hand .card.ok.k-counter { box-shadow: 0 0 0 3px var(--counter), 0 4px 10px rgba(10, 20, 14, .3); }
-.hand .card.ok.k-block { box-shadow: 0 0 0 3px var(--block), 0 4px 10px rgba(10, 20, 14, .3); }
+.hand .card.ok.k-normal { box-shadow: 0 0 0 3px var(--ok), 0 4px 10px rgba(12, 12, 14, .3); }
+.hand .card.ok.k-counter { box-shadow: 0 0 0 3px var(--counter), 0 4px 10px rgba(12, 12, 14, .3); }
+.hand .card.ok.k-block { box-shadow: 0 0 0 3px var(--block), 0 4px 10px rgba(12, 12, 14, .3); }
 .hand .card.ok.k-joker {
   border: 4px solid transparent;
   background:
@@ -285,8 +285,8 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
   box-shadow: var(--shadow-lift);
 }
 /* 여러 장 고르기 */
-.hand .card.sel { cursor: pointer; transform: translateY(-22px); box-shadow: 0 0 0 3px var(--pick), 0 4px 10px rgba(10, 20, 14, .3); }
-.hand .card.pick { cursor: pointer; transform: translateY(-8px); box-shadow: 0 0 0 2px var(--pick), 0 4px 10px rgba(10, 20, 14, .3); }
+.hand .card.sel { cursor: pointer; transform: translateY(-22px); box-shadow: 0 0 0 3px var(--pick), 0 4px 10px rgba(12, 12, 14, .3); }
+.hand .card.pick { cursor: pointer; transform: translateY(-8px); box-shadow: 0 0 0 2px var(--pick), 0 4px 10px rgba(12, 12, 14, .3); }
 .sel-no {
   position: absolute; bottom: 6px; left: 6px; width: 24px; height: 24px; border-radius: 50%;
   background: var(--pick); color: var(--white); font-family: var(--ui); font-weight: 700; font-size: 13px;
@@ -402,7 +402,7 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
 }
 
 /* --- 모달 --- */
-.modal { position: fixed; inset: 0; background: rgba(8, 20, 14, .6); display: flex; align-items: center; justify-content: center; z-index: 30; padding: 16px; }
+.modal { position: fixed; inset: 0; background: rgba(12, 12, 14, .6); display: flex; align-items: center; justify-content: center; z-index: 30; padding: 16px; }
 #suitModal { z-index: 34; } /* 무늬 고르는 중에는 원카드 버튼보다 위 */
 .modal .panel { animation: drop .2s ease-out; }
 @keyframes drop { from { transform: translateY(-14px); opacity: 0; } }
@@ -429,7 +429,7 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
 .one-pop {
   position: fixed; inset: 0; z-index: 33; pointer-events: none;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
-  background: rgba(8, 20, 14, .55); animation: fadeIn .15s ease-out;
+  background: rgba(12, 12, 14, .55); animation: fadeIn .15s ease-out;
 }
 .one-pop > * { pointer-events: auto; animation: oneIn .28s cubic-bezier(.3, 1.5, .5, 1); }
 .one-pop > .one-big { animation: oneIn .28s cubic-bezier(.3, 1.5, .5, 1), wobble .6s ease-in-out .3s 2; }
@@ -503,14 +503,14 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
 
 /* --- 원카드 반응 속도 --- */
 .one-pop .race-panel { display: none; }
-.one-pop.result { pointer-events: auto; background: rgba(8, 20, 14, .6); } /* 결과를 보는 동안 뒤의 버튼이 눌리지 않게 */
+.one-pop.result { pointer-events: auto; background: rgba(12, 12, 14, .6); } /* 결과를 보는 동안 뒤의 버튼이 눌리지 않게 */
 .one-pop.result > p, .one-pop.result > .one-big { display: none; }
 .one-pop.result .race-panel { display: block; }
 .one-pop.count .one-big { background: var(--neutral-btn); color: var(--cream); font-size: 64px; font-family: var(--serif); box-shadow: 0 10px 0 var(--neutral-btn-deep), 0 18px 24px rgba(0, 0, 0, .45); animation: none; cursor: default; }
 .one-pop.count .one-big:active { transform: none; }
 .one-pop.open .one-big { animation: goPop .25s cubic-bezier(.3, 1.6, .5, 1); }
 @keyframes goPop { from { transform: scale(.8); } }
-.one-pop.late { background: rgba(8, 20, 14, .35); }
+.one-pop.late { background: rgba(12, 12, 14, .35); }
 .one-pop.late .one-big { background: var(--neutral-btn); color: var(--cream); box-shadow: 0 10px 0 var(--neutral-btn-deep), 0 18px 24px rgba(0, 0, 0, .45); animation: none; }
 .race-panel {
   width: min(320px, calc(100vw - 32px)); background: var(--paper); color: var(--ink); border: 1.5px solid var(--line-strong); border-radius: var(--radius-md);
@@ -553,9 +553,9 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
 .tu-quiz { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
 .tu-quiz .btn.small { background: var(--paper); }
 .tu-pick { cursor: pointer; transition: transform .12s; }
-.tu-pick.on { transform: translateY(-8px); box-shadow: 0 0 0 3px var(--cream), 0 4px 10px rgba(10, 20, 14, .3); }
-.tu-pick.ans { box-shadow: 0 0 0 3px var(--success), 0 4px 10px rgba(10, 20, 14, .3); }
-.tu-sel { box-shadow: 0 0 0 3px var(--pick), 0 4px 10px rgba(10, 20, 14, .3); }
+.tu-pick.on { transform: translateY(-8px); box-shadow: 0 0 0 3px var(--cream), 0 4px 10px rgba(12, 12, 14, .3); }
+.tu-pick.ans { box-shadow: 0 0 0 3px var(--success), 0 4px 10px rgba(12, 12, 14, .3); }
+.tu-sel { box-shadow: 0 0 0 3px var(--pick), 0 4px 10px rgba(12, 12, 14, .3); }
 .tu-note { margin: 0; font-size: 13px; line-height: 1.5; color: var(--cream); text-align: center; }
 .tu-note.good { color: var(--on-felt); font-weight: 700; }
 .tu-note.bad { color: var(--warn-on-felt); font-weight: 700; }
@@ -632,7 +632,7 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
 .my-turn .tray .turn-bar i { background: var(--ink); }
 .my-turn .tray .turn-bar.low i { background: var(--red); }
 /* 금색 바탕에서도 잘 보이게: 낼 수 있는 일반 카드는 흰 테두리 + 검은 바깥선 */
-.my-turn .hand .card.ok.k-normal { box-shadow: 0 0 0 3px var(--white), 0 0 0 5px var(--ink), 0 4px 10px rgba(10, 20, 14, .3); }
+.my-turn .hand .card.ok.k-normal { box-shadow: 0 0 0 3px var(--white), 0 0 0 5px var(--ink), 0 4px 10px rgba(12, 12, 14, .3); }
 .my-turn .hand .card.dim::after { background: rgba(60, 40, 0, .35); }
 /* 상자 위로 버튼과 알림 올리기 */
 .fab { bottom: calc(232px + env(safe-area-inset-bottom)); }
@@ -649,7 +649,7 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
 }
 .tab-time { font-family: var(--serif); font-size: 30px; line-height: 1; min-width: 1.2em; text-align: center; }
 .tab-time:empty { display: none; }
-.my-turn .tray-tab { background: var(--ink); color: var(--call-soft); border-color: var(--ink); font-size: 18px; padding: 5px 18px; box-shadow: 0 4px 10px rgba(10, 20, 14, .3); }
+.my-turn .tray-tab { background: var(--ink); color: var(--call-soft); border-color: var(--ink); font-size: 18px; padding: 5px 18px; box-shadow: 0 4px 10px rgba(12, 12, 14, .3); }
 .my-turn .tray-tab .tab-time { color: var(--white); }
 .my-turn .tray-tab.low { background: var(--red); color: var(--white); border-color: var(--ink); }
 .tab-time.tick { animation: tick .35s cubic-bezier(.3, 1.6, .5, 1); }
@@ -714,7 +714,7 @@ body[data-bg="charcoal"] { --felt: var(--table-charcoal); --felt-deep: #1d1e21; 
 
 /* --- 이모티콘·빠른 채팅이 잘 보이게: 말풍선을 자리 바로 옆에 크게 --- */
 .emote-float { z-index: 37; }
-.emote-float.emoji { font-size: 54px; filter: drop-shadow(0 4px 10px rgba(10, 20, 14, .3)); }
+.emote-float.emoji { font-size: 54px; filter: drop-shadow(0 4px 10px rgba(12, 12, 14, .3)); }
 .emote-float.phrase { font-size: 17px; padding: 8px 14px; max-width: 240px; border-width: 2.5px; }
 .emote-float.from-opp { transform: translate(-50%, 0); }
 .emote-float.from-opp.emoji { animation: hopDown 2.4s ease-out forwards; }
@@ -780,7 +780,7 @@ body[data-bg="charcoal"] { --felt: var(--table-charcoal); --felt-deep: #1d1e21; 
   display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--cream);
   animation: dirFade 1.5s ease-out forwards;
 }
-.dir-flash i { font-style: normal; font-size: 120px; line-height: 1; font-weight: 700; text-shadow: 0 4px 10px rgba(10, 20, 14, .3); animation: dirSpin 1.2s cubic-bezier(.2, .7, .3, 1) forwards; }
+.dir-flash i { font-style: normal; font-size: 120px; line-height: 1; font-weight: 700; text-shadow: 0 4px 10px rgba(12, 12, 14, .3); animation: dirSpin 1.2s cubic-bezier(.2, .7, .3, 1) forwards; }
 .dir-flash.ccw i { animation-name: dirSpinCcw; }
 .dir-flash b { font-size: 18px; background: var(--ink); color: var(--call-soft); padding: 3px 12px; border-radius: var(--radius-md); border: 2px solid var(--call-soft); }
 @keyframes dirSpin { from { transform: rotate(-200deg) scale(.5); } to { transform: rotate(0) scale(1); } }
@@ -803,7 +803,7 @@ body[data-bg="charcoal"] { --felt: var(--table-charcoal); --felt-deep: #1d1e21; 
 .draw-mark {
   position: fixed; z-index: 36; pointer-events: none; transform: translate(-50%, -50%); white-space: nowrap;
   font-size: 15px; font-weight: 700; padding: 3px 11px; border-radius: 999px;
-  background: var(--paper); color: var(--ink); border: 1.5px solid var(--line-strong); box-shadow: 0 4px 10px rgba(10, 20, 14, .3);
+  background: var(--paper); color: var(--ink); border: 1.5px solid var(--line-strong); box-shadow: 0 4px 10px rgba(12, 12, 14, .3);
   animation: markPop 1.6s cubic-bezier(.3, 1.4, .5, 1) forwards;
 }
 .draw-mark b { font-family: var(--serif); font-size: 22px; margin-right: 1px; }
@@ -845,7 +845,7 @@ body[data-bg="charcoal"] { --felt: var(--table-charcoal); --felt-deep: #1d1e21; 
 /* --- 먼저 할 사람 고르기 --- */
 .intro-pop {
   position: fixed; inset: 0; z-index: 35; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
-  background: rgba(8, 20, 14, .7); animation: fadeIn .2s ease-out;
+  background: rgba(12, 12, 14, .7); animation: fadeIn .2s ease-out;
 }
 .intro-pop[hidden] { display: none; }
 .intro-title {
@@ -853,7 +853,7 @@ body[data-bg="charcoal"] { --felt: var(--table-charcoal); --felt-deep: #1d1e21; 
   font-size: 16px; font-weight: 700; box-shadow: var(--shadow-hard); transform: rotate(-2deg);
 }
 .intro-stage { position: relative; width: 260px; height: 260px; display: flex; align-items: center; justify-content: center; perspective: 700px; }
-.intro-msg { margin: 0; min-height: 34px; font-size: 24px; font-weight: 700; color: var(--call-soft); text-shadow: 0 4px 10px rgba(10, 20, 14, .3); }
+.intro-msg { margin: 0; min-height: 34px; font-size: 24px; font-weight: 700; color: var(--call-soft); text-shadow: 0 4px 10px rgba(12, 12, 14, .3); }
 .intro-pop.reveal .intro-msg { animation: stampIn .35s cubic-bezier(.3, 1.6, .5, 1); }
 
 
@@ -870,7 +870,7 @@ body[data-bg="charcoal"] { --felt: var(--table-charcoal); --felt-deep: #1d1e21; 
 .chip3d { position: relative; width: 160px; height: 160px; transform-style: preserve-3d; }
 .chip3d .face {
   position: absolute; inset: 0; border-radius: 50%; backface-visibility: hidden; -webkit-backface-visibility: hidden;
-  border: 1.5px solid var(--line-strong); box-shadow: 0 4px 10px rgba(10, 20, 14, .3);
+  border: 1.5px solid var(--line-strong); box-shadow: 0 4px 10px rgba(12, 12, 14, .3);
   /* 칩 가장자리: 굵은 줄무늬 6개 */
   background: repeating-conic-gradient(from 15deg, var(--cream) 0 30deg, var(--red) 30deg 60deg);
   display: flex; align-items: center; justify-content: center;
@@ -910,7 +910,7 @@ body[data-bg="charcoal"] { --felt: var(--table-charcoal); --felt-deep: #1d1e21; 
   display: inline-flex; align-items: center; gap: 3px; vertical-align: middle;
   font-size: 11px; font-weight: 700; line-height: 1; padding: 3px 7px 3px 4px; border-radius: 999px;
   background: linear-gradient(160deg, var(--t1), var(--t2) 70%); color: var(--tx);
-  border: 1.5px solid var(--tr); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 4px 10px rgba(10, 20, 14, .3);
+  border: 1.5px solid var(--tr); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 4px 10px rgba(12, 12, 14, .3);
   text-shadow: none; letter-spacing: 0;
 }
 
@@ -918,7 +918,7 @@ body[data-bg="charcoal"] { --felt: var(--table-charcoal); --felt-deep: #1d1e21; 
 .tier .ti path, .tier .ti circle { fill: var(--tx); fill-opacity: .9; }
 .tier .ti .ln { fill: none; stroke: var(--t2); stroke-width: 1.2; stroke-linejoin: round; }
 .tier.t-master .ti .ln, .tier.t-grandmaster .ti .ln { stroke: var(--t2); }
-.tier.t-grandmaster { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), 0 0 0 1.5px var(--ink), 0 4px 10px rgba(10, 20, 14, .3); }
+.tier.t-grandmaster { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), 0 0 0 1.5px var(--ink), 0 4px 10px rgba(12, 12, 14, .3); }
 /* 상대 자리 오른쪽 위 작은 배지 */
 .opp .nm .bot { background: none !important; border: none !important; padding: 0; top: -9px; right: -7px; letter-spacing: 0; }
 .opp .nm .bot .tier { font-size: 9px; padding: 2px 5px 2px 3px; gap: 2px; }
@@ -1170,10 +1170,10 @@ h1, h2, .modal h2, .tu-panel h2 { font-family: var(--font-display); font-weight:
 }
 /* 낼 수 있는 카드 테두리: 일반 크림 · 받아치기 빨강 · 막기 노랑 · 조커 무지개, 고른 카드 초록.
    내 차례(머스터드 상자) 위에서는 노랑 막기가 상자 색에 묻히지 않게 모든 테두리에 얇은 잉크 바깥선 */
-.my-turn .hand .card.ok.k-counter { box-shadow: 0 0 0 3px var(--counter), 0 0 0 5px var(--ink), 0 4px 10px rgba(10, 20, 14, .3); }
-.my-turn .hand .card.ok.k-block { box-shadow: 0 0 0 3px var(--block), 0 0 0 5px var(--ink), 0 4px 10px rgba(10, 20, 14, .3); }
-.my-turn .hand .card.sel { box-shadow: 0 0 0 3px var(--pick), 0 0 0 5px var(--ink), 0 8px 18px rgba(10, 20, 14, .35); }
-.my-turn .hand .card.pick { box-shadow: 0 0 0 2px var(--pick), 0 0 0 4px var(--ink), 0 4px 10px rgba(10, 20, 14, .3); }
+.my-turn .hand .card.ok.k-counter { box-shadow: 0 0 0 3px var(--counter), 0 0 0 5px var(--ink), 0 4px 10px rgba(12, 12, 14, .3); }
+.my-turn .hand .card.ok.k-block { box-shadow: 0 0 0 3px var(--block), 0 0 0 5px var(--ink), 0 4px 10px rgba(12, 12, 14, .3); }
+.my-turn .hand .card.sel { box-shadow: 0 0 0 3px var(--pick), 0 0 0 5px var(--ink), 0 8px 18px rgba(12, 12, 14, .35); }
+.my-turn .hand .card.pick { box-shadow: 0 0 0 2px var(--pick), 0 0 0 4px var(--ink), 0 4px 10px rgba(12, 12, 14, .3); }
 /* 키보드로 옮겨 다닐 때만 보이는 파란 포커스 링 */
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .hand .card:focus-visible { outline-offset: 3px; }
@@ -1358,7 +1358,7 @@ body.game-panel-open #game { z-index: 60; }
    ===================================================================== */
 .emote-float.phrase.from-opp, .emote-float.phrase.from-me {
   background: var(--ground); color: var(--ink); border: 1.5px solid var(--line-strong); border-radius: 16px;
-  padding: 9px 15px; font-size: 16px; font-weight: 700; line-height: 1.25; box-shadow: 0 6px 14px rgba(10, 20, 14, .28);
+  padding: 9px 15px; font-size: 16px; font-weight: 700; line-height: 1.25; box-shadow: 0 6px 14px rgba(12, 12, 14, .28);
 }
 .emote-float.phrase.from-opp::before, .emote-float.phrase.from-me::after {
   content: ""; position: absolute; left: var(--tail, 50%); width: 12px; height: 12px; margin-left: -6px;
@@ -1368,7 +1368,7 @@ body.game-panel-open #game { z-index: 60; }
 .emote-float.phrase.from-me::after { bottom: -7.5px; border-right-width: 1.5px; border-bottom-width: 1.5px; border-bottom-right-radius: 2px; }
 .emote-float.emoji.from-opp, .emote-float.emoji.from-me {
   background: none; border: none; box-shadow: none; padding: 0; font-size: 46px; line-height: 1;
-  filter: drop-shadow(0 4px 8px rgba(10, 20, 14, .35));
+  filter: drop-shadow(0 4px 8px rgba(12, 12, 14, .35));
 }
 .emote-float.emoji.from-opp::before, .emote-float.emoji.from-opp::after,
 .emote-float.emoji.from-me::before, .emote-float.emoji.from-me::after { content: none; }
