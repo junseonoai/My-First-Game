@@ -1613,3 +1613,25 @@ body.game-panel-open .tray, body.game-panel-open .topbar { z-index: 7; }
 .stack { --h: calc(var(--size) * 1.26); }
 /* 낙관은 패 오른쪽 아래 모서리에 걸쳐 찍는다 (글자를 가리지 않게) */
 .stack.lv2 .hp-seal, .stack.lv3 .hp-seal, .stack.lv4 .hp-seal { right: calc(var(--w) * -.1); bottom: calc(var(--w) * -.06); width: calc(var(--w) * .28); height: calc(var(--w) * .28); box-shadow: inset 0 0 0 1.5px rgba(255, 235, 225, .55), 0 1px 2px rgba(0, 0, 0, .35); }
+
+/* =====================================================================
+   챌린저 배지: 먹빛 금속 바탕 + 놋쇠 테두리 두 겹 + 놋쇠빛 글씨, 날개 달린 별 문양
+   ===================================================================== */
+.t-challenger { --t1: #4a4d55; --t2: #15161a; --tx: var(--brass-light); --tr: var(--call); --tc: #15161a; }
+.tier.t-challenger, .tier-btn.t-challenger {
+  background: radial-gradient(ellipse at 30% 0%, rgba(255, 255, 255, .18), transparent 60%), linear-gradient(160deg, #4a4d55 0%, #1f2024 45%, #0e0f12 100%);
+  color: var(--brass-light); border-color: var(--call);
+  box-shadow: inset 0 1.5px 0 rgba(255, 240, 200, .25), inset 0 -2px 0 rgba(0, 0, 0, .5), 0 0 0 1.5px #0e0f12, 0 0 0 3px var(--brass-deep);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .6);
+}
+.tier.t-challenger span, .tier-btn.t-challenger span {
+  background: linear-gradient(180deg, #fff2c6 0%, var(--brass-light) 40%, var(--call) 75%, var(--brass-deep) 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; letter-spacing: .5px;
+}
+.tier.t-challenger .ti path, .tier.t-challenger .ti circle, .tier-btn.t-challenger .ti path, .tier-btn.t-challenger .ti circle { fill: var(--brass-light); fill-opacity: 1; }
+.tier.t-challenger .ti .ln, .tier-btn.t-challenger .ti .ln { stroke: var(--call); stroke-width: 1.1; fill: none; }
+.tier-btn.t-challenger { border-width: 2.5px; }
+.tier-btn.t-challenger:active { box-shadow: inset 0 2px 0 rgba(0, 0, 0, .5), 0 0 0 1.5px #0e0f12, 0 0 0 3px var(--brass-deep); }
+.opp .nm .bot .tier.t-challenger { box-shadow: inset 0 1px 0 rgba(255, 240, 200, .25), 0 0 0 1px #0e0f12, 0 0 0 2px var(--brass-deep); }
+.bi-card.t-challenger { border-left-color: var(--call); background: linear-gradient(90deg, rgba(184, 146, 63, .12), var(--card) 40%); }
+.tier-row .tier-btn.t-challenger { flex-basis: 100%; }

@@ -47,9 +47,9 @@
     const stage = document.createElement('button');
     stage.className = 'tu-stage';
     stage.textContent = '여기를 눌러 시작';
-    const out = note('봇이 남의 원카드를 잡는 속도: 실버 0.8~1.6초 · 골드 0.6~1.3초 · 플래티넘 0.45~1초 · 마스터 0.32~0.62초 · 그랜드마스터 0.2~0.42초');
+    const out = note('봇이 남의 원카드를 잡는 속도: 실버 0.8~1.6초 · 골드 0.6~1.3초 · 플래티넘 0.45~1초 · 마스터 0.32~0.62초 · 그랜드마스터 0.2~0.42초 · 챌린저 0.15~0.3초');
     let phase = 'idle', shownAt = 0, timer = null;
-    const tierFor = (ms) => ms <= 420 ? '그랜드마스터급' : ms <= 620 ? '마스터급' : ms <= 1000 ? '플래티넘급' : ms <= 1300 ? '골드급' : '실버급';
+    const tierFor = (ms) => ms <= 300 ? '챌린저급' : ms <= 420 ? '그랜드마스터급' : ms <= 620 ? '마스터급' : ms <= 1000 ? '플래티넘급' : ms <= 1300 ? '골드급' : '실버급';
     stage.onclick = () => {
       if (phase === 'idle' || phase === 'done') {
         phase = 'wait';
@@ -133,11 +133,11 @@
     },
     {
       title: '파산과 봇 등급',
-      body: '손패가 30장이 되면 파산이에요. 대기실에서 봇 추가를 누르면 실버부터 그랜드마스터까지 봇 등급을 골라 연습할 수 있어요. 이제 방을 만들어 시작해 보세요!',
+      body: '손패가 30장이 되면 파산이에요. 대기실에서 봇 추가를 누르면 실버부터 챌린저까지 봇 등급을 골라 연습할 수 있어요. 이제 방을 만들어 시작해 보세요!',
       demo: () => {
         const d = document.createElement('div');
         d.className = 'tu-tiers';
-        for (const [t] of [['silver', '실버'], ['gold', '골드'], ['platinum', '플래티넘'], ['master', '마스터'], ['grandmaster', '그랜드마스터']]) d.insertAdjacentHTML('beforeend', window.oneCardUI.tierTag(t));
+        for (const [t] of [['silver', '실버'], ['gold', '골드'], ['platinum', '플래티넘'], ['master', '마스터'], ['grandmaster', '그랜드마스터'], ['challenger', '챌린저']]) d.insertAdjacentHTML('beforeend', window.oneCardUI.tierTag(t));
         return d;
       },
     },

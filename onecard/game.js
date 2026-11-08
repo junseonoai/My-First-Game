@@ -272,7 +272,7 @@ class Game {
     {
       const top = this.top();
       const L = { n: p.hand.length, joker: true };
-      if (this.penalty === 0) { L.suit = this.activeSuit; L.rank = isJoker(top) ? null : top.rank; }
+      if (this.penalty === 0) { L.suit = this.activeSuit; L.rank = isJoker(top) ? null : top.rank; if (this.activeSuit) { this.missCount = this.missCount || {}; const m = (this.missCount[p.id] = this.missCount[p.id] || {}); m[this.activeSuit] = (m[this.activeSuit] || 0) + 1; } }
       else if (isJoker(top)) { L.atkSpadeA = true; }
       else { L.atkSuit = top.suit; L.atkRank = top.rank; L.block = top.rank === '2' || top.rank === 'A' ? top.suit : null; }
       this.lacks[p.id] = L;
@@ -354,8 +354,8 @@ class Game {
 
   // --- 봇 ---
   // tier: silver | gold | platinum | master | grandmaster
-  botMove(botId, tier = 'gold') {
-    const move = require('./bots').chooseMove(this, botId, tier);
+  botMove(botId, tier = 'gold', opts) {
+    const move = require('./bots').chooseMove(this, botId, tier, null, opts);
     if (!move || move.draw) return this.draw(botId);
     return this.play(botId, move.ids, move.suit);
   }

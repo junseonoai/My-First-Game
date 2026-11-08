@@ -36,17 +36,18 @@
   const chatLines = [];
 
   const SYM = { S: '♠', H: '♥', D: '♦', C: '♣' };
-  const TIER_NAME = { silver: '실버', gold: '골드', platinum: '플래티넘', master: '마스터', grandmaster: '그랜드마스터' };
-  const TIER_SHORT = { silver: '실버', gold: '골드', platinum: '플래', master: '마스터', grandmaster: '그마' };
+  const TIER_NAME = { silver: '실버', gold: '골드', platinum: '플래티넘', master: '마스터', grandmaster: '그랜드마스터', challenger: '챌린저' };
+  const TIER_SHORT = { silver: '실버', gold: '골드', platinum: '플래', master: '마스터', grandmaster: '그마', challenger: '챌린저' };
   // 둘이 할 때는 1등·2등 대신 우승·패배
   const rankLabel = (rank, n) => n === 2 ? (rank === 1 ? '우승' : '패배') : `${rank}등`;
-  // 등급 문장(紋章): 실버 방패 → 골드 방패 → 플래티넘 보석 → 마스터 큰 보석 → 그랜드마스터 왕관
+  // 등급 문장(紋章): 실버 방패 → 골드 방패 → 플래티넘 보석 → 마스터 큰 보석 → 그랜드마스터 왕관 → 챌린저 날개 달린 별
   const TIER_ICON = {
     silver: '<path d="M8 1.5 14 4v4.2C14 11.6 11.4 14 8 15 4.6 14 2 11.6 2 8.2V4z"/><path d="M5 8.2h6" class="ln"/>',
     gold: '<path d="M8 1.5 14 4v4.2C14 11.6 11.4 14 8 15 4.6 14 2 11.6 2 8.2V4z"/><path d="M5 6.8h6M5 9.6h6" class="ln"/>',
     platinum: '<path d="M8 1.2 14 5v6L8 14.8 2 11V5z"/><path d="M8 1.2v13.6M2 5l6 3.6L14 5" class="ln"/>',
     master: '<path d="M4.5 2h7L15 6.2 8 15 1 6.2z"/><path d="M1 6.2h14M6 2 5 6.2 8 15l3-8.8L10 2" class="ln"/>',
     grandmaster: '<path d="M1.5 5.5 5 8.5 8 2.5l3 6 3.5-3-1.4 8H2.9z"/><circle cx="8" cy="2.2" r="1.3"/><circle cx="1.5" cy="5.2" r="1.1"/><circle cx="14.5" cy="5.2" r="1.1"/><path d="M3 12.4h10" class="ln"/>',
+    challenger: '<path d="M8 .8l1.8 4 4.4.4-3.3 2.9 1 4.3L8 10.2l-3.9 2.2 1-4.3-3.3-2.9 4.4-.4z"/><path d="M.6 9.2C2.2 10 3.4 10 4.6 9.4M15.4 9.2C13.8 10 12.6 10 11.4 9.4M1.6 11.6c1.4.6 2.6.6 3.6 0M14.4 11.6c-1.4.6-2.6.6-3.6 0" class="ln"/><circle cx="8" cy="14.6" r="1"/>',
   };
   const tierIcon = (t) => `<svg class="ti" viewBox="0 0 16 16" aria-hidden="true">${TIER_ICON[t] || TIER_ICON.gold}</svg>`;
   const tierTag = (t, short) => `<span class="tier t-${t || 'gold'}">${tierIcon(t || 'gold')}<span>${(short ? TIER_SHORT : TIER_NAME)[t || 'gold']}</span></span>`;
@@ -1145,11 +1146,13 @@
   // --- 봇 실력 안내 ---
   const BOT_INFO = [
     { t: 'silver', who: '처음 배우는 사람', win: 11, play: ['낼 수 있는 카드 중 아무거나 내요', '같은 숫자를 자주 몰아서 내요', '가끔 받아칠 수 있는데 그냥 먹어요 (15%)', '가끔 낼 수 있는데 뽑아요 (5%)'], self: '85% · 0.6~1.4초', catchS: '70% · 0.8~1.6초' },
-    { t: 'gold', who: '보통 실력', win: 27, play: ['공격 카드(2, A)부터 내요', '같은 숫자는 항상 몰아서 내요'], self: '92% · 0.5~1.1초', catchS: '82% · 0.6~1.3초' },
-    { t: 'platinum', who: '잘하는 사람', win: 43, play: ['공격 카드와 조커를 아꼈다가 공격받을 때 받아쳐요', '받아칠 때 싼 카드부터, 3은 막기용으로 남겨요', '가끔 덜 좋은 수를 둬요 (5%)'], self: '96% · 0.4~0.85초', catchS: '90% · 0.45~1초' },
-    { t: 'master', who: '고수', win: 58, play: ['플래티넘의 요령 + 나온 카드를 기억해요', '한 장 남은 사람을 아껴 둔 공격으로 끊어요', '7로 바꿀 무늬는 다음 사람에게 없을 무늬로 골라요', '아주 가끔 실수해요 (2%)'], self: '98% · 0.28~0.55초', catchS: '96% · 0.32~0.62초' },
-    { t: 'grandmaster', who: '최고수', win: 63, play: ['마스터의 판단 + 실수가 없어요', '같은 숫자를 남겨 두었다가 한 번에 끝내요 (원카드 상황을 건너뜀)', '다음 사람에게 없는 무늬로 몰아가요', 'Q로 방향을 돌려 거의 끝난 사람을 늦춰요', '둘이서 할 때 J·Q를 연달아 내요'], self: '100% · 0.18~0.38초', catchS: '99% · 0.2~0.42초' },
+    { t: 'gold', who: '보통 실력', win: 26, play: ['공격 카드(2, A)부터 내요', '같은 숫자는 항상 몰아서 내요'], self: '92% · 0.5~1.1초', catchS: '82% · 0.6~1.3초' },
+    { t: 'platinum', who: '잘하는 사람', win: 41, play: ['공격 카드와 조커를 아꼈다가 공격받을 때 받아쳐요', '받아칠 때 싼 카드부터, 다음 사람이 위험하면 센 카드로 크게 넘겨요', '바닥 무늬를 자기가 많이 가진 무늬로 남겨요', '나온 공격 카드를 세서 남은 게 적으면 일찍 털어요', '7·조커 한 장은 비상구로 남겨요', '가끔 덜 좋은 수를 둬요 (5%)'], self: '96% · 0.4~0.85초', catchS: '90% · 0.45~1초' },
+    { t: 'master', who: '고수', win: 58, play: ['플래티넘의 요령 + 남의 패를 추리해요 (뽑기만 한 무늬)', '한 장 남은 사람을 아껴 둔 공격으로 끊어요', '판의 선두를 노려요 (J로 건너뛰기, Q로 넘기지 않기)', '손패가 많으면 받아치기 카드를 지켜 파산을 피해요', '둘만 남으면 수마다 모의 게임 40판을 둬 보고 골라요', '아주 가끔 실수해요 (2%)'], self: '98% · 0.28~0.55초', catchS: '96% · 0.32~0.62초' },
+    { t: 'grandmaster', who: '최고수', win: 63, play: ['마스터의 판단 + 실수가 없어요', '같은 숫자를 남겨 두었다가 한 번에 끝내요 (원카드 상황을 건너뜀)', 'K 다음 카드로 바로 끝낼 수 있으면 K부터 내요', '다음 사람에게 없는 무늬로 몰아가고, Q로 방향을 돌려 거의 끝난 사람을 늦춰요', '덱이 다시 섞일 때 나올 카드까지 세요', '상대가 원카드를 빨리 잡으면 한 장만 남는 수를 피해요', '둘만 남으면 수마다 모의 게임 100판'], self: '100% · 0.18~0.38초', catchS: '99% · 0.2~0.42초' },
+    { t: 'challenger', who: '벽', win: 63, play: ['그랜드마스터의 모든 판단', '사람이 이번 판에 자주 못 낸 무늬를 기억해 그 무늬로 바꿔요', '둘만 남으면 수마다 모의 게임 300판', '원카드는 거의 못 잡고, 거의 못 피해요'], self: '100% · 0.15~0.2초', catchS: '99% · 0.15~0.3초' },
   ];
+
   function renderBotInfo() {
     const list = $('biList');
     list.innerHTML = '';
@@ -1157,7 +1160,7 @@
       const card = document.createElement('section');
       card.className = `bi-card t-${b.t}`;
       card.innerHTML = `<header>${tierTag(b.t)}<span class="bi-who"></span><span class="bi-win"><b>${b.win}%</b> 승률</span></header>
-        <div class="bi-meter" aria-hidden="true"><i style="width:${Math.min(100, b.win / 65 * 100)}%"></i></div>
+        <div class="bi-meter" aria-hidden="true"><i style="width:${Math.min(100, b.win / 70 * 100)}%"></i></div>
         <ul class="bi-play"></ul>
         <dl class="bi-react"><div><dt>내 원카드 외치기</dt><dd></dd></div><div><dt>남의 원카드 잡기</dt><dd></dd></div></dl>`;
       card.querySelector('.bi-who').textContent = b.who;

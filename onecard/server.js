@@ -3,7 +3,7 @@ const http = require('http');
 const express = require('express');
 const { Server } = require('socket.io');
 const { Game } = require('./game');
-const { TIERS, REACTION } = require('./bots');
+const { TIERS, REACTION, chooseMove, wantSearch, searchIter } = require('./bots');
 
 const PORT = process.env.PORT || 3000;
 const MAX_PLAYERS = 6;
@@ -18,6 +18,12 @@ const INTRO_MS = 7600; // 게임 시작 연출: 먼저 할 사람 고르기(둘�
 const EMOJIS = ['😀', '😂', '😎', '😭', '😡', '😱', '👍', '👏', '🔥', '💀'];
 const PHRASES = ['빨리 내요!', '잘했어요', '아 안 돼!', '봐주세요', '원카드 조심!', '공격 간다!', '운이 좋네요', '한 판 더?', 'ㅋㅋㅋㅋ', '안녕하세요'];
 const BOT_NAMES = ['철수', '영희', '민수', '지수', '하늘'];
+
+// 점검용 (ONECARD_LAG=1): 서버가 다른 일을 못 하고 멈춰 있던 최대 시간을 10초마다 찍는다
+if (process.env.ONECARD_LAG) {
+  const h = require('perf_hooks').monitorEventLoopDelay({ resolution: 5 }); h.enable();
+  setInterval(() => { console.log(`LAG max ${(h.max / 1e6).toFixed(0)}ms p99 ${(h.percentile(99) / 1e6).toFixed(0)}ms`); h.reset(); }, 10000);
+}
 
 const app = express();
 // 그림·글꼴은 휴대폰에 7일 동안 저장해 두고, 화면 코드(html·css·js)는 매번 바뀐 게 있는지만 확인한다
@@ -134,10 +140,13 @@ function scheduleTurn(room) {
   room.curTurnId = cur.id;
   const member = room.members.find((m) => m.id === cur.id);
   if (member && member.bot) {
-    room.botTimer = setTimeout(() => whenUnpaused(room, () => {
+    // 둘만 남은 막판에는 기다리는 동안 모의 게임으로 미리 고민해 둔다 (잘게 나눠 계산해서 다른 일을 막지 않음)
+    const job = startThinking(room, g, cur.id, member.tier, key);
+    room.botTimer = setTimeout(() => whenUnpaused(room, function act() {
       if (room.game === g && !g.finished && g.cur().id === cur.id) {
+        if (job && !job.done && room.turnKey === key) { job.onDone = () => whenUnpaused(room, act, 'botTimer'); return; } // 아직 고민 중
         const before = { penalty: g.penalty, count: cur.hand.length, rank: cur.rank };
-        g.botMove(cur.id, member.tier);
+        playBot(room, g, cur.id, member.tier, job && job.done && room.turnKey === key && job.moves === g.moves ? job.move : null);
         after(room);
         // 봇 반응: 크게 먹으면 아쉬워하고, 큰 공격을 넣으면 신나 하고, 이기면 뽐낸다
         if (cur.rank === 1 && !before.rank) botEmote(room, member, 'win');
@@ -151,6 +160,41 @@ function scheduleTurn(room) {
     const away = member && !member.socketId;
     extendTurn(room, (away ? OFFLINE_TURN_MS : TURN_SECONDS * 1000) + raceCoverLeft(room) + introLeft(room));
   }
+}
+
+// 봇의 다른 사람 등급 추정 (공개 정보). 사람은 골드쯤으로 본다
+function tierOfIn(room) {
+  return (id) => { const m = room.members.find((x) => x.id === id); return (m && m.bot && m.tier) || 'gold'; };
+}
+// 모의 게임 고민: 조각(약 8ms)마다 쉬어 가며 계산한다. 판이 바뀌면 그만둔다
+function startThinking(room, g, botId, tier, key) {
+  if (!wantSearch(g, tier)) return null;
+  let it;
+  try { it = searchIter(g, botId, tier, tierOfIn(room)); } catch (e) { console.error('think', e); return null; }
+  const job = { done: false, move: null, moves: g.moves, onDone: null };
+  const step = () => {
+    if (room.game !== g || g.finished || room.turnKey !== key) { job.done = true; job.move = null; return; }
+    try {
+      const t0 = Date.now(); let r;
+      do { r = it.next(); } while (!r.done && Date.now() - t0 < 8);
+      if (!r.done) { setImmediate(step); return; }
+      job.move = r.value;
+    } catch (e) { console.error('think', e); job.move = null; }
+    job.done = true;
+    if (job.onDone) { const f = job.onDone; job.onDone = null; f(); }
+  };
+  setImmediate(step);
+  return job;
+}
+// 봇이 수를 둔다: 고민해 둔 수가 있으면 그걸, 없거나 안 맞으면 바로 판단 (계산 없이)
+function playBot(room, g, botId, tier, planned) {
+  if (planned) {
+    const res = planned.draw ? g.draw(botId) : g.play(botId, planned.ids, planned.suit);
+    if (res && res.ok) return;
+  }
+  const mv = chooseMove(g, botId, tier, tierOfIn(room), { noSearch: true });
+  const res = !mv || mv.draw ? g.draw(botId) : g.play(botId, mv.ids, mv.suit);
+  if (!res || !res.ok) g.draw(botId);
 }
 
 function extendTurn(room, ms) {
@@ -174,6 +218,7 @@ const BOT_MOOD = {
   platinum: { rate: 0.3, hurt: ['😱', '봐주세요'], attack: ['🔥'], caught: ['👍', '원카드 조심!'], win: ['😎', '잘했어요'] },
   master: { rate: 0.22, hurt: ['😡'], attack: ['😎'], caught: ['👏', '원카드 조심!'], win: ['😎', '한 판 더?'] },
   grandmaster: { rate: 0.15, hurt: ['💀'], attack: ['😎'], caught: ['👍'], win: ['😎', '한 판 더?'] },
+  challenger: { rate: 0.12, hurt: ['😡'], attack: ['🔥'], caught: ['😎'], win: ['😎'] },
 };
 function botEmote(room, m, kind) {
   const mood = BOT_MOOD[m.tier] || BOT_MOOD.gold;
@@ -460,7 +505,7 @@ io.on('connection', (socket) => {
     if (g.oneCard) race();
     while (!g.finished && steps++ < 5000) {
       const cur = g.cur();
-      g.botMove(cur.id, tierOf(cur.id));
+      g.botMove(cur.id, tierOf(cur.id), { noSearch: true });
       if (g.oneCard) race();
     }
     g.addLog(`${me.name}님이 관전을 건너뛰어 남은 판을 바로 끝냈어요.`);
