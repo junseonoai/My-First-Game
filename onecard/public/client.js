@@ -1259,7 +1259,11 @@
     "<path d=\"M32 5c4 10 16 15 16 30a16 16 0 0 1-32 0c0-8 5-12 7-18c3 4 4 7 4 10c3-6 5-12 5-22z\" fill=\"#d26a62\" stroke=\"#1e1a15\" stroke-width=\"3\" stroke-linejoin=\"round\"/> <path d=\"M32 30c3 5 8 8 8 14a8 8 0 0 1-16 0c0-5 4-8 8-14z\" fill=\"#f3da87\" stroke=\"#1e1a15\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>",
     "<path d=\"M32 6c-14 0-23 9-23 22c0 8 4 13 9 15v9c0 3 2 5 5 5h18c3 0 5-2 5-5v-9c5-2 9-7 9-15c0-13-9-22-23-22z\" fill=\"#faf8f2\" stroke=\"#1e1a15\" stroke-width=\"3\" stroke-linejoin=\"round\"/> <ellipse cx=\"22\" cy=\"29\" rx=\"6\" ry=\"6.5\" fill=\"#1e1a15\"/><ellipse cx=\"42\" cy=\"29\" rx=\"6\" ry=\"6.5\" fill=\"#1e1a15\"/> <path d=\"M32 36l-3 6h6z\" fill=\"#1e1a15\"/> <path d=\"M27 47v9M32 47v9M37 47v9\" stroke=\"#1e1a15\" stroke-width=\"2.5\" stroke-linecap=\"round\"/>",
   ];
+  // 캐릭터 이모지 (갓 쓴 스페이드): 이 다섯은 그림 파일로 보여 준다
+  const EMOJI_CHAR = { '😂': 'laugh', '😎': 'cool', '😭': 'cry', '😡': 'angry', '😱': 'shock' };
+  for (const n of Object.values(EMOJI_CHAR)) { const im = new Image(); im.src = `emoji/${n}.webp`; } // 미리 받아 두기
   function emojiIcon(e) {
+    if (EMOJI_CHAR[e]) return `<img class="emo char" src="emoji/${EMOJI_CHAR[e]}.webp" alt="" draggable="false">`;
     const i = EMOJIS.indexOf(e);
     return i < 0 ? '' : `<svg class="emo" viewBox="0 0 64 64" aria-hidden="true">${EMOJI_SVG[i]}</svg>`;
   }

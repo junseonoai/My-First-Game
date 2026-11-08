@@ -1410,3 +1410,7 @@ body.game-panel-open .tray, body.game-panel-open .topbar { z-index: 7; }
     var(--meok);
   color: var(--on-meok);
 }
+/* 캐릭터 이모지 (그림 파일): 조금 더 크게 */
+.emo.char { object-fit: contain; -webkit-user-drag: none; user-select: none; }
+.emoji-row button .emo.char { width: 42px; height: 42px; margin: -4px 0; }
+.emote-float.emoji .emo.char { width: 80px; height: 80px; }
