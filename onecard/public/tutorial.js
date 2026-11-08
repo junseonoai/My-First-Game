@@ -58,7 +58,7 @@
         timer = setTimeout(() => {
           phase = 'go'; shownAt = performance.now();
           stage.className = 'tu-stage go';
-          stage.textContent = '원카드!';
+          stage.textContent = '한장!';
         }, 1200 + Math.random() * 2500);
       } else if (phase === 'wait') {
         clearTimeout(timer);
@@ -127,7 +127,7 @@
     },
     {
       title: '원카드!',
-      body: '누군가 한 장 남으면 모두의 화면에 원카드 버튼이 떠요. 가장 먼저 누른 사람이 이겨요. 본인이 먼저 누르면 안전하고, 다른 사람이 먼저 누르면 1장 벌칙이에요. 누른 뒤에는 모두의 반응 속도가 나와요.',
+      body: '누군가 한 장 남으면 모두의 화면에 "한장!" 버튼이 떠요. 가장 먼저 누른 사람이 이겨요. 본인이 먼저 누르면 안전하고, 다른 사람이 먼저 누르면 1장 벌칙이에요. 누른 뒤에는 모두의 반응 속도가 나와요.',
       demo: oneCardDrill,
       task: '버튼이 뜨면 최대한 빨리 눌러 보세요.',
     },
