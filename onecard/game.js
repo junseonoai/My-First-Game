@@ -58,6 +58,9 @@ class Game {
     this.nextRank = 1;
     this.log = [];
     this.voids = {}; // 공개 정보: 카드를 못 내고 뽑은 사람 → 그때 없던 무늬 (봇이 추리에 씀)
+    // 공개 정보로 하는 추리 (봇용): 카드를 못 내고 뽑았거나 공격을 먹은 사람은 그때 어떤 카드가 없었다.
+    // lacks[id] = { suit, rank, joker, atkSuit, atkRank, block, n } — n: 그때 들고 있던 장수 중 아직 남아 있을 수 있는 장수
+    this.lacks = {};
 
     for (const p of this.players) p.hand = this.deck.splice(0, START_HAND);
     // 첫 카드는 특수/공격 카드가 아닌 것으로
@@ -201,6 +204,7 @@ class Game {
     let blocked = false;
 
     if (this.voids[p.id] && cards.some((c) => c.suit === this.voids[p.id])) delete this.voids[p.id];
+    if (this.lacks[p.id]) this.lacks[p.id].n = Math.max(0, this.lacks[p.id].n - cards.length); // 낸 만큼 예전 손패가 줄었을 수 있다
     for (const card of cards) {
       p.hand.splice(p.hand.indexOf(card), 1);
       const isBlock = this.isBlock(card);
@@ -265,6 +269,14 @@ class Game {
     if (p.id !== playerId) return { ok: false, error: '내 차례가 아닙니다.' };
     const n = this.penalty > 0 ? this.penalty : 1;
     this.moves = (this.moves || 0) + 1;
+    {
+      const top = this.top();
+      const L = { n: p.hand.length, joker: true };
+      if (this.penalty === 0) { L.suit = this.activeSuit; L.rank = isJoker(top) ? null : top.rank; }
+      else if (isJoker(top)) { L.atkSpadeA = true; }
+      else { L.atkSuit = top.suit; L.atkRank = top.rank; L.block = top.rank === '2' || top.rank === 'A' ? top.suit : null; }
+      this.lacks[p.id] = L;
+    }
     // 공격 없이 뽑았다면 그 순간 낼 무늬가 없었다는 뜻 (많이 먹은 경우는 정보가 흐려지므로 지움)
     if (this.penalty === 0 && this.activeSuit) this.voids[p.id] = this.activeSuit;
     else delete this.voids[p.id];

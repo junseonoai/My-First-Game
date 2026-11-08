@@ -15,8 +15,8 @@
 
 const { attackValue, isJoker, SUITS, makeDeck } = require('./game');
 
-const TIERS = ['silver', 'gold', 'platinum', 'master', 'grandmaster'];
-const TIER_NAMES = { silver: '실버', gold: '골드', platinum: '플래티넘', master: '마스터', grandmaster: '그랜드마스터' };
+const TIERS = ['silver', 'gold', 'platinum', 'master', 'grandmaster', 'challenger'];
+const TIER_NAMES = { silver: '실버', gold: '골드', platinum: '플래티넘', master: '마스터', grandmaster: '그랜드마스터', challenger: '챌린저' };
 
 // 원카드 버튼 반응 (버튼이 열린 뒤 ms). 2초 안에 못 누르면 실패.
 // self: 내 원카드를 외칠 확률과 시간, catch: 남의 원카드를 잡을 확률과 시간
@@ -26,10 +26,11 @@ const REACTION = {
   platinum: { self: 0.96, selfMs: [400, 850], catch: 0.9, catchMs: [450, 1000] },
   master: { self: 0.98, selfMs: [280, 550], catch: 0.96, catchMs: [320, 620] },
   grandmaster: { self: 1, selfMs: [180, 380], catch: 0.99, catchMs: [200, 420] },
+  challenger: { self: 1, selfMs: [150, 200], catch: 0.99, catchMs: [150, 300] },
 };
 
 // 일부러 넣는 작은 실수 (사람 같은 느낌): 이 확률로 최선 대신 아무 낼 수 있는 카드
-const MISTAKE = { platinum: 0.05, master: 0.02, grandmaster: 0 };
+const MISTAKE = { platinum: 0.05, master: 0.02, grandmaster: 0, challenger: 0 };
 
 const FULL_DECK = makeDeck();
 
@@ -203,7 +204,7 @@ function chooseMove(g, botId, tier) {
     case 'silver': return silverMove(g, me);
     case 'platinum': return planMove(g, botId, false);
     case 'master': return planMove(g, botId, true);
-    case 'grandmaster': return gmMove(g, botId);
+    case 'grandmaster': case 'challenger': return gmMove(g, botId);
     default: return g.goldMove(botId);
   }
 }
