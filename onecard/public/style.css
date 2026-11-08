@@ -1596,3 +1596,22 @@ body.game-panel-open .tray, body.game-panel-open .topbar { z-index: 7; }
 .stack.lv4::after { border-color: rgba(30, 26, 21, .35); }
 .stack.lv2 .hp-seal { display: block; }
 .stack.lv3 .hp-seal, .stack.lv4 .hp-seal { display: block; width: calc(var(--w) * .27); height: calc(var(--w) * .27); right: calc(var(--w) * .09); }
+
+/* '한장!' 버튼: 로고와 같은 메이플스토리 글씨, 크게 */
+.one-big { font-family: var(--font-display); font-size: 42px; font-weight: 700; letter-spacing: 0; line-height: 1; }
+
+/* 호패 끈: 구멍에 꿴 가는 고리 + 왼쪽으로 늘어진 끈과 술 */
+.hp-cord {
+  top: calc(var(--h) * -.085); width: calc(var(--w) * .26); height: calc(var(--h) * .16); margin-left: calc(var(--w) * -.13);
+  border: 2.5px solid var(--seal-strong); border-bottom: none; border-radius: 50% 50% 0 0 / 90% 90% 0 0;
+}
+.hp-cord::before { /* 늘어진 끈 */
+  content: ""; position: absolute; left: -2px; top: 55%; width: 2.5px; height: calc(var(--h) * .42);
+  background: var(--seal-strong); border-radius: 2px; transform-origin: top center; transform: rotate(32deg);
+}
+.hp-cord::after { /* 매듭 + 술 */
+  content: ""; position: absolute; top: calc(var(--h) * .44); left: calc(var(--h) * -.28); margin: 0;
+  width: calc(var(--w) * .22); height: calc(var(--h) * .3); border-radius: 45% 45% 2px 2px / 30% 30% 2px 2px;
+  background: repeating-linear-gradient(90deg, var(--seal) 0 1.5px, var(--seal-strong) 1.5px 3px);
+  border-top: 4px solid #5a1d17; box-sizing: border-box;
+}
