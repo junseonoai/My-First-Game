@@ -1,5 +1,5 @@
 /* 한장 — tokens.json에서 생성. 색·간격은 여기 변수만 쓴다. */
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600&family=Noto+Sans+KR:wght@400;500;700&display=swap");
+/* 글꼴(Noto Sans KR·IBM Plex Mono)은 index.html에서 바로 불러온다 (@import는 받는 순서가 늦어져서 뺐다) */
 @font-face { font-family: "Maplestory"; src: url("./fonts/MaplestoryBold.woff") format("woff"); font-weight: 700; font-display: swap; }
 
 :root, [data-theme="light"] {

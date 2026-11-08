@@ -20,7 +20,11 @@ const PHRASES = ['빨리 내요!', '잘했어요', '아 안 돼!', '봐주세요
 const BOT_NAMES = ['철수', '영희', '민수', '지수', '하늘'];
 
 const app = express();
-app.use(express.static(path.join(__dirname, 'public')));
+// 그림·글꼴은 휴대폰에 7일 동안 저장해 두고, 화면 코드(html·css·js)는 매번 바뀐 게 있는지만 확인한다
+const LONG_CACHE = /\.(png|svg|woff2?|jpg|webp)$/i;
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders: (res, file) => { if (LONG_CACHE.test(file)) res.setHeader('Cache-Control', 'public, max-age=604800'); },
+}));
 const server = http.createServer(app);
 // 연결 확인을 자주 해서 휴대폰 신호가 끊긴 사람을 빨리 알아챈다 (기본값은 최대 45초)
 const io = new Server(server, { pingInterval: 10000, pingTimeout: 8000 });

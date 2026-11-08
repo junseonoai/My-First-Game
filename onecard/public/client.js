@@ -599,7 +599,7 @@
     for (const p of s.game.players) opp[p.id] = 0;
     deal = { mine: 0, opp, deck: false, pile: false, total: s.game.players.length * 7, given: 0, until: Date.now() + full + 1500 };
     playPick(it, s.game, s.me);
-    later(PICK_SPIN + PICK_SHOW, () => { $('introPop').hidden = true; showDeck(); });
+    later(PICK_SPIN + PICK_SHOW, () => { $('introPop').hidden = true; $('introStage').innerHTML = ''; showDeck(); });
     later(PICK_SPIN + PICK_SHOW + DECK_IN, () => dealCards(s.me));
     later(PICK_SPIN + PICK_SHOW + DECK_IN + DEAL_MS, () => placeStartCard());
     later(full, () => {
@@ -1239,7 +1239,7 @@
   // 한장 캐릭터 이모지 (그림 파일). 주고받는 값은 그대로 이모지 글자다
   const EMOJI_CHAR = { '😀': 'smile', '😂': 'laugh', '😎': 'cool', '😭': 'cry', '😡': 'angry', '😱': 'shock', '👍': 'thumb', '👏': 'clap', '🔥': 'fire', '💀': 'skull' };
   function emojiIcon(e) {
-    return EMOJI_CHAR[e] ? `<img class="emo char" src="emoji/${EMOJI_CHAR[e]}.png" alt="" draggable="false">` : '';
+    return EMOJI_CHAR[e] ? `<img class="emo char" src="emoji/${EMOJI_CHAR[e]}.png" alt="" draggable="false" loading="lazy" decoding="async">` : '';
   }
 
   const PHRASES = ['빨리 내요!', '잘했어요', '아 안 돼!', '봐주세요', '원카드 조심!', '공격 간다!', '운이 좋네요', '한 판 더?', 'ㅋㅋㅋㅋ', '안녕하세요'];

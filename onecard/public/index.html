@@ -19,7 +19,9 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- 한장 브랜드 변수(색·간격·모서리·그림자·글꼴). style.css보다 먼저 -->
+<!-- 글꼴: 쓰는 굵기(400·700)만. 이어서 한장 브랜드 변수(색·간격·모서리·그림자·글꼴), style.css 순서 -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600&family=Noto+Sans+KR:wght@400;700&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600&family=Noto+Sans+KR:wght@400;700&display=swap"></noscript>
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -270,7 +272,7 @@
 <div id="toast" class="toast" hidden></div>
 <div id="bubble" class="bubble" hidden></div>
 
-<script src="/socket.io/socket.io.js"></script>
+<script src="/socket.io/socket.io.min.js"></script>
 <script src="client.js"></script>
 <script src="tutorial.js"></script>
 </body>

@@ -855,13 +855,9 @@ body[data-bg="charcoal"] { --felt: var(--table-charcoal); --felt-deep: #1d1e21; 
 .intro-stage { position: relative; width: 260px; height: 260px; display: flex; align-items: center; justify-content: center; perspective: 700px; }
 .intro-msg { margin: 0; min-height: 34px; font-size: 24px; font-weight: 700; color: var(--call-soft); text-shadow: 0 4px 10px rgba(10, 20, 14, .3); }
 .intro-pop.reveal .intro-msg { animation: stampIn .35s cubic-bezier(.3, 1.6, .5, 1); }
-.wheel { width: 250px; height: 250px; filter: drop-shadow(0 4px 10px rgba(10, 20, 14, .3)); }
-.wheel path.win { stroke: var(--white); stroke-width: 5; }
-.wheel-pin {
-  position: absolute; top: -8px; left: 50%; z-index: 2; width: 0; height: 0; margin-left: -14px;
-  border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 26px solid var(--cream);
-  filter: drop-shadow(0 2px 0 var(--ink)) drop-shadow(0 -1px 0 var(--ink));
-}
+
+
+
 /* 시간 막대와 남은 카드 글자도 자리를 늘 차지 (차례가 바뀌어도 판이 움직이지 않게) */
 .tray .turn-bar.off { visibility: hidden; }
 .deck-wrap { width: 84px; }
@@ -880,21 +876,14 @@ body[data-bg="charcoal"] { --felt: var(--table-charcoal); --felt-deep: #1d1e21; 
   display: flex; align-items: center; justify-content: center;
 }
 .chip3d .face.b { transform: rotateX(180deg); background: repeating-conic-gradient(from 15deg, var(--call) 0 30deg, var(--ink) 30deg 60deg); }
-.chip-in {
-  width: 112px; height: 112px; border-radius: 50%; background: var(--red); color: var(--cream);
-  border: 1.5px solid var(--line-strong); outline: 2px dashed rgba(243, 234, 214, .75); outline-offset: -9px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 0 14px;
-}
-.face.b .chip-in { background: var(--ink); color: var(--call-soft); outline-color: rgba(184, 146, 63, .85); }
-.chip-in small { font-size: 11px; font-weight: 700; opacity: .8; letter-spacing: 1px; }
-.chip-in span { font-size: 22px; font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+
+
+
 .chip-shadow { position: absolute; bottom: 22px; width: 130px; height: 18px; border-radius: 50%; background: rgba(0, 0, 0, .45); filter: blur(3px); }
-.wheel { width: 256px; height: 256px; filter: drop-shadow(0 4px 10px rgba(10, 20, 14, .3)); }
-.wheel path.win { stroke: var(--call-soft); stroke-width: 6; }
-.wheel-pin {
-  top: -10px; margin-left: -15px; border-left-width: 15px; border-right-width: 15px; border-top: 28px solid var(--paper);
-  filter: drop-shadow(0 3px 0 var(--ink)) drop-shadow(0 -2px 0 var(--ink)) drop-shadow(2px 0 0 var(--ink)) drop-shadow(-2px 0 0 var(--ink));
-}
+
+
+
 .intro-msg { color: var(--paper); font-size: 26px; }
 .intro-pop.reveal .intro-msg { padding: 4px 18px; background: var(--paper); color: var(--ink); border: 1.5px solid var(--line-strong); border-radius: var(--radius-md); box-shadow: var(--shadow-card); text-shadow: none; transform: rotate(-2deg); }
 /* 시작 알림 */
@@ -902,7 +891,7 @@ body[data-bg="charcoal"] { --felt: var(--table-charcoal); --felt-deep: #1d1e21; 
 /* 칩: 뒷면은 앞면 색을 뒤집은 것 (크림 바탕 + 빨간 글씨), 두께가 보이게 옆면을 겹쳐 쌓는다 */
 .chip3d .face.a { transform: translateZ(10px); }
 .chip3d .face.b { transform: rotateX(180deg) translateZ(10px); background: repeating-conic-gradient(from 15deg, var(--red) 0 30deg, var(--cream) 30deg 60deg); }
-.face.b .chip-in { background: var(--cream); color: var(--red); outline-color: rgba(168, 50, 45, .7); }
+
 .chip3d .rim {
   position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid var(--line-strong);
   background: repeating-conic-gradient(from 15deg, var(--sunken) 0 30deg, var(--brand-strong) 30deg 60deg);
@@ -963,8 +952,8 @@ body[data-bg="charcoal"] { --felt: var(--table-charcoal); --felt-deep: #1d1e21; 
 }
 .icon-close svg { width: 16px; height: 16px; }
 .icon-close:active { transform: translateY(1px); box-shadow: none; }
-.wheel .win-line { fill: none; stroke: var(--call-soft); stroke-width: 5; stroke-linejoin: round; filter: drop-shadow(0 0 1.5px var(--ink)); animation: winGlow .5s ease-out; }
-@keyframes winGlow { from { stroke-width: 10; opacity: 0; } }
+
+
 /* '다음' 표시는 '차례'처럼 자리 아랫변에 걸치게 */
 .next-tag { top: auto; bottom: -9px; font-size: 11px; line-height: 16px; padding: 0 8px; border-radius: 999px; border-width: 2px; }
 /* 연결 끊김 알림 */
@@ -1449,11 +1438,11 @@ body.game-panel-open .tray, body.game-panel-open .topbar { z-index: 7; }
 .face.b .coin-in .hole { box-shadow: 0 0 0 3px var(--ink), 0 0 0 8px var(--bronze), 0 0 0 10px var(--ink); }
 .coin-in span { font-family: var(--font-display); font-size: 20px; line-height: 1.1; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* 주령구 */
-.jury-wrap { position: relative; z-index: 1; perspective: 520px; }
-.jury { transform: translate(-96px, -70px); backface-visibility: hidden; }
-.jury { display: block; width: 236px; height: 236px; filter: drop-shadow(0 6px 10px rgba(10, 20, 14, .35)); }
-.jury text { font-family: var(--font-display); }
-.jury .jface.win { stroke: var(--call-soft) !important; stroke-width: 6; }
+
+
+
+
+
 .k-roulette .chip-shadow { bottom: 6px; width: 170px; }
 
 /* 엽전 이름: 크게, 바탕과 대비되게 */
@@ -1484,17 +1473,14 @@ body.game-panel-open .tray, body.game-panel-open .topbar { z-index: 7; }
 @media (max-width: 520px) { .stack-label { font-size: max(9px, calc(var(--size) * .15)); } }
 
 /* --- 주령구 (입체): 옆면을 겹쳐 두께를 만들고, 윗면·아랫면에 이름 --- */
-.jury3d { position: relative; width: 236px; height: 236px; transform-style: preserve-3d; z-index: 1; }
-.jury3d .jrim {
-  position: absolute; inset: 0; background: var(--wood-3);
-  clip-path: polygon(27.5% 9.17%, 72.5% 9.17%, 90.83% 27.5%, 90.83% 72.5%, 72.5% 90.83%, 27.5% 90.83%, 9.17% 72.5%, 9.17% 27.5%);
-}
-.jury3d .jrim:first-child, .jury3d .jrim:nth-child(15) { background: var(--ink); }
-.jury-face { position: absolute; inset: 0; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-.jury-face.a { transform: translateZ(8px); }
-.jury-face.b { transform: rotateX(180deg) translateZ(8px); }
-.jury-face text { font-family: var(--font-display); }
-.jury-face .jface.win { stroke: var(--call-soft) !important; stroke-width: 6; }
+
+
+
+
+
+
+
+
 
 /* =====================================================================
    쌓인 공격: 네모 마패 (놋쇠 판 + 위쪽 고리 구멍 + 새긴 테두리, 가운데에 장수)
@@ -1615,3 +1601,15 @@ body.game-panel-open .tray, body.game-panel-open .topbar { z-index: 7; }
   background: repeating-linear-gradient(90deg, var(--seal) 0 1.5px, var(--seal-strong) 1.5px 3px);
   border-top: 4px solid #5a1d17; box-sizing: border-box;
 }
+/* 제비뽑기 그림자: 통 바닥 밑에, 통 뒤로 */
+.jebi { z-index: 1; }
+.k-roulette .chip-shadow { bottom: -22px; width: 150px; height: 16px; z-index: 0; filter: blur(4px); }
+
+/* 호패 '공격' 글자: 크고 또렷하게 (패를 조금 넓히고, 글자에 옅은 테두리) */
+.stack { --w: calc(var(--size) * .72); }
+.stack-label { font-size: max(12px, calc(var(--w) * .3)); font-weight: 700; margin-top: 1px; }
+.stack-num, .stack-label { text-shadow: 0 0 2px rgba(255, 246, 225, .7), 0 1px 0 rgba(255, 246, 225, .6); }
+.stack.lv2 .stack-num, .stack.lv2 .stack-label, .stack.lv3 .stack-num, .stack.lv3 .stack-label { text-shadow: 0 0 2px rgba(0, 0, 0, .8), 0 1px 0 rgba(0, 0, 0, .6); }
+.stack { --h: calc(var(--size) * 1.26); }
+/* 낙관은 패 오른쪽 아래 모서리에 걸쳐 찍는다 (글자를 가리지 않게) */
+.stack.lv2 .hp-seal, .stack.lv3 .hp-seal, .stack.lv4 .hp-seal { right: calc(var(--w) * -.1); bottom: calc(var(--w) * -.06); width: calc(var(--w) * .28); height: calc(var(--w) * .28); box-shadow: inset 0 0 0 1.5px rgba(255, 235, 225, .55), 0 1px 2px rgba(0, 0, 0, .35); }
