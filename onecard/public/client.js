@@ -620,7 +620,7 @@
     if (it.kind === 'coin') {
       // 엽전 던지기: 가운데 네모 구멍이 뚫린 놋쇠 동전. 앞면 이름이 나오면 그 사람이 먼저
       $('introTitle').textContent = '엽전 던지기 · 누가 먼저?';
-      stage.innerHTML = `<div class="chip3d coin">${Array.from({ length: 9 }, (_, k) => k - 4).map((z) => `<i class="rim" style="transform:translateZ(${z}px)"></i>`).join('')}<div class="face a"><div class="coin-in"><small>앞</small><b class="hole"></b><span></span></div></div><div class="face b"><div class="coin-in"><small>뒤</small><b class="hole"></b><span></span></div></div></div><div class="chip-shadow"></div>`;
+      stage.innerHTML = `<div class="chip3d coin">${Array.from({ length: 19 }, (_, k) => k - 9).map((z) => `<i class="rim" style="transform:translateZ(${z}px)"></i>`).join('')}<div class="face a"><div class="coin-in"><small>앞</small><b class="hole"></b><span></span></div></div><div class="face b"><div class="coin-in"><small>뒤</small><b class="hole"></b><span></span></div></div></div><div class="chip-shadow"></div>`;
       stage.querySelector('.face.a span').textContent = nameOf(g, it.order[0], me);
       stage.querySelector('.face.b span').textContent = nameOf(g, it.order[1], me);
       const end = 360 * 6 + (starterIdx === 1 ? 180 : 0);
@@ -657,20 +657,35 @@
         main.textContent = names[i]; main.setAttribute('font-size', fs(names[i], true));
         sides.forEach((el, k) => { const t = names[(i + 1 + (k % (n - 1))) % n]; el.textContent = t; el.setAttribute('font-size', fs(t, false)); }); // 옆면에는 다른 사람 이름만
       };
-      // 이름이 바뀌는 시각: 처음엔 빠르게, 점점 느리게. 마지막은 먼저 할 사람
-      const steps = 14, times = Array.from({ length: steps }, (_, k) => PICK_SPIN * .92 * Math.pow((k + 1) / steps, 1.8));
-      const first = (starterIdx - steps % n + n * 10) % n;
+      // 구르기: 주사위가 모서리를 넘어 한 면씩 넘어간다 (넘어가는 순간 위 면의 이름이 바뀜). 점점 느려지다 멈춘다
+      const DUR = [150, 165, 185, 210, 245, 290, 360, 470]; // 합 2075ms, 나머지는 멈추며 흔들림
+      const AX = ['X', 'Y', 'X', 'Y', 'X', 'X', 'Y', 'X'];
+      const SG = [1, -1, 1, 1, -1, 1, -1, 1];
+      const first = (starterIdx - DUR.length % n + n * 10) % n;
       showFace(first);
-      times.forEach((t, k) => later(t, () => showFace((first + k + 1) % n)));
-      stage.querySelector('.jury').animate([
-        { transform: 'translate(-80px,-60px) rotate(-200deg) scale(.7)' },
-        { transform: 'translate(-20px,0) rotate(-40deg) scale(1)', offset: .3 },
-        { transform: 'translate(10px,-46px) rotate(10deg) scale(1.08)', offset: .5 },
-        { transform: 'translate(4px,0) rotate(-6deg) scale(1)', offset: .7 },
-        { transform: 'translate(0,-14px) rotate(3deg) scale(1.02)', offset: .84 },
-        { transform: 'translate(0,0) rotate(0deg) scale(1)' },
-      ], { duration: PICK_SPIN, easing: 'cubic-bezier(.25,.6,.35,1)', fill: 'forwards' });
-      stage.querySelector('.chip-shadow').animate([{ transform: 'translateX(-80px) scale(.6)', opacity: .2 }, { transform: 'translateX(-20px) scale(1)', opacity: .5, offset: .3 }, { transform: 'scale(.7)', opacity: .3, offset: .5 }, { transform: 'scale(1)', opacity: .5 }], { duration: PICK_SPIN, fill: 'forwards' });
+      const jury = stage.querySelector('.jury'), shadow = stage.querySelector('.chip-shadow');
+      let t0 = 0, x = -96, y = -70;
+      const hopH = [56, 48, 40, 32, 24, 17, 11, 6];
+      DUR.forEach((d, k) => {
+        const nx = x + 96 / DUR.length, ny = y + (0 - y) * (1 / (DUR.length - k)), rot = `rotate${AX[k]}`;
+        const deg = 90 * SG[k] * (AX[k] === 'X' ? -1 : 1);
+        later(t0, () => {
+          jury.animate([
+            { transform: `translate(${x}px,${y}px) ${rot}(0deg)` },
+            { transform: `translate(${(x + nx) / 2}px,${(y + ny) / 2 - hopH[k]}px) ${rot}(${deg}deg) scale(1.04)`, offset: .5 },
+            { transform: `translate(${(x + nx) / 2}px,${(y + ny) / 2 - hopH[k]}px) ${rot}(${-deg}deg) scale(1.04)`, offset: .501 },
+            { transform: `translate(${nx}px,${ny}px) ${rot}(0deg)` },
+          ], { duration: d, easing: 'linear', fill: 'forwards' });
+          shadow.animate([{ transform: `translateX(${x}px) scale(.9)`, opacity: .45 }, { transform: `translateX(${(x + nx) / 2}px) scale(.7)`, opacity: .25, offset: .5 }, { transform: `translateX(${nx}px) scale(.9)`, opacity: .45 }], { duration: d, fill: 'forwards' });
+        });
+        later(t0 + d / 2, () => showFace((first + k + 1) % n));
+        t0 += d; x = nx; y = ny;
+      });
+      // 멈추며 살짝 흔들림
+      later(t0, () => jury.animate([
+        { transform: 'translate(0,0) rotate(0deg)' }, { transform: 'translate(0,0) rotate(-5deg)', offset: .3 },
+        { transform: 'translate(0,0) rotate(3deg)', offset: .65 }, { transform: 'translate(0,0) rotate(0deg)' },
+      ], { duration: Math.max(200, PICK_SPIN - t0 - 40), easing: 'ease-out', fill: 'forwards' }));
       later(PICK_SPIN, () => { const f = stage.querySelector('.jface'); if (f) f.classList.add('win'); });
     }
     later(PICK_SPIN, () => {

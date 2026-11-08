@@ -1429,13 +1429,13 @@ body.game-panel-open .tray, body.game-panel-open .topbar { z-index: 7; }
   background: radial-gradient(circle at 38% 32%, var(--brass-light) 0, var(--call) 45%, var(--brass-deep) 100%);
   box-shadow: inset 0 0 0 3px var(--ink), inset 0 0 0 11px var(--brass-deep), inset 0 0 0 13px var(--ink);
 }
-.chip3d.coin .face.a { transform: translateZ(5px); }
+.chip3d.coin .face.a { transform: translateZ(10px); }
 .chip3d.coin .face.b {
-  transform: rotateX(180deg) translateZ(5px);
+  transform: rotateX(180deg) translateZ(10px);
   background: radial-gradient(circle at 38% 32%, var(--call) 0, var(--brass-deep) 50%, var(--bronze) 100%);
 }
 .chip3d.coin .rim { background: var(--brass-deep); border: none; }
-.chip3d.coin .rim:first-child, .chip3d.coin .rim:nth-child(9) { border: 2px solid var(--ink); }
+.chip3d.coin .rim:first-child, .chip3d.coin .rim:nth-child(19) { border: 2px solid var(--ink); }
 .coin-in {
   position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
   color: var(--ink); padding: 0 26px; gap: 14px;
@@ -1449,8 +1449,36 @@ body.game-panel-open .tray, body.game-panel-open .topbar { z-index: 7; }
 .face.b .coin-in .hole { box-shadow: 0 0 0 3px var(--ink), 0 0 0 8px var(--bronze), 0 0 0 10px var(--ink); }
 .coin-in span { font-family: var(--font-display); font-size: 20px; line-height: 1.1; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* 주령구 */
-.jury-wrap { position: relative; z-index: 1; }
+.jury-wrap { position: relative; z-index: 1; perspective: 520px; }
+.jury { transform: translate(-96px, -70px); backface-visibility: hidden; }
 .jury { display: block; width: 236px; height: 236px; filter: drop-shadow(0 6px 10px rgba(10, 20, 14, .35)); }
 .jury text { font-family: var(--font-display); }
 .jury .jface.win { stroke: var(--call-soft) !important; stroke-width: 6; }
 .k-roulette .chip-shadow { bottom: 6px; width: 170px; }
+
+/* 엽전 이름: 크게, 바탕과 대비되게 */
+.coin-in span { font-size: 27px; letter-spacing: -.5px; text-shadow: 0 1px 0 rgba(255, 246, 214, .55); }
+.face.b .coin-in span { color: var(--raised); text-shadow: 0 1px 0 rgba(30, 26, 21, .6); }
+.coin-in small { font-size: 14px; opacity: .85; }
+.chip3d.coin .rim { background: linear-gradient(90deg, var(--bronze), var(--brass-deep) 40%, var(--call) 55%, var(--brass-deep) 70%, var(--bronze)); }
+
+/* =====================================================================
+   쌓인 공격: 엽전 모양 (먼저 할 사람 고르는 엽전과 같은 모양). 가운데 구멍 자리에 낙관 도장 + 장수
+   ===================================================================== */
+.stack {
+  border: none; outline: none; color: var(--ink); gap: 2px;
+  background: radial-gradient(circle at 38% 32%, var(--brass-light) 0, var(--call) 45%, var(--brass-deep) 100%);
+  box-shadow: inset 0 0 0 2px var(--ink), inset 0 0 0 calc(var(--size) * .07 + 2px) var(--brass-deep), inset 0 0 0 calc(var(--size) * .07 + 4px) var(--ink), var(--shadow-card);
+}
+.stack-num {
+  display: grid; place-items: center; width: calc(var(--size) * .42); height: calc(var(--size) * .42);
+  background: var(--seal); color: var(--on-seal); border-radius: 3px; box-shadow: 0 0 0 2px var(--ink);
+  font-family: var(--font-display); font-size: calc(var(--size) * .3); line-height: 1; transform: rotate(-4deg);
+}
+.stack-label { font-family: var(--font-display); font-weight: 700; font-size: calc(var(--size) * .14); letter-spacing: 0; margin-top: 1px; }
+.stack.lv2 { color: var(--ink); background: radial-gradient(circle at 38% 32%, #f3c08a 0, #d9844a 45%, var(--seal-strong) 100%); }
+.stack.lv3 { color: var(--on-seal); background: radial-gradient(circle at 38% 32%, #e3735f 0, var(--seal) 50%, var(--seal-strong) 100%); }
+.stack.lv3 .stack-num { background: var(--ink); color: var(--call-soft); }
+.stack.lv4 { color: var(--call-soft); background: radial-gradient(circle at 38% 32%, var(--meok-wash) 0, var(--ink) 70%); box-shadow: inset 0 0 0 2px var(--call-soft), inset 0 0 0 calc(var(--size) * .07 + 2px) var(--brass-deep), inset 0 0 0 calc(var(--size) * .07 + 4px) var(--call-soft), var(--shadow-card); }
+.stack.lv4 .stack-num { background: var(--seal); color: var(--on-seal); box-shadow: 0 0 0 2px var(--call-soft); }
+@media (max-width: 520px) { .stack-label { font-size: max(9px, calc(var(--size) * .15)); } }
