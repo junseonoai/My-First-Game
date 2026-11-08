@@ -1261,9 +1261,8 @@
   ];
   // 캐릭터 이모지 (갓 쓴 스페이드): 이 다섯은 그림 파일로 보여 준다
   const EMOJI_CHAR = { '😂': 'laugh', '😎': 'cool', '😭': 'cry', '😡': 'angry', '😱': 'shock' };
-  for (const n of Object.values(EMOJI_CHAR)) { const im = new Image(); im.src = `emoji/${n}.webp`; } // 미리 받아 두기
   function emojiIcon(e) {
-    if (EMOJI_CHAR[e]) return `<img class="emo char" src="emoji/${EMOJI_CHAR[e]}.webp" alt="" draggable="false">`;
+    if (EMOJI_CHAR[e]) return `<img class="emo char" src="emoji/${EMOJI_CHAR[e]}.png" alt="" draggable="false">`;
     const i = EMOJIS.indexOf(e);
     return i < 0 ? '' : `<svg class="emo" viewBox="0 0 64 64" aria-hidden="true">${EMOJI_SVG[i]}</svg>`;
   }
