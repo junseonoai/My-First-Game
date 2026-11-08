@@ -569,7 +569,7 @@
     el.className = 'draw-mark' + (n >= 2 ? ' big' : '') + (id === me ? ' mine' : '');
     el.innerHTML = `<b>+${n}</b>장${n >= 2 ? ' 먹음' : ''}`;
     el.style.left = Math.min(Math.max(r.left + r.width / 2, 50), window.innerWidth - 50) + 'px';
-    el.style.top = (id === me ? r.top - 10 : r.top + r.height * .45) + 'px';
+    el.style.top = (id === me ? r.top - 10 : r.top + r.height * .64) + 'px'; // 상대는 이름 아래 카드 부채 위에 (이름을 가리지 않게)
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 1600);
   }
