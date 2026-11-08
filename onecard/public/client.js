@@ -1292,6 +1292,20 @@
   $('btnLog').onclick = () => { closeMenu(); $('side').hidden = false; $('btnMenu').classList.remove('dot'); $('btnLog').classList.remove('dot'); };
 
   // --- 오른쪽 위 메뉴: 테마 변경 · 기록·채팅 · 설정 ---
+  // 창이 열려 있는지 body 클래스로 알린다 (CSS :has()는 아이폰 사파리에서 무거워 쓰지 않는다)
+  //  panel-open: 어떤 창이든 열림 → 게임 알림 숨김 / game-panel-open: 게임판 안의 메뉴·빠른 채팅·기록 → 게임판을 맨 앞으로
+  const PANEL_IDS = ['side', 'settingsModal', 'rulesModal', 'botInfoModal', 'tutorial', 'bgModal', 'quitModal', 'menuPanel', 'emotePanel'];
+  const GAME_PANEL_IDS = ['menuPanel', 'emotePanel', 'side'];
+  function syncPanels() {
+    const open = (id) => { const e = $(id); return !!e && !e.hidden; };
+    document.body.classList.toggle('panel-open', PANEL_IDS.some(open));
+    document.body.classList.toggle('game-panel-open', GAME_PANEL_IDS.some(open));
+  }
+  if (window.MutationObserver) {
+    const mo = new MutationObserver(syncPanels);
+    for (const id of PANEL_IDS) { const e = $(id); if (e) mo.observe(e, { attributes: true, attributeFilter: ['hidden'] }); }
+  }
+  syncPanels();
   function closePanels() {
     closeMenu();
     for (const id of ['emotePanel', 'side', 'settingsModal', 'bgModal', 'rulesModal', 'botInfoModal', 'quitModal']) $(id).hidden = true;
