@@ -473,6 +473,11 @@
     $('btnMulti').hidden = !selecting;
     $('btnMultiCancel').hidden = !selecting;
     $('btnDraw').hidden = selecting;
+    // 관전 건너뛰기: 내 판은 끝났고 남은 사람이 모두 봇이면 카드 뽑기 자리에 버튼을 보여 준다
+    const meSeat = g.players.find((p) => p.id === me);
+    const canSkip = !g.finished && !deal && !!meSeat && meSeat.out && g.players.every((p) => p.out || p.bot);
+    $('btnSkip').hidden = !canSkip;
+    if (canSkip) $('btnDraw').hidden = true;
     $('multiHint').hidden = true; // 안내는 위 상태 줄에 (자리가 밀리지 않게)
     $('btnMulti').textContent = `${selected.length}장 내기`;
 
@@ -1210,6 +1215,11 @@
   const emitDraw = () => { if (Date.now() < actBusyUntil) return; actBusyUntil = Date.now() + 1500; socket.emit('draw'); };
   const tableFree = () => Date.now() >= guardUntil && $('onePop').hidden && $('introPop').hidden && !deal;
   $('btnDraw').onclick = () => { if (tableFree()) emitDraw(); };
+  $('btnSkip').onclick = () => {
+    if ($('btnSkip').disabled) return;
+    $('btnSkip').disabled = true; setTimeout(() => { $('btnSkip').disabled = false; }, 2000); // 두 번 눌림 방지
+    socket.emit('skipSpectate');
+  };
   $('btnMulti').onclick = () => { if (state && state.game && selected.length) submitPlay(selected.slice(), state.game); };
   $('btnMultiCancel').onclick = () => { selected = []; render(); };
   $('deck').onclick = () => { if (state && state.game && state.game.turn === state.me && tableFree()) emitDraw(); };

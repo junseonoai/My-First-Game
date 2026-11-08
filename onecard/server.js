@@ -426,6 +426,47 @@ io.on('connection', (socket) => {
     after(room);
   });
 
+  // 관전 건너뛰기: 나는 이미 끝났고(1등·파산 등) 남은 사람이 모두 봇이면, 남은 판을 그 자리에서 끝까지 계산해 바로 결과를 보여 준다
+  socket.on('skipSpectate', () => {
+    const g = room && room.game;
+    if (!g || g.finished) return;
+    const me = g.players.find((p) => p.id === memberId);
+    const isBot = (id) => { const m = room.members.find((x) => x.id === id); return !!(m && m.bot); };
+    if (!me || !me.out) return fail('내 판이 끝난 뒤에 건너뛸 수 있어요.');
+    if (!g.alive().every((p) => isBot(p.id))) return fail('아직 사람이 남아 있어서 건너뛸 수 없어요.');
+    if (introLeft(room) > 0) return;
+    clearTimeout(room.botTimer); clearTimeout(room.turnTimer);
+    (room.oneCardTimers || []).forEach(clearTimeout); room.oneCardTimers = [];
+    room.race = null; room.oneCardFor = null; room.deadline = null; room.turnKey = null;
+    const tierOf = (id) => (room.members.find((x) => x.id === id) || {}).tier || 'gold';
+    // 원카드 경쟁은 봇마다 등급별 반응 확률과 시간으로 바로 판정 (판에서와 같은 기준)
+    const race = () => {
+      const target = g.oneCard.playerId;
+      let best = null;
+      for (const p of g.players) {
+        if (p.out && p.id !== target) continue;
+        if (!isBot(p.id)) continue;
+        const r = REACTION[tierOf(p.id)] || REACTION.gold;
+        const own = p.id === target;
+        if (Math.random() >= (own ? r.self : r.catch)) continue;
+        const [a, b] = own ? r.selfMs : r.catchMs;
+        const t = a + Math.random() * (b - a);
+        if (t > ONECARD_WINDOW_MS) continue;
+        if (!best || t < best.t) best = { id: p.id, t };
+      }
+      if (best) g.callOneCard(best.id); else g.oneCard = null;
+    };
+    let steps = 0;
+    if (g.oneCard) race();
+    while (!g.finished && steps++ < 5000) {
+      const cur = g.cur();
+      g.botMove(cur.id, tierOf(cur.id));
+      if (g.oneCard) race();
+    }
+    g.addLog(`${me.name}님이 관전을 건너뛰어 남은 판을 바로 끝냈어요.`);
+    after(room);
+  });
+
   socket.on('oneCard', () => {
     if (!room || !room.game) return;
     const res = pressOneCard(room, memberId);
