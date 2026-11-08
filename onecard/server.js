@@ -1,6 +1,7 @@
 const path = require('path');
 const http = require('http');
 const express = require('express');
+const compression = require('compression');
 const { Server } = require('socket.io');
 const { Game, honor } = require('./game');
 const { TIERS, REACTION, chooseMove, wantSearch, searchIter } = require('./bots');
@@ -28,6 +29,7 @@ if (process.env.ONECARD_LAG) {
 const app = express();
 // 그림·글꼴은 휴대폰에 7일 동안 저장해 두고, 화면 코드(html·css·js)는 매번 바뀐 게 있는지만 확인한다
 const LONG_CACHE = /\.(png|svg|woff2?|jpg|webp)$/i;
+app.use(compression()); // html·css·js를 압축해서 보낸다 (모바일 데이터에서 받는 양이 3~4배 줄어듦)
 app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, file) => { if (LONG_CACHE.test(file)) res.setHeader('Cache-Control', 'public, max-age=604800'); },
 }));
