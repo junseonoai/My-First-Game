@@ -43,6 +43,11 @@ function attackValue(c) {
   return 0;
 }
 
+// 호칭: 사람은 '○○님', 봇은 이름만. 받침에 따라 이/가
+const hasBatchim = (w) => { const k = w.charCodeAt(w.length - 1) - 0xac00; return k >= 0 && k <= 11171 && k % 28 !== 0; };
+const honor = (p) => (p.bot ? p.name : p.name + '님');
+const subj = (p) => { const w = honor(p); return w + (hasBatchim(w) ? '이' : '가'); };
+
 class Game {
   constructor(players) {
     // players: [{ id, name, bot }]
@@ -68,7 +73,7 @@ class Game {
     const first = this.deck.splice(idx, 1)[0];
     this.discard.push(first);
     this.activeSuit = first.suit;
-    this.addLog(`게임 시작! ${this.cur().name}님부터 시작합니다.`);
+    this.addLog(`게임 시작! ${honor(this.cur())}부터 시작합니다.`);
   }
 
   top() { return this.discard[this.discard.length - 1]; }
@@ -143,7 +148,7 @@ class Game {
     player.bankrupt = true;
     this.discard.splice(0, 0, ...player.hand); // 바닥 아래로
     player.hand = [];
-    this.addLog(`${player.name}님 파산! (${BANKRUPT}장 이상)`);
+    this.addLog(`${honor(player)} 파산! (${BANKRUPT}장 이상)`);
     this.checkEnd();
   }
 
@@ -151,7 +156,7 @@ class Game {
     player.out = true;
     player.rank = this.nextRank++;
     // 둘이 할 때는 순위 대신 우승
-    this.addLog(this.players.length === 2 ? `${player.name}님 우승!` : `${player.name}님 ${player.rank}등!`);
+    this.addLog(this.players.length === 2 ? `${honor(player)} 우승!` : `${honor(player)} ${player.rank}등!`);
     this.checkEnd();
   }
 
@@ -304,7 +309,7 @@ class Game {
     if (caller.id === target.id) {
       this.addLog(`${target.name}: 원카드!`);
     } else {
-      this.addLog(`${caller.name}님이 먼저 눌렀다! ${target.name}님 1장 벌칙`);
+      this.addLog(`${subj(caller)} 먼저 눌렀다! ${honor(target)} 1장 벌칙`);
       this.drawCards(target, 1);
       if (target.out && !this.finished && this.cur().id === target.id) this.advance(1);
     }
@@ -318,7 +323,7 @@ class Game {
     p.out = true;
     this.discard.splice(0, 0, ...p.hand);
     p.hand = [];
-    this.addLog(`${p.name}님이 나갔습니다.`);
+    this.addLog(`${subj(p)} 나갔습니다.`);
     if (this.oneCard && this.oneCard.playerId === p.id) this.oneCard = null;
     this.checkEnd();
     if (!this.finished && wasTurn) {
@@ -402,4 +407,4 @@ function sortHand(hand) {
   return hand.slice().sort((a, b) => so[a.suit] - so[b.suit] || RANKS.indexOf(a.rank) - RANKS.indexOf(b.rank));
 }
 
-module.exports = { Game, makeDeck, attackValue, isJoker, SUITS };
+module.exports = { honor, subj, Game, makeDeck, attackValue, isJoker, SUITS };

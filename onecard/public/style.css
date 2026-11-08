@@ -1633,5 +1633,21 @@ body.game-panel-open .tray, body.game-panel-open .topbar { z-index: 7; }
 .tier-btn.t-challenger { border-width: 2.5px; }
 .tier-btn.t-challenger:active { box-shadow: inset 0 2px 0 rgba(0, 0, 0, .5), 0 0 0 1.5px #0e0f12, 0 0 0 3px var(--brass-deep); }
 .opp .nm .bot .tier.t-challenger { box-shadow: inset 0 1px 0 rgba(255, 240, 200, .25), 0 0 0 1px #0e0f12, 0 0 0 2px var(--brass-deep); }
-.bi-card.t-challenger { border-left-color: var(--call); background: linear-gradient(90deg, rgba(184, 146, 63, .12), var(--card) 40%); }
-.tier-row .tier-btn.t-challenger { flex-basis: 100%; }
+.bi-card.t-challenger { border-left-color: var(--call); }
+
+
+/* --- 봇 고르기: 2칸 격자, 등급 이름 아래 한 줄 설명 --- */
+#tierPick .tier-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#tierPick .tier-btn { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; align-items: center; column-gap: 8px; text-align: left; padding: 9px 12px; min-height: 52px; border-radius: var(--radius-md); }
+#tierPick .tier-btn .ti { grid-row: 1 / 3; width: 22px; height: 22px; }
+#tierPick .tier-btn > span { font-size: 15px; line-height: 1.1; }
+#tierPick .tier-btn small { display: block; font-size: 11px; font-weight: 600; opacity: .75; line-height: 1.2; margin-top: 1px; }
+#tierPick .tier-btn.t-challenger small { color: var(--brass-light); background: none; -webkit-text-fill-color: currentColor; }
+#tierPick > .sub { margin: 0 0 2px; }
+
+/* --- 테마 (먹 말고는 한장 색에 맞춘 전통 색) --- */
+:root { --th-song: #2e4a3c; --th-daechu: #5c2a2d; --th-hwangto: #6f5431; --th-cheongja: #2d5452; }
+:root { --felt: var(--th-song); --felt-deep: #1d3127; --tray: #132119; }
+body[data-bg="burgundy"] { --felt: var(--th-daechu); --felt-deep: #3a191c; --tray: #261013; }
+body[data-bg="wood"] { --felt: var(--th-hwangto); --felt-deep: #46341d; --tray: #2e2213; }
+body[data-bg="charcoal"] { --felt: var(--th-cheongja); --felt-deep: #1c3735; --tray: #112423; }

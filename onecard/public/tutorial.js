@@ -69,7 +69,7 @@
         const ms = performance.now() - shownAt;
         phase = 'done';
         stage.className = 'tu-stage';
-        stage.textContent = `${(ms / 1000).toFixed(2)}초 · ${tierFor(ms)} — 다시 하기`;
+        stage.textContent = `${(ms / 1000).toFixed(3)}초 · ${tierFor(ms)} — 다시 하기`;
       }
     };
     box.appendChild(stage);

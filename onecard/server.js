@@ -2,7 +2,7 @@ const path = require('path');
 const http = require('http');
 const express = require('express');
 const { Server } = require('socket.io');
-const { Game } = require('./game');
+const { Game, honor } = require('./game');
 const { TIERS, REACTION, chooseMove, wantSearch, searchIter } = require('./bots');
 
 const PORT = process.env.PORT || 3000;
@@ -204,7 +204,7 @@ function extendTurn(room, ms) {
   clearTimeout(room.turnTimer);
   room.turnTimer = setTimeout(() => whenUnpaused(room, () => {
     if (room.game === g && !g.finished && g.cur().id === cur.id) {
-      g.addLog(`${cur.name}님 시간 초과`);
+      g.addLog(`${honor(cur)} 시간 초과`);
       g.draw(cur.id);
       after(room);
     }

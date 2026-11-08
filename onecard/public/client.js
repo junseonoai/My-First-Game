@@ -52,6 +52,11 @@
   const tierIcon = (t) => `<svg class="ti" viewBox="0 0 16 16" aria-hidden="true">${TIER_ICON[t] || TIER_ICON.gold}</svg>`;
   const tierTag = (t, short) => `<span class="tier t-${t || 'gold'}">${tierIcon(t || 'gold')}<span>${(short ? TIER_SHORT : TIER_NAME)[t || 'gold']}</span></span>`;
   const RED = { H: 1, D: 1 };
+  // 호칭: 사람은 '○○님', 봇은 이름만. 받침에 따라 이/가
+  const hasBatchim = (w) => { const k = (w || '').charCodeAt((w || '').length - 1) - 0xac00; return k >= 0 && k <= 11171 && k % 28 !== 0; };
+  const honor = (p) => (p ? (p.bot ? p.name : p.name + '님') : '');
+  const subj = (p) => { const w = honor(p); return w + (hasBatchim(w) ? '이' : '가'); };
+  const playerOf = (id) => (state && state.game ? state.game.players.find((p) => p.id === id) : null);
 
   function show(screen) {
     for (const s of ['home', 'lobby', 'game']) $(s).hidden = s !== screen;
@@ -346,7 +351,7 @@
     else if (deal) st = '카드를 나눠 주는 중…';
     else if (selectingNow) st = '같은 숫자를 더 골라 함께 내요';
     else if (myTurn) st = g.penalty > 0 ? '받아치거나 막거나, 먹으세요' : '낼 카드를 고르세요'; // 내 차례 표시는 아래 상자 탭에
-    else st = `${cur ? escapeHtml(cur.name) : ''}님 차례`;
+    else st = `${cur ? escapeHtml(honor(cur)) : ''} 차례`;
     $('status').innerHTML = st;
     // 셋 이상: 도는 방향을 가운데에 크게 (바뀌면 한 바퀴 돈다)
     const dirEl = $('dirChip');
@@ -359,8 +364,8 @@
     $('ring').hidden = n <= 2;
     $('game').classList.toggle('my-turn', myTurn);
     // 상자 탭: 내 차례면 크게, 아니면 누구 차례인지
-    const tabName = cur ? cur.name : '';
-    $('tabLabel').textContent = g.finished ? '게임 종료' : deal ? '준비 중' : myTurn ? '내 차례' : `${tabName}님 차례` + (nextId === me ? ' · 다음은 나' : '');
+    const tabName = cur ? honor(cur) : '';
+    $('tabLabel').textContent = g.finished ? '게임 종료' : deal ? '준비 중' : myTurn ? '내 차례' : `${tabName} 차례` + (nextId === me ? ' · 다음은 나' : '');
     updateTimer();
     // 내 차례가 막 시작되면 크게 알려 준다 (휴대폰은 짧게 진동)
     if (myTurn && !wasMyTurn && seenSeq) {
@@ -408,7 +413,7 @@
     $('deckCount').style.visibility = deal && !deal.deck ? 'hidden' : '';
 
     const badge = $('suitBadge');
-    const showSuit = g.activeSuit && (g.top.rank === 'JOKER' || g.activeSuit !== g.top.suit);
+    const showSuit = g.activeSuit && (g.top.rank === 'JOKER' || g.activeSuit !== g.top.suit || (g.top.rank === '7' && g.penalty === 0)); // 7은 같은 무늬를 골라도 보여 준다
     const freeAfterJoker = g.top.rank === 'JOKER' && !g.activeSuit && g.penalty === 0;
     const badgeKey = showSuit ? g.activeSuit : freeAfterJoker ? '★' : '';
     if (badge.dataset.k !== badgeKey) {
@@ -535,10 +540,10 @@
       if (p.id === actorId) break;
     }
     if (!skipped.length) return;
-    const who = (p) => (p.id === me ? '나' : p.name + '님');
+    const who = (p) => (p.id === me ? '나' : honor(p));
     const nextP = g.players.find((p) => p.id === g.turn);
     const head = skipped.length > 2 ? `${who(skipped[0])} 외 ${skipped.length - 1}명` : skipped.map(who).join(', ');
-    const tail = !nextP ? '' : nextP.id === me ? '내 차례' : `${nextP.name}님 차례`;
+    const tail = !nextP ? '' : nextP.id === me ? '내 차례' : `${honor(nextP)} 차례`;
     bubble(`${head} 건너뜀 → ${tail}`, 'skip');
     for (const p of skipped) {
       const anchor = p.id === me ? $('trayTab') : document.querySelector(`.opp[data-id="${p.id}"]`);
@@ -612,7 +617,7 @@
       const g = state && state.game;
       deal = null;
       render();
-      if (g) bubble(g.turn === state.me ? '내가 먼저 시작!' : `${nameOf(g, g.turn, state.me)}님부터 시작!`, 'start');
+      if (g) bubble(g.turn === state.me ? '내가 먼저 시작!' : `${honor(g.players.find((p) => p.id === g.turn))}부터 시작!`, 'start');
     });
   }
 
@@ -667,7 +672,7 @@
     }
     later(PICK_SPIN, () => {
       pop.classList.add('reveal');
-      $('introMsg').textContent = it.starter === me ? '내가 먼저!' : `${nameOf(g, it.starter, me)}님이 먼저!`;
+      $('introMsg').textContent = it.starter === me ? '내가 먼저!' : `${subj(g.players.find((p) => p.id === it.starter))} 먼저!`;
     });
   }
 
@@ -787,7 +792,7 @@
     if (phase === 'count') {
       btn.textContent = Math.ceil((info.openAt - now) / 1000);
       btn.disabled = true;
-      $('oneMsg').textContent = race.target === me ? '한 장 남았어요! 준비…' : `${race.targetName}님이 한 장! 준비…`;
+      $('oneMsg').textContent = race.target === me ? '한 장 남았어요! 준비…' : `${subj(playerOf(race.target) || { name: race.targetName })} 한 장! 준비…`;
     } else if (phase === 'open') {
       btn.textContent = '한장!';
       btn.disabled = false;
@@ -796,14 +801,14 @@
     } else if (phase === 'mine') {
       const mine = myPress[race.id] || race.presses.find((p) => p.id === me);
       btn.disabled = true;
-      btn.textContent = mine ? `${(mine.ms / 1000).toFixed(2)}초` : '…';
+      btn.textContent = mine ? `${(mine.ms / 1000).toFixed(3)}초` : '…';
       const place = mine && (mine.place || race.presses.findIndex((p) => p.id === me) + 1);
       $('oneMsg').textContent = place === 1 ? '가장 빨랐어요! 다른 사람 기다리는 중…' : `${place}번째로 눌렀어요. 다른 사람 기다리는 중…`;
       bar.style.transform = `scaleX(${Math.max(0, (info.closeAt - now) / 2000)})`;
     } else if (phase === 'watch') {
       btn.disabled = true;
       btn.textContent = now < info.openAt ? Math.ceil((info.openAt - now) / 1000) : '…';
-      $('oneMsg').textContent = `${race.targetName}님 원카드 상황`;
+      $('oneMsg').textContent = `${honor(playerOf(race.target) || { name: race.targetName })} 원카드 상황`;
     } else if (phase === 'result') {
       renderRace(race, me);
     }
@@ -831,10 +836,10 @@
       if (!best || mine.ms < best) { record = best ? ' · 새 기록!' : ''; best = mine.ms; store.set('onecard-best-ms', mine.ms); }
     }
     const winner = race.presses.find((p) => p.first);
-    const who = (id, name) => (id === me ? '내가' : `${name}님이`);
+    const who = (id, name) => (id === me ? '내가' : subj(playerOf(id) || { name }));
     const [head, cls, sub] = !winner ? ['벌칙 없음', 'none', '아무도 누르지 않았어요']
       : winner.id === race.target ? ['원카드 성공!', 'ok', `${who(winner.id, winner.name)} 먼저 눌렀어요`]
-      : ['벌칙 1장', 'bad', `${who(winner.id, winner.name)} 먼저! ${race.target === me ? '내가' : race.targetName + '님이'} 1장 받아요`];
+      : ['벌칙 1장', 'bad', `${who(winner.id, winner.name)} 먼저! ${race.target === me ? '내가' : subj(playerOf(race.target) || { name: race.targetName })} 1장 받아요`];
     el.innerHTML = `<div class="race-stamp ${cls}"></div><div class="race-out"></div><ol></ol>${best ? `<div class="race-best">내 최고 ${(best / 1000).toFixed(2)}초${record}</div>` : ''}`;
     el.querySelector('.race-stamp').textContent = head;
     el.querySelector('.race-out').textContent = sub;
@@ -842,7 +847,7 @@
     rows.forEach((p, k) => {
       const li = document.createElement('li');
       if (p.id === me) li.className = 'me';
-      li.innerHTML = `<span class="rn"></span><b>${(p.ms / 1000).toFixed(2)}초</b><i>${k === 0 ? '먼저!' : k + 1 + '등'}</i>`;
+      li.innerHTML = `<span class="rn"></span><b>${(p.ms / 1000).toFixed(3)}초</b><i>${k === 0 ? '먼저!' : k + 1 + '등'}</i>`;
       li.querySelector('.rn').textContent = p.name + (p.id === me ? ' (나)' : '');
       ol.appendChild(li);
     });
@@ -1150,7 +1155,7 @@
     { t: 'platinum', who: '잘하는 사람', win: 41, play: ['공격 카드와 조커를 아꼈다가 공격받을 때 받아쳐요', '받아칠 때 싼 카드부터, 다음 사람이 위험하면 센 카드로 크게 넘겨요', '바닥 무늬를 자기가 많이 가진 무늬로 남겨요', '나온 공격 카드를 세서 남은 게 적으면 일찍 털어요', '7·조커 한 장은 비상구로 남겨요', '가끔 덜 좋은 수를 둬요 (5%)'], self: '96% · 0.4~0.85초', catchS: '90% · 0.45~1초' },
     { t: 'master', who: '고수', win: 58, play: ['플래티넘의 요령 + 남의 패를 추리해요 (뽑기만 한 무늬)', '한 장 남은 사람을 아껴 둔 공격으로 끊어요', '판의 선두를 노려요 (J로 건너뛰기, Q로 넘기지 않기)', '손패가 많으면 받아치기 카드를 지켜 파산을 피해요', '둘만 남으면 수마다 모의 게임 40판을 둬 보고 골라요', '아주 가끔 실수해요 (2%)'], self: '98% · 0.28~0.55초', catchS: '96% · 0.32~0.62초' },
     { t: 'grandmaster', who: '최고수', win: 63, play: ['마스터의 판단 + 실수가 없어요', '같은 숫자를 남겨 두었다가 한 번에 끝내요 (원카드 상황을 건너뜀)', 'K 다음 카드로 바로 끝낼 수 있으면 K부터 내요', '다음 사람에게 없는 무늬로 몰아가고, Q로 방향을 돌려 거의 끝난 사람을 늦춰요', '덱이 다시 섞일 때 나올 카드까지 세요', '상대가 원카드를 빨리 잡으면 한 장만 남는 수를 피해요', '둘만 남으면 수마다 모의 게임 100판'], self: '100% · 0.18~0.38초', catchS: '99% · 0.2~0.42초' },
-    { t: 'challenger', who: '벽', win: 63, play: ['그랜드마스터의 모든 판단', '사람이 이번 판에 자주 못 낸 무늬를 기억해 그 무늬로 바꿔요', '둘만 남으면 수마다 모의 게임 300판', '원카드는 거의 못 잡고, 거의 못 피해요'], self: '100% · 0.15~0.2초', catchS: '99% · 0.15~0.3초' },
+    { t: 'challenger', who: '벽', win: 63, play: ['그랜드마스터의 모든 판단', '사람이 이번 판에 자주 못 낸 무늬를 기억해 그 무늬로 바꿔요', '둘만 남으면 수마다 모의 게임 300판', '원카드에서 챌린저를 잡기도, 챌린저에게서 살아남기도 거의 어려워요'], self: '100% · 0.15~0.2초', catchS: '99% · 0.15~0.3초' },
   ];
 
   function renderBotInfo() {
@@ -1191,7 +1196,8 @@
   };
   $('btnBot').onclick = () => { $('tierPick').hidden = !$('tierPick').hidden; };
   document.querySelectorAll('#tierPick [data-tier]').forEach((b) => {
-    b.innerHTML = tierIcon(b.dataset.tier) + `<span>${TIER_NAME[b.dataset.tier]}</span>`;
+    const info = BOT_INFO.find((x) => x.t === b.dataset.tier);
+    b.innerHTML = tierIcon(b.dataset.tier) + `<span>${TIER_NAME[b.dataset.tier]}</span><small>${info ? info.who : ''}</small>`;
     b.onclick = () => { socket.emit('addBot', b.dataset.tier); };
   });
   $('btnStart').onclick = () => socket.emit('start');
