@@ -20,7 +20,7 @@
 
 - 이름: "온라인 원카드" / "♥원카드♠" → "한장" (탭 제목, 로비 로고, 링크 미리보기 메타태그)
 - 로고: `assets/Logos/hanjang-lockup.svg` (로비), `favicon.svg` (파비콘), `hanjang-app-icon.svg` (PWA 아이콘)
-- 색: 코드에 박힌 hex 값을 `tokens.css` 변수로 교체. 색 자체는 지금과 거의 같다(와인·머스터드·펠트·종이·남색).
+- 색: 코드에 박힌 hex 값을 `tokens.css` 변수로 교체. 2026-11-08에 색이 "먹을 탄 오방색"으로 바뀌었다(먹·한지·쪽빛·놋쇠·낙관). 바꾸는 방법은 `PROMPT.md` 10번.
 - 모양: 패널·버튼의 각진 굵은 검정 테두리와 딱딱한 오프셋 그림자 → 둥근 모서리(`--radius-md`, `--radius-lg`) + `--shadow-card`/`--shadow-lift`
 - 글꼴: 제목·큰 숫자(장수, 타이머, 원카드 배너)는 `--font-display`(메이플스토리 Bold), 본문 `--font-sans`, 방 코드 `--font-mono`. 지금의 세리프 숫자는 없앤다.
 - 카드 뒷면: 남색 마름모 무늬는 유지하고 가운데에 `hanjang-submark.svg`를 종이색으로 작게.

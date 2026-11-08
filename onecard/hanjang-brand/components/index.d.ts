@@ -15,7 +15,7 @@ export interface CallBannerProps { kind?: 'onecard' | 'attack' | 'win'; title?: 
 export declare function CallBanner(props: CallBannerProps): React.ReactElement;
 export interface TextFieldProps extends React.InputHTMLAttributes<HTMLInputElement> { label: string; hint?: string; error?: string; code?: boolean }
 export declare function TextField(props: TextFieldProps): React.ReactElement;
-export interface BadgeProps { tone?: 'neutral' | 'brand' | 'felt' | 'call' | Tier; children?: React.ReactNode }
+export interface BadgeProps { tone?: 'neutral' | 'brand' | 'seal' | 'felt' | 'call' | Tier; children?: React.ReactNode }
 export declare function Badge(props: BadgeProps): React.ReactElement;
 export interface QuickChatProps { phrases?: string[]; onSend?: (text: string) => void }
 export declare function QuickChat(props: QuickChatProps): React.ReactElement;

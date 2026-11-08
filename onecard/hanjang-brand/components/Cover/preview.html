@@ -10,10 +10,11 @@
   .cover { position:relative; height:288px; overflow:hidden; }
   .art { position:absolute; top:0; left:480px; width:480px; height:288px; overflow:hidden; }
   .art svg { display:block; width:480px; height:288px; }
-  .felt { fill:var(--felt); }
-  .tile { fill:var(--felt-deep); }
+  .meok { fill:var(--meok); }
+  .tile { fill:var(--meok-wash); }
   .ink { fill:var(--card-back); }
-  .brand { fill:var(--brand); }
+  .bubble { fill:var(--card-face); stroke:var(--ink); stroke-width:3; }
+  .seal { fill:var(--seal); }
   .call { fill:var(--call); }
   .words { position:absolute; left:var(--space-8); bottom:var(--space-8); max-width:440px; }
   .name { margin:0; font-family:var(--font-display); font-weight:700; font-size:120px; line-height:.92; letter-spacing:-.02em; color:var(--ink); }
@@ -25,12 +26,12 @@
 <div class="art" aria-hidden="true">
 <svg viewBox="0 0 480 288" width="480" height="288">
 <!--
-  blocks      felt 304x264 slab bled off top and right (table, the largest) · navy card-back card 112x160 (the deck) · brand speech-bubble card 112x160 tilted -8deg with its tail (the logo silhouette, the "last one" shouting) · call disc r24 once (the shout) · about 40% of 960x288
-  arrangement two cards laid on the edge of the table: ink standing on the ground line, brand dropped across it onto the felt, one yellow pip above, bottoms on y=264 (space-6 above the edge)
-  pattern     "a literal motif (card)": 24 deck tiles 16x24 cut by radius-sm-ish 4px corners in felt-deep, staggered at a space-8 pitch and thinning toward the cards, like a dealt deck on the felt
+  blocks      meok (먹) 304x264 slab bled off top and right (the ink-wash ground, the largest) · navy card-back card 112x160 (the deck, 청) · hanji speech-bubble card 112x160 tilted -8deg with its tail and an ink outline (the logo silhouette, 백) · seal square 28 on its corner (낙관, 적, the only red) · brass disc r24 once (the shout, 황) · about 40% of 960x288
+  arrangement two cards laid on the edge of the ink slab: navy standing on the ground line, the hanji bubble dropped across it onto the meok, one brass pip above, bottoms on y=264 (space-6 above the edge)
+  pattern     "a literal motif (card)": 24 deck tiles 16x24 cut by radius-sm-ish 4px corners in meok-wash, staggered at a space-8 pitch and thinning toward the cards, like a dealt deck on the ink
   scales      card sides 112 = space-4 x7, 160 = space-8 x5; slab corner radius-lg 20; card corners radius-md 12; tile pitch space-8, row step 40 (space-8 + space-2)
 -->
-<rect class="felt" x="176" y="-24" width="328" height="264" rx="20"/>
+<rect class="meok" x="176" y="-24" width="328" height="264" rx="20"/>
 <rect class="tile" x="200" y="24" width="16" height="24" rx="4"/>
 <rect class="tile" x="232" y="24" width="16" height="24" rx="4"/>
 <rect class="tile" x="264" y="24" width="16" height="24" rx="4"/>
@@ -58,7 +59,7 @@
 <rect class="tile" x="392" y="184" width="16" height="24" rx="4"/>
 <rect class="tile" x="424" y="184" width="16" height="24" rx="4"/>
 <rect class="ink" x="24" y="104" width="112" height="160" rx="12"/>
-<g transform="rotate(-8 196 176)"><path class="brand" d="M152 80H240A12 12 0 0 1 252 92V228A12 12 0 0 1 240 240H190Q172 256 142 264Q158 252 160 240H152A12 12 0 0 1 140 228V92A12 12 0 0 1 152 80Z"/></g>
+<g transform="rotate(-8 196 176)"><path class="bubble" d="M152 80H240A12 12 0 0 1 252 92V228A12 12 0 0 1 240 240H190Q172 256 142 264Q158 252 160 240H152A12 12 0 0 1 140 228V92A12 12 0 0 1 152 80Z"/><rect class="seal" x="232" y="220" width="28" height="28" rx="4" transform="rotate(16 246 234)"/></g>
 <circle class="call" cx="268" cy="72" r="24"/>
 </svg>
 </div>
