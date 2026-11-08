@@ -664,7 +664,7 @@ input:focus { outline: none; box-shadow: 0 0 0 3px rgba(168, 38, 44, .25); }
 
 /* --- 테이블 색 --- */
 :root { --felt: var(--table-green); }
-body[data-bg="navy"] { --felt: var(--table-navy); --felt-deep: #1c263b; --tray: #131a28; }
+body[data-bg="navy"] { --felt: var(--meok); --felt-deep: var(--meok-deep); --tray: #141518; } /* 예전 남색 자리: 이제 먹 */
 body[data-bg="burgundy"] { --felt: var(--table-wine); --felt-deep: #371820; --tray: #251016; }
 body[data-bg="wood"] { --felt: var(--table-wood); --felt-deep: #433220; --tray: #2d2216; }
 body[data-bg="charcoal"] { --felt: var(--table-charcoal); --felt-deep: #1d1e21; --tray: #141516; }
@@ -1414,3 +1414,43 @@ body.game-panel-open .tray, body.game-panel-open .topbar { z-index: 7; }
 .emo.char { object-fit: contain; -webkit-user-drag: none; user-select: none; }
 .emoji-row button .emo.char { width: 42px; height: 42px; margin: -4px 0; }
 .emote-float.emoji .emo.char { width: 80px; height: 80px; }
+
+/* =====================================================================
+   먼저 할 사람 고르기: 엽전 (둘) · 주령구 (셋 이상)
+   ===================================================================== */
+:root {
+  --brass-light: #f0d68e; --brass-deep: #8a6a28; --bronze: #5e4a1c;   /* 엽전 */
+  --wood-1: #c08a52; --wood-2: #9c6a3a; --wood-3: #74492a;              /* 주령구 나무 */
+}
+/* 엽전: 얇은 놋쇠 동전, 가운데 네모 구멍 */
+.chip3d.coin { width: 184px; height: 184px; }
+.chip3d.coin .face {
+  border: none;
+  background: radial-gradient(circle at 38% 32%, var(--brass-light) 0, var(--call) 45%, var(--brass-deep) 100%);
+  box-shadow: inset 0 0 0 3px var(--ink), inset 0 0 0 11px var(--brass-deep), inset 0 0 0 13px var(--ink);
+}
+.chip3d.coin .face.a { transform: translateZ(5px); }
+.chip3d.coin .face.b {
+  transform: rotateX(180deg) translateZ(5px);
+  background: radial-gradient(circle at 38% 32%, var(--call) 0, var(--brass-deep) 50%, var(--bronze) 100%);
+}
+.chip3d.coin .rim { background: var(--brass-deep); border: none; }
+.chip3d.coin .rim:first-child, .chip3d.coin .rim:nth-child(9) { border: 2px solid var(--ink); }
+.coin-in {
+  position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  color: var(--ink); padding: 0 26px; gap: 14px;
+}
+.face.b .coin-in { color: var(--brass-light); }
+.coin-in small { font-family: var(--font-display); font-size: 15px; line-height: 1; }
+.coin-in .hole {
+  width: 30px; height: 30px; flex: none; background: var(--felt-deep); border-radius: 2px;
+  box-shadow: 0 0 0 3px var(--ink), 0 0 0 8px var(--brass-deep), 0 0 0 10px var(--ink);
+}
+.face.b .coin-in .hole { box-shadow: 0 0 0 3px var(--ink), 0 0 0 8px var(--bronze), 0 0 0 10px var(--ink); }
+.coin-in span { font-family: var(--font-display); font-size: 20px; line-height: 1.1; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 주령구 */
+.jury-wrap { position: relative; z-index: 1; }
+.jury { display: block; width: 236px; height: 236px; filter: drop-shadow(0 6px 10px rgba(10, 20, 14, .35)); }
+.jury text { font-family: var(--font-display); }
+.jury .jface.win { stroke: var(--call-soft) !important; stroke-width: 6; }
+.k-roulette .chip-shadow { bottom: 6px; width: 170px; }

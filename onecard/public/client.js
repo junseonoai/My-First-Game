@@ -618,8 +618,9 @@
     $('introMsg').textContent = '';
     const starterIdx = Math.max(0, it.order.indexOf(it.starter));
     if (it.kind === 'coin') {
-      $('introTitle').textContent = '칩 던지기 · 누가 먼저?';
-      stage.innerHTML = `<div class="chip3d">${Array.from({ length: 19 }, (_, k) => k - 9).map((z) => `<i class="rim" style="transform:translateZ(${z}px)"></i>`).join('')}<div class="face a"><div class="chip-in"><small>앞</small><span></span></div></div><div class="face b"><div class="chip-in"><small>뒤</small><span></span></div></div></div><div class="chip-shadow"></div>`;
+      // 엽전 던지기: 가운데 네모 구멍이 뚫린 놋쇠 동전. 앞면 이름이 나오면 그 사람이 먼저
+      $('introTitle').textContent = '엽전 던지기 · 누가 먼저?';
+      stage.innerHTML = `<div class="chip3d coin">${Array.from({ length: 9 }, (_, k) => k - 4).map((z) => `<i class="rim" style="transform:translateZ(${z}px)"></i>`).join('')}<div class="face a"><div class="coin-in"><small>앞</small><b class="hole"></b><span></span></div></div><div class="face b"><div class="coin-in"><small>뒤</small><b class="hole"></b><span></span></div></div></div><div class="chip-shadow"></div>`;
       stage.querySelector('.face.a span').textContent = nameOf(g, it.order[0], me);
       stage.querySelector('.face.b span').textContent = nameOf(g, it.order[1], me);
       const end = 360 * 6 + (starterIdx === 1 ? 180 : 0);
@@ -631,43 +632,46 @@
       ], { duration: PICK_SPIN, easing: 'cubic-bezier(.3,.6,.4,1)', fill: 'forwards' });
       stage.querySelector('.chip-shadow').animate([{ transform: 'scale(1)', opacity: .5 }, { transform: 'scale(.5)', opacity: .2, offset: .45 }, { transform: 'scale(1)', opacity: .5 }], { duration: PICK_SPIN * .85, fill: 'forwards' });
     } else {
-      $('introTitle').textContent = '룰렛 · 누가 먼저?';
-      const n = it.order.length, seg = 360 / n, R = 100;
-      // 칩과 같은 색: 빨강 · 먹색 · 크림을 번갈아 (마지막 칸이 첫 칸과 같은 색이면 금색)
-      // 칩과 같은 색: 와인 · 잉크 · 종이를 번갈아 (마지막 칸이 첫 칸과 같은 색이면 머스터드). 색은 토큰으로
-      const FILL = ['--brand', '--ink', '--ground'];
-      const fillOf = (i) => (i === n - 1 && n % 3 === 1 ? '--call' : FILL[i % 3]);
-      const pt = (a, r) => [120 + r * Math.sin(a * Math.PI / 180), 120 - r * Math.cos(a * Math.PI / 180)];
-      let svg = '';
-      it.order.forEach((id, i) => {
-        const [x1, y1] = pt(i * seg, R), [x2, y2] = pt((i + 1) * seg, R);
-        const mid = (i + .5) * seg, [tx, ty] = pt(mid, R * .6);
-        const f = fillOf(i), light = f === '--ground' || f === '--call';
-        svg += `<path d="M120 120 L${x1} ${y1} A${R} ${R} 0 ${seg > 180 ? 1 : 0} 1 ${x2} ${y2} Z" style="fill:var(${f});stroke:var(--ink)" stroke-width="2.5" data-i="${i}"/>`;
-        svg += `<text x="${tx}" y="${ty}" transform="rotate(${mid} ${tx} ${ty})" text-anchor="middle" dominant-baseline="middle" font-size="${n >= 5 ? 13 : 15}" font-weight="700" style="fill:var(${light ? '--ink' : '--ground'})">${escapeHtml(nameOf(g, id, me).slice(0, 6))}</text>`;
-      });
-      // 바깥 테두리는 칩 가장자리처럼 줄무늬
-      stage.innerHTML = `<div class="wheel-pin"></div><svg class="wheel" viewBox="0 0 240 240">
-        <circle cx="120" cy="120" r="116" style="fill:var(--brand);stroke:var(--ink)" stroke-width="3"/>
-        <circle cx="120" cy="120" r="108" fill="none" style="stroke:var(--ground)" stroke-width="10" stroke-dasharray="14 14"/>
-        <g class="wheel-in">${svg}</g>
-        <circle cx="120" cy="120" r="101" fill="none" style="stroke:var(--ink)" stroke-width="3"/>
-        <circle cx="120" cy="120" r="20" style="fill:var(--call);stroke:var(--ink)" stroke-width="3"/>
-        <circle cx="120" cy="120" r="12" fill="none" style="stroke:var(--ink)" stroke-width="1.5" stroke-dasharray="3 3"/></svg>`;
-      const jitter = (Math.random() - .5) * seg * .6;
-      const end = 360 * 5 + (360 - (starterIdx + .5) * seg) + jitter; // 고른 칸이 위쪽 바늘에 멈춘다
-      stage.querySelector('.wheel').animate([{ transform: 'rotate(0deg)' }, { transform: `rotate(${end}deg)` }],
-        { duration: PICK_SPIN, easing: 'cubic-bezier(.12,.6,.15,1)', fill: 'forwards' });
-      // 걸린 칸: 이웃 칸과 테두리에 가려지지 않게 윤곽선만 따로 맨 위에 (안쪽으로 고르게)
-      later(PICK_SPIN, () => {
-        const seg0 = stage.querySelector(`path[data-i="${starterIdx}"]`);
-        const hub = stage.querySelector('.wheel > circle[r="20"]');
-        if (!seg0 || !hub) return;
-        const hl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        hl.setAttribute('d', seg0.getAttribute('d'));
-        hl.setAttribute('class', 'win-line');
-        hub.before(hl);
-      });
+      // 주령구 굴리기: 신라 나무 주사위. 구르는 동안 가운데 면의 이름이 바뀌다가 먼저 할 사람에서 멈춘다
+      $('introTitle').textContent = '주령구 굴리기 · 누가 먼저?';
+      const n = it.order.length;
+      const names = it.order.map((id) => nameOf(g, id, me).slice(0, 6));
+      // 면: 가운데 네모 1, 둘레 사다리꼴 4, 모서리 세모 4 (위에서 본 14면 주사위)
+      const F = {
+        c: '78,78 162,78 162,162 78,162',
+        t: '78,78 162,78 174,22 66,22', r: '162,78 162,162 218,174 218,66', b: '162,162 78,162 66,218 174,218', l: '78,162 78,78 22,66 22,174',
+        tr: '162,78 174,22 218,66', br: '162,162 218,174 174,218', bl: '78,162 66,218 22,174', tl: '78,78 22,66 66,22',
+      };
+      const shade = { c: '--wood-1', t: '--wood-1', l: '--wood-2', r: '--wood-2', b: '--wood-3', tl: '--wood-2', tr: '--wood-2', bl: '--wood-3', br: '--wood-3' };
+      const side = [['t', 120, 50, 0], ['r', 190, 120, 90], ['b', 120, 190, 180], ['l', 50, 120, -90]];
+      let faces = '';
+      for (const [k, pts] of Object.entries(F)) faces += `<polygon points="${pts}" style="fill:var(${shade[k]});stroke:var(--ink)" stroke-width="3" stroke-linejoin="round"${k === 'c' ? ' class="jface"' : ''}/>`;
+      const fs = (t, big) => Math.max(big ? 14 : 10, (big ? 32 : 18) - t.length * (big ? 3 : 1.8));
+      let labels = side.map(([, x, y, rot], i) => `<text class="jside" data-k="${i}" x="${x}" y="${y}" transform="rotate(${rot} ${x} ${y})" text-anchor="middle" dominant-baseline="middle" font-weight="700" style="fill:var(--ink)"></text>`).join('');
+      stage.innerHTML = `<div class="jury-wrap"><svg class="jury" viewBox="0 0 240 240">${faces}
+        <g class="grain" style="stroke:var(--wood-3)" stroke-width="1.2" fill="none" opacity=".55"><path d="M86 96q34-7 68 0M86 144q34 7 68 0"/></g>
+        <text class="jmain" x="120" y="121" text-anchor="middle" dominant-baseline="middle" font-weight="700" style="fill:var(--ink)"></text>${labels}</svg></div><div class="chip-shadow"></div>`;
+      const main = stage.querySelector('.jmain');
+      const sides = [...stage.querySelectorAll('.jside')];
+      const showFace = (i) => {
+        main.textContent = names[i]; main.setAttribute('font-size', fs(names[i], true));
+        sides.forEach((el, k) => { const t = names[(i + 1 + (k % (n - 1))) % n]; el.textContent = t; el.setAttribute('font-size', fs(t, false)); }); // 옆면에는 다른 사람 이름만
+      };
+      // 이름이 바뀌는 시각: 처음엔 빠르게, 점점 느리게. 마지막은 먼저 할 사람
+      const steps = 14, times = Array.from({ length: steps }, (_, k) => PICK_SPIN * .92 * Math.pow((k + 1) / steps, 1.8));
+      const first = (starterIdx - steps % n + n * 10) % n;
+      showFace(first);
+      times.forEach((t, k) => later(t, () => showFace((first + k + 1) % n)));
+      stage.querySelector('.jury').animate([
+        { transform: 'translate(-80px,-60px) rotate(-200deg) scale(.7)' },
+        { transform: 'translate(-20px,0) rotate(-40deg) scale(1)', offset: .3 },
+        { transform: 'translate(10px,-46px) rotate(10deg) scale(1.08)', offset: .5 },
+        { transform: 'translate(4px,0) rotate(-6deg) scale(1)', offset: .7 },
+        { transform: 'translate(0,-14px) rotate(3deg) scale(1.02)', offset: .84 },
+        { transform: 'translate(0,0) rotate(0deg) scale(1)' },
+      ], { duration: PICK_SPIN, easing: 'cubic-bezier(.25,.6,.35,1)', fill: 'forwards' });
+      stage.querySelector('.chip-shadow').animate([{ transform: 'translateX(-80px) scale(.6)', opacity: .2 }, { transform: 'translateX(-20px) scale(1)', opacity: .5, offset: .3 }, { transform: 'scale(.7)', opacity: .3, offset: .5 }, { transform: 'scale(1)', opacity: .5 }], { duration: PICK_SPIN, fill: 'forwards' });
+      later(PICK_SPIN, () => { const f = stage.querySelector('.jface'); if (f) f.classList.add('win'); });
     }
     later(PICK_SPIN, () => {
       pop.classList.add('reveal');
