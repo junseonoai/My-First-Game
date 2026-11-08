@@ -1393,3 +1393,9 @@ body.game-panel-open #game { z-index: 60; }
 }
 /* 빠른 채팅 창·메뉴가 열리면 상대의 '차례' 표시가 그 위로 비치지 않게 */
 body.game-panel-open .tray, body.game-panel-open .topbar { z-index: 7; }
+
+/* --- 한장 이모지 (직접 그린 SVG) --- */
+.emo { display: block; width: 1em; height: 1em; }
+.emoji-row button { display: grid; place-items: center; padding: 5px 0; }
+.emoji-row button .emo { width: 32px; height: 32px; }
+.emote-float.emoji.from-opp, .emote-float.emoji.from-me { font-size: 54px; line-height: 0; }

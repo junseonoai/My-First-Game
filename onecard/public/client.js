@@ -1244,9 +1244,15 @@
 
   // --- 빠른 이모티콘 / 채팅 ---
   const EMOJIS = ['😀', '😂', '😎', '😭', '😡', '😱', '👍', '👏', '🔥', '💀'];
+  // 화면에는 직접 그린 한장 이모지를 보여 준다 (주고받는 값은 그대로 이모지 글자)
+  const EMOJI_NAMES = ['웃음', '폭소', '멋짐', '엉엉', '화남', '깜짝', '최고', '박수', '불꽃', '해골'];
+  function emojiIcon(e) {
+    const i = EMOJIS.indexOf(e);
+    return i < 0 ? '' : `<svg class="emo" viewBox="0 0 64 64" aria-hidden="true"><use href="#emo-${i}"/></svg>`;
+  }
   const PHRASES = ['빨리 내요!', '잘했어요', '아 안 돼!', '봐주세요', '원카드 조심!', '공격 간다!', '운이 좋네요', '한 판 더?', 'ㅋㅋㅋㅋ', '안녕하세요'];
   for (const e of EMOJIS) {
-    const b = document.createElement('button'); b.type = 'button'; b.textContent = e;
+    const b = document.createElement('button'); b.type = 'button'; b.innerHTML = emojiIcon(e); b.setAttribute('aria-label', EMOJI_NAMES[EMOJIS.indexOf(e)]);
     b.onclick = () => { socket.emit('emote', e); $('emotePanel').hidden = true; };
     $('emojiRow').appendChild(b);
   }
@@ -1269,7 +1275,8 @@
     const r = anchor.getBoundingClientRect();
     const el = document.createElement('div');
     el.className = 'emote-float ' + kind + (mine ? ' from-me' : ' from-opp');
-    el.textContent = text;
+    const icon = kind === 'emoji' ? emojiIcon(text) : '';
+    if (icon) el.innerHTML = icon; else el.textContent = text;
     el.style.visibility = 'hidden';
     document.body.appendChild(el);
     const w = el.offsetWidth, h = el.offsetHeight;
