@@ -10,22 +10,30 @@
   --ink-muted: #585146;
   --line: #d8d0bb;
   --line-strong: #8a8172;
-  --brand: #933231;
-  --on-brand: #ffffff;
-  --brand-soft: #f1d9d3;
-  --brand-strong: #7a2726;
+  --brand: #2b355c;
+  --on-brand: #f0ead8;
+  --brand-soft: #dde0ec;
+  --brand-strong: #1f2745;
+  --seal: #a8322d;
+  --on-seal: #ffffff;
+  --seal-soft: #f1d9d3;
+  --seal-strong: #7a2726;
   --felt: #2a4434;
   --felt-deep: #1c3023;
   --on-felt: #f0ead8;
-  --call: #ccac52;
-  --call-soft: #f3da87;
+  --meok: #24262b;
+  --meok-deep: #17181b;
+  --meok-wash: #3a3d44;
+  --on-meok: #f0ead8;
+  --call: #b8923f;
+  --call-soft: #e2c27a;
   --on-call: #1e1a15;
   --card-face: #faf8f2;
   --card-back: #2b355c;
   --card-back-pattern: #464f71;
   --suit-red: #9c3130;
   --suit-black: #1e1a15;
-  --hint-counter: var(--brand);
+  --hint-counter: var(--seal);
   --hint-block: var(--call);
   --table-green: #2a4434;
   --table-navy: #2b3a59;
@@ -42,19 +50,48 @@
   --shadow-lift: 0 12px 26px rgba(10,20,14,0.40);
 }
 [data-theme="dark"] {
-  --ground: #171511;
-  --raised: #221f1a;
-  --sunken: #100e0b;
+  --ground: #1a1b1f;
+  --raised: #24262b;
+  --sunken: #121316;
   --ink: #f0ead8;
   --ink-muted: #aaa190;
-  --line: #34302a;
-  --line-strong: #6e675c;
-  --brand: #e0706a;
-  --on-brand: #1a0d0c;
-  --brand-soft: #3d1d1c;
-  --brand-strong: #f0a39c;
-  --hint-counter: #c0443f;
-  --hint-block: #ccac52;
+  --line: #33353b;
+  --line-strong: #6b6e76;
+  --brand: #9aa8dc;
+  --on-brand: #141a30;
+  --brand-soft: #232a47;
+  --brand-strong: #c3cbef;
+  --seal: #e0675f;
+  --on-seal: #1a0d0c;
+  --seal-soft: #3d1d1c;
+  --seal-strong: #f0a39c;
+  --felt: #2a4434;
+  --felt-deep: #1c3023;
+  --on-felt: #f0ead8;
+  --meok: #24262b;
+  --meok-deep: #17181b;
+  --meok-wash: #3a3d44;
+  --on-meok: #f0ead8;
+  --call: #b8923f;
+  --call-soft: #e2c27a;
+  --on-call: #1e1a15;
+  --card-face: #faf8f2;
+  --card-back: #2b355c;
+  --card-back-pattern: #464f71;
+  --suit-red: #9c3130;
+  --suit-black: #1e1a15;
+  --hint-counter: #e0675f;
+  --hint-block: #b8923f;
+  --table-green: #2a4434;
+  --table-navy: #2b3a59;
+  --table-wine: #532430;
+  --table-wood: #654c31;
+  --table-charcoal: #2c2e32;
+  --tier-silver: #b9bcc3;
+  --tier-gold: #d9b54f;
+  --tier-platinum: #7fb5ae;
+  --tier-master: #b79be0;
+  --tier-grandmaster: #d26a62;
   --focus: #7aa2ff;
   --shadow-card: 0 1px 0 rgba(0,0,0,0.4), 0 6px 14px rgba(0,0,0,0.5);
   --shadow-lift: 0 12px 28px rgba(0,0,0,0.6);
@@ -75,6 +112,8 @@
   --font-sans: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
 }
+
+/* 테이블 색 바꾸기: 고른 색을 --felt에 넣는다 (게임판만) */
 [data-table="navy"] { --felt: var(--table-navy); }
 [data-table="wine"] { --felt: var(--table-wine); }
 [data-table="wood"] { --felt: var(--table-wood); }
