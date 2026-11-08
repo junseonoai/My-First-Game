@@ -1281,7 +1281,13 @@
       top = r.top - 12 - h;
       const draw = [$('btnDraw'), $('btnMulti'), $('btnMultiCancel')].filter((b) => b && !b.hidden).map((b) => b.getBoundingClientRect());
       for (const d of draw) if (left < d.right + 6 && left + w > d.left - 6 && top + h > d.top - 6) top = d.top - 10 - h;
-    } else top = r.bottom + 10;
+    } else {
+      // 자리 아래에 붙은 '차례'·'다음' 표시보다 더 아래에 (가리지 않게)
+      let below = r.bottom;
+      const tags = [anchor.querySelector('.next-tag'), $('turnToken')].filter((t) => t && !t.hidden);
+      for (const t of tags) { const tr = t.getBoundingClientRect(); if (tr.width && tr.right > r.left && tr.left < r.right) below = Math.max(below, tr.bottom); }
+      top = below + 10;
+    }
     el.style.left = left + 'px';
     el.style.top = top + 'px';
     el.style.setProperty('--tail', `${Math.min(Math.max(cx - left, 14), w - 14)}px`); // 꼬리는 보낸 사람 쪽을 가리킨다

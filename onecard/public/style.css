@@ -1361,3 +1361,35 @@ body.calm :is(.one-pop > *, .one-pop .one-big, .one-pop.open .one-big, .one-pop.
 body.game-panel-open #game { z-index: 60; }
 .toast { z-index: 70; }
 .net-banner { z-index: 75; }
+
+/* =====================================================================
+   빠른 채팅·이모티콘 말풍선 (최종)
+   - 글: 둥근 크림색 말풍선 + 얇은 테두리 + 부드러운 그림자, 꼬리도 같은 테두리
+   - 이모지: 상자 없이 크게, 그림자만
+   ===================================================================== */
+.emote-float.phrase.from-opp, .emote-float.phrase.from-me {
+  background: var(--ground); color: var(--ink); border: 1.5px solid var(--line-strong); border-radius: 16px;
+  padding: 9px 15px; font-size: 16px; font-weight: 700; line-height: 1.25; box-shadow: 0 6px 14px rgba(10, 20, 14, .28);
+}
+.emote-float.phrase.from-opp::before, .emote-float.phrase.from-me::after {
+  content: ""; position: absolute; left: var(--tail, 50%); width: 12px; height: 12px; margin-left: -6px;
+  background: var(--ground); border: 0 solid var(--line-strong); border-radius: 0 0 0 0; transform: rotate(45deg);
+}
+.emote-float.phrase.from-opp::before { top: -7.5px; border-left-width: 1.5px; border-top-width: 1.5px; border-top-left-radius: 2px; }
+.emote-float.phrase.from-me::after { bottom: -7.5px; border-right-width: 1.5px; border-bottom-width: 1.5px; border-bottom-right-radius: 2px; }
+.emote-float.emoji.from-opp, .emote-float.emoji.from-me {
+  background: none; border: none; box-shadow: none; padding: 0; font-size: 46px; line-height: 1;
+  filter: drop-shadow(0 4px 8px rgba(10, 20, 14, .35));
+}
+.emote-float.emoji.from-opp::before, .emote-float.emoji.from-opp::after,
+.emote-float.emoji.from-me::before, .emote-float.emoji.from-me::after { content: none; }
+.emote-float.emoji.from-opp, .emote-float.emoji.from-me { animation-name: emojiPop; }
+@keyframes emojiPop {
+  0% { opacity: 0; scale: .5; }
+  10% { opacity: 1; scale: 1.12; }
+  18% { scale: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+/* 빠른 채팅 창·메뉴가 열리면 상대의 '차례' 표시가 그 위로 비치지 않게 */
+body.game-panel-open .tray, body.game-panel-open .topbar { z-index: 7; }
