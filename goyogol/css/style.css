@@ -1,0 +1,84 @@
+:root {
+  --ink: #0f1a24;
+  --panel: rgba(18, 28, 44, .88);
+  --line: rgba(127, 240, 255, .35);
+  --glow: #7ff0ff;
+  --cream: #f1ead8;
+  --dim: #a9b6c2;
+  --warm: #ffc46b;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--ink); color: var(--cream);
+  font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+  user-select: none; -webkit-user-select: none; touch-action: none; }
+canvas#c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+[hidden] { display: none !important; }
+button { font: inherit; color: inherit; cursor: pointer; }
+
+/* ---------- HUD ---------- */
+#hud { position: fixed; inset: 0; pointer-events: none; }
+#stat { position: absolute; left: 14px; top: calc(12px + env(safe-area-inset-top)); display: flex; flex-direction: column; gap: 6px; }
+.hp { position: relative; width: 190px; height: 18px; background: rgba(10, 16, 24, .7); border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+.hp i { position: absolute; inset: 0 auto 0 0; width: 100%; background: linear-gradient(90deg, #3fbfae, #7ff0ff); transition: width .2s; }
+.hp span { position: absolute; inset: 0; font-size: 11px; line-height: 17px; text-align: center; color: #06202a; font-weight: 700; }
+#coin { font-size: 14px; color: var(--warm); text-shadow: 0 1px 2px #000; }
+#quest { position: absolute; right: 14px; top: calc(12px + env(safe-area-inset-top)); width: min(250px, 46vw); font-size: 13px; line-height: 1.45; }
+#quest .q { background: var(--panel); border-left: 3px solid var(--glow); border-radius: 4px; padding: 7px 10px; margin-bottom: 6px; }
+#quest .q b { display: block; color: var(--glow); font-size: 12px; margin-bottom: 2px; }
+#toast { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; width: 90vw; }
+#toast div { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 6px 16px; font-size: 14px; animation: toast 3.2s forwards; }
+@keyframes toast { 0% { opacity: 0; transform: translateY(8px); } 10%, 80% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+
+#stick { position: absolute; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; border: 2px solid var(--line); background: rgba(18, 28, 44, .35); display: none; }
+#stick i { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: rgba(127, 240, 255, .45); }
+
+#btns { position: absolute; right: calc(16px + env(safe-area-inset-right)); bottom: calc(20px + env(safe-area-inset-bottom)); display: grid; grid-template-columns: auto auto; gap: 10px; align-items: end; justify-items: end; pointer-events: auto; }
+#btns button { border-radius: 50%; border: 2px solid var(--line); background: var(--panel); width: 64px; height: 64px; font-size: 13px; }
+#btns #btnBag { grid-column: 2; width: 52px; height: 52px; font-size: 12px; }
+#btns #btnAct { width: 92px; height: 92px; font-size: 17px; font-weight: 700; border-color: var(--glow); color: var(--glow); }
+#btns button:active { background: rgba(127, 240, 255, .28); }
+
+/* ---------- dialog ---------- */
+#dialog { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(680px, 94vw); min-height: 110px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px 22px; cursor: pointer; }
+#dialog b { color: var(--glow); font-size: 14px; }
+#dialog p { margin: 6px 0 0; font-size: 16px; line-height: 1.6; white-space: pre-wrap; }
+#dialog .next { position: absolute; right: 14px; bottom: 6px; color: var(--glow); font-size: 12px; animation: bob 1s infinite; }
+@keyframes bob { 50% { transform: translateY(3px); } }
+
+/* ---------- panel ---------- */
+#panel { position: fixed; inset: 0; background: rgba(6, 10, 16, .55); display: flex; align-items: center; justify-content: center; }
+#panel .box { width: min(560px, 94vw); max-height: 86vh; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+#panel header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+#panel h2 { margin: 0; font-size: 17px; color: var(--glow); }
+#panel header button { background: none; border: 1px solid var(--line); border-radius: 6px; padding: 4px 12px; }
+#pBody { padding: 12px 16px 16px; overflow-y: auto; font-size: 14px; line-height: 1.5; touch-action: pan-y; }
+#pBody h3 { margin: 14px 0 6px; font-size: 13px; color: var(--dim); font-weight: 600; }
+#pBody h3:first-child { margin-top: 0; }
+.row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(255, 255, 255, .07); }
+.row .nm { flex: 1; }
+.row .nm small { display: block; color: var(--dim); font-size: 12px; }
+.row .qty { color: var(--warm); min-width: 34px; text-align: right; }
+.row button { background: rgba(127, 240, 255, .12); border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; font-size: 13px; white-space: nowrap; }
+.row button:disabled { opacity: .35; }
+.bar { height: 6px; background: rgba(255, 255, 255, .12); border-radius: 3px; overflow: hidden; margin-top: 3px; }
+.bar i { display: block; height: 100%; background: var(--glow); }
+.empty { color: var(--dim); padding: 8px 0; }
+
+/* ---------- memory & fade & title ---------- */
+#memory { position: fixed; inset: 0; background: rgba(8, 14, 22, .9); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+#memory p { width: min(620px, 86vw); font-size: 19px; line-height: 1.9; text-align: center; color: #dffaff; text-shadow: 0 0 18px rgba(127, 240, 255, .6); animation: fadein 1.2s; white-space: pre-wrap; }
+@keyframes fadein { from { opacity: 0; } }
+#fade { position: fixed; inset: 0; background: #e8fbff; opacity: 0; pointer-events: none; transition: opacity .9s; }
+#title { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center;
+  background: linear-gradient(180deg, rgba(10, 18, 28, .15), rgba(10, 18, 28, .7)); }
+#title h1 { margin: 0; font-size: clamp(54px, 13vw, 110px); letter-spacing: .12em; font-weight: 800; color: #eafcff; text-shadow: 0 0 34px rgba(127, 240, 255, .7); }
+#title .sub { margin: 0 0 26px; color: var(--dim); letter-spacing: .3em; font-size: 15px; }
+#title .menu { display: flex; flex-direction: column; gap: 10px; }
+#title .menu button { min-width: 210px; padding: 12px 20px; font-size: 17px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); }
+#title .menu button:hover { border-color: var(--glow); }
+#title .help { margin-top: 26px; color: var(--dim); font-size: 12px; line-height: 1.8; }
+
+@media (hover: hover) and (pointer: fine) {
+  #btns button { opacity: .85; }
+}

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>고요골</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="hud" hidden>
+  <div id="stat">
+    <div class="hp"><i id="hpFill"></i><span id="hpTxt"></span></div>
+    <div id="coin">◈ 0</div>
+  </div>
+  <div id="quest"></div>
+  <div id="toast"></div>
+  <div id="stick"><i></i></div>
+  <div id="btns">
+    <button id="btnBag" type="button">가방</button>
+    <button id="btnRoll" type="button">구르기</button>
+    <button id="btnAct" type="button">공격</button>
+  </div>
+</div>
+
+<div id="dialog" hidden>
+  <b id="dName"></b>
+  <p id="dText"></p>
+  <span class="next">▼</span>
+</div>
+
+<div id="panel" hidden>
+  <div class="box">
+    <header><h2 id="pTitle"></h2><button id="pClose" type="button">닫기</button></header>
+    <div id="pBody"></div>
+  </div>
+</div>
+
+<div id="memory" hidden><p id="mText"></p></div>
+<div id="fade"></div>
+
+<div id="title">
+  <h1>고요골</h1>
+  <p class="sub">잊힌 골짜기의 기억</p>
+  <div class="menu">
+    <button id="btnContinue" type="button" hidden>이어하기</button>
+    <button id="btnNew" type="button">처음부터</button>
+  </div>
+  <p class="help">이동 WASD · 행동 Space · 구르기 Shift · 가방 I · 시점 마우스 드래그<br>휴대폰: 왼쪽 화면 조이스틱 · 오른쪽 화면 드래그로 시점</p>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="js/core.js"></script>
+<script src="js/data.js"></script>
+<script src="js/models.js"></script>
+<script src="js/world.js"></script>
+<script src="js/systems.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/input.js"></script>
+<script src="js/player.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
